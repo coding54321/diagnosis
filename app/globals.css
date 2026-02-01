@@ -1,0 +1,165 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * Hyundai Sans 폰트 설정
+ * 로컬에 설치된 폰트 및 public/fonts 폴더의 폰트 파일 사용
+ */
+
+/* Hyundai Sans Head - Regular */
+@font-face {
+  font-family: 'HyundaiSans';
+  src: local('HyundaiSansHeadKROTFRegular'),
+       local('Hyundai Sans Head Regular'),
+       url('/fonts/HyundaiSansHeadKROTFRegular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Hyundai Sans Head - Medium */
+@font-face {
+  font-family: 'HyundaiSans';
+  src: local('HyundaiSansHeadKROTFMedium'),
+       local('Hyundai Sans Head Medium'),
+       url('/fonts/HyundaiSansHeadKROTFMedium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Hyundai Sans Head - Bold */
+@font-face {
+  font-family: 'HyundaiSans';
+  src: local('HyundaiSansHeadKROTFBold'),
+       local('Hyundai Sans Head Bold'),
+       url('/fonts/HyundaiSansHeadKROTFBold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Hyundai Sans Text - Regular (본문용) */
+@font-face {
+  font-family: 'HyundaiSansText';
+  src: local('HyundaiSansTextKROTFRegular'),
+       local('Hyundai Sans Text Regular'),
+       url('/fonts/HyundaiSansTextKROTFRegular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Hyundai Sans Text - Medium */
+@font-face {
+  font-family: 'HyundaiSansText';
+  src: local('HyundaiSansTextKROTFMedium'),
+       local('Hyundai Sans Text Medium'),
+       url('/fonts/HyundaiSansTextKROTFMedium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Hyundai Sans Text - Bold */
+@font-face {
+  font-family: 'HyundaiSansText';
+  src: local('HyundaiSansTextKROTFBold'),
+       local('Hyundai Sans Text Bold'),
+       url('/fonts/HyundaiSansTextKROTFBold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 기본 스타일 */
+@layer base {
+  html {
+    font-family: 'HyundaiSans', 'HyundaiSansText', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-neutral-white text-hyundai-gray-900;
+    font-family: 'HyundaiSansText', 'HyundaiSans', sans-serif;
+  }
+
+  /* 모바일 최적화 */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* 스크롤바 스타일링 (선택사항) */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-hyundai-gray-100;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-hyundai-gray-400 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-hyundai-gray-500;
+  }
+}
+
+/* 유틸리티 클래스 */
+@layer utilities {
+  /* 텍스트 스타일 프리셋 */
+  .text-display-1 {
+    @apply text-5xl font-bold tracking-tight;
+    font-family: 'HyundaiSans', sans-serif;
+  }
+
+  .text-display-2 {
+    @apply text-4xl font-bold tracking-tight;
+    font-family: 'HyundaiSans', sans-serif;
+  }
+
+  .text-h1 {
+    @apply text-3xl font-bold;
+    font-family: 'HyundaiSans', sans-serif;
+  }
+
+  .text-h2 {
+    @apply text-2xl font-semibold;
+    font-family: 'HyundaiSans', sans-serif;
+  }
+
+  .text-h3 {
+    @apply text-xl font-semibold;
+    font-family: 'HyundaiSans', sans-serif;
+  }
+
+  .text-h4 {
+    @apply text-lg font-medium;
+    font-family: 'HyundaiSans', sans-serif;
+  }
+
+  .text-body-1 {
+    @apply text-base font-normal;
+    font-family: 'HyundaiSansText', sans-serif;
+  }
+
+  .text-body-2 {
+    @apply text-sm font-normal;
+    font-family: 'HyundaiSansText', sans-serif;
+  }
+
+  .text-caption {
+    @apply text-xs font-normal;
+    font-family: 'HyundaiSansText', sans-serif;
+  }
+
+  /* 모바일 터치 최적화 */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+}
