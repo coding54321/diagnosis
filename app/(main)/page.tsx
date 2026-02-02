@@ -64,7 +64,7 @@ export default async function HomePage() {
               /* ===== 로그인 사용자 홈 ===== */
               <>
                 {/* 인사말 + CTA */}
-                <div>
+                <div className="mb-8">
                   <h2 className="text-2xl font-bold text-hyundai-gray-900 tracking-tight mb-1">
                     {userName}님,
                   </h2>
@@ -75,11 +75,13 @@ export default async function HomePage() {
                 </div>
 
                 {/* 차량 정보 */}
-                {vehicle ? (
-                  <VehicleInfo vehicle={vehicle} nextMaintenance={nextMaintenance ?? undefined} />
-                ) : (
-                  <VehicleRegisterCard />
-                )}
+                <div>
+                  {vehicle ? (
+                    <VehicleInfo vehicle={vehicle} nextMaintenance={nextMaintenance ?? undefined} />
+                  ) : (
+                    <VehicleRegisterCard />
+                  )}
+                </div>
 
                 {/* 검증 요약 통계 */}
                 {totalVerifications > 0 && (
@@ -290,7 +292,7 @@ function VerificationStats({ totalCount, appropriateCount }: { totalCount: numbe
 /** 빈 검증 이력 상태 카드 */
 function EmptyHistoryCard() {
   return (
-    <Link href="/verify">
+    <Link href="/verify/camera">
       <Card variant="default" padding="md" className="active:opacity-90">
         <div className="text-center py-4">
           <div className="w-12 h-12 rounded-full bg-hyundai-gray-50 flex items-center justify-center mx-auto mb-3">

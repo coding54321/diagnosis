@@ -1,21 +1,115 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { CheckCircle2, AlertCircle, XCircle, DollarSign, Info, Database, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle2, AlertCircle, XCircle, DollarSign, Info, Database, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { Header, Container } from '@/components/layout';
-import { Card, Badge, Button } from '@/components/ui';
+import { Card, Badge } from '@/components/ui';
 import PriceChart from '@/components/verification/PriceChart';
 import { formatPrice } from '@/lib/utils';
+import { fetchVerificationResult } from '@/lib/supabase/actions';
 import { mockVerificationResult } from '@/lib/mockData';
+import type { VerificationResult, ItemVerification } from '@/types';
+
+const statusConfig = {
+  appropriate: {
+    label: '적정',
+    variant: 'success' as const,
+    Icon: CheckCircle2,
+  },
+  review_needed: {
+    label: '확인 필요',
+    variant: 'warning' as const,
+    Icon: AlertCircle,
+  },
+  recheck_recommended: {
+    label: '재검토 권장',
+    variant: 'error' as const,
+    Icon: XCircle,
+  },
+};
 
 const ItemDetailPage: React.FC = () => {
   const router = useRouter();
   const params = useParams();
   const itemId = params.itemId as string;
 
-  const item = mockVerificationResult.items.find((i) => i.itemId === itemId);
+  const [result, setResult] = useState<VerificationResult | null>(null);
+  const [itemNames, setItemNames] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(true);
   const [showPartInfo, setShowPartInfo] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      const estimateId = sessionStorage.getItem('currentEstimateId');
+      if (estimateId) {
+        const verificationResult = await fetchVerificationResult(estimateId);
+        if (verificationResult.success && verificationResult.data) {
+          const dbResult = verificationResult.data;
+          const nameMap: Record<string, string> = {};
+          const items: ItemVerification[] = dbResult.items.map((item: any) => {
+            const id = item.estimate_item_id || item.estimateItem?.id || '';
+            const name = item.estimateItem?.name || item.estimate_items?.name || '';
+            if (id && name) nameMap[id] = name;
+            return {
+              itemId: id,
+              status: item.status,
+              userPrice: item.user_price,
+              averagePrice: item.average_price,
+              priceRange: {
+                min: item.min_price,
+                max: item.max_price,
+                median: item.median_price,
+              },
+              sampleCount: item.sample_count || 0,
+              breakdown: {
+                partCost: { user: item.part_cost_user, average: item.part_cost_average },
+                laborCost: { user: item.labor_cost_user, average: item.labor_cost_average },
+              },
+            };
+          });
+          setItemNames(nameMap);
+          setResult({
+            estimateId,
+            totalAmount: dbResult.result.total_amount,
+            status: dbResult.result.status as VerificationResult['status'],
+            items,
+            confidence: dbResult.result.confidence || 0,
+          });
+        } else {
+          setResult(mockVerificationResult);
+          setItemNames(
+            Object.fromEntries(
+              mockVerificationResult.items.map((i) => [i.itemId, '항목'])
+            )
+          );
+        }
+      } else {
+        setResult(mockVerificationResult);
+        setItemNames({ 'item-1': '브레이크 패드 교체 (전륜)', 'item-2': '브레이크 디스크 연마 (전륜)' });
+      }
+      setIsLoading(false);
+    };
+    load();
+  }, []);
+
+  const item = result?.items.find((i) => i.itemId === itemId);
+  const itemName = item ? itemNames[itemId] || '항목' : '';
+
+  if (isLoading) {
+    return (
+      <>
+        <Header title="항목 상세" showBackButton onBack={() => router.back()} />
+        <main className="min-h-screen bg-hyundai-gray-50 pb-20">
+          <Container>
+            <div className="py-12 flex justify-center">
+              <Loader2 className="w-8 h-8 animate-spin text-hyundai-blue-500" />
+            </div>
+          </Container>
+        </main>
+      </>
+    );
+  }
 
   if (!item) {
     return (
@@ -25,6 +119,13 @@ const ItemDetailPage: React.FC = () => {
           <Container>
             <div className="py-6">
               <p className="text-body-1 text-hyundai-gray-700">항목을 찾을 수 없습니다.</p>
+              <button
+                type="button"
+                onClick={() => router.back()}
+                className="mt-4 text-body-1 text-hyundai-blue-500 font-medium"
+              >
+                검증 결과로 돌아가기
+              </button>
             </div>
           </Container>
         </main>
@@ -32,31 +133,21 @@ const ItemDetailPage: React.FC = () => {
     );
   }
 
-  const statusConfig = {
-    appropriate: {
-      label: '적정',
-      variant: 'success' as const,
-      Icon: CheckCircle2,
-    },
-    review_needed: {
-      label: '확인 필요',
-      variant: 'warning' as const,
-      Icon: AlertCircle,
-    },
-    recheck_recommended: {
-      label: '재검토 권장',
-      variant: 'error' as const,
-      Icon: XCircle,
-    },
-  };
-
   const config = statusConfig[item.status];
   const StatusIcon = config.Icon;
+  const partUser = item.breakdown.partCost.user;
+  const partAvg = item.breakdown.partCost.average;
+  const laborUser = item.breakdown.laborCost.user;
+  const laborAvg = item.breakdown.laborCost.average;
 
   return (
     <>
-      <Header title="브레이크 패드 교체 (전륜)" showBackButton onBack={() => router.back()} />
-      
+      <Header
+        title={itemName.length > 12 ? `${itemName.slice(0, 12)}…` : itemName || '항목 상세'}
+        showBackButton
+        onBack={() => router.back()}
+      />
+
       <main className="min-h-screen bg-hyundai-gray-50 pb-20">
         <Container>
           <div className="py-6 space-y-6">
@@ -73,6 +164,9 @@ const ItemDetailPage: React.FC = () => {
                   </Badge>
                 </div>
               </div>
+              <p className="text-body-2 text-hyundai-gray-600">
+                시장 평균 {formatPrice(item.averagePrice)} · 표본 {item.sampleCount}건
+              </p>
             </Card>
 
             {/* 가격 분포 차트 */}
@@ -88,41 +182,54 @@ const ItemDetailPage: React.FC = () => {
                 <DollarSign className="w-5 h-5 text-hyundai-gray-600" />
                 <h3 className="text-h4 text-hyundai-gray-900">비용 분해</h3>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="border-b border-hyundai-gray-200 pb-4">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-body-1 text-hyundai-gray-700">부품비</span>
                     <span className="text-body-1 font-semibold text-hyundai-gray-900">
-                      {formatPrice(item.breakdown.partCost.user)}
+                      {formatPrice(partUser)}
                     </span>
                   </div>
-                  <div className="text-body-2 text-hyundai-gray-600 space-y-1">
-                    <p>• 품목: 순정 브레이크 패드 (전륜 1세트)</p>
-                    <p>• 판정: 현대모비스 권장소비자가 기준 적정</p>
-                  </div>
-                  <div className="mt-3 p-3 bg-hyundai-gray-50 rounded-lg border border-hyundai-gray-200">
-                    <div className="flex items-start gap-2">
-                      <Info className="w-4 h-4 text-hyundai-gray-600 mt-0.5 flex-shrink-0" />
-                      <p className="text-body-2 text-hyundai-gray-700">
-                        절감 팁: OEM 호환 부품 사용 시 약 85,000원 (35,000원 절감 가능)
-                      </p>
+                  {partAvg > 0 && (
+                    <p className="text-body-2 text-hyundai-gray-600">
+                      • 시장 평균: {formatPrice(partAvg)}
+                      {partUser > partAvg && (
+                        <span className="text-semantic-warning-main ml-1">
+                          (평균 대비 +{formatPrice(partUser - partAvg)})
+                        </span>
+                      )}
+                    </p>
+                  )}
+                  {partUser > partAvg && partAvg > 0 && (
+                    <div className="mt-3 p-3 bg-hyundai-gray-50 rounded-lg border border-hyundai-gray-200">
+                      <div className="flex items-start gap-2">
+                        <Info className="w-4 h-4 text-hyundai-gray-600 mt-0.5 flex-shrink-0" />
+                        <p className="text-body-2 text-hyundai-gray-700">
+                          호환 부품 또는 다른 정비소 견적을 비교해 보시면 절감할 수 있을 수 있어요.
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-body-1 text-hyundai-gray-700">공임비</span>
                     <span className="text-body-1 font-semibold text-hyundai-gray-900">
-                      {formatPrice(item.breakdown.laborCost.user)}
+                      {formatPrice(laborUser)}
                     </span>
                   </div>
-                  <div className="text-body-2 text-hyundai-gray-600 space-y-1">
-                    <p>• 작업시간: 0.8시간</p>
-                    <p>• 시간당공임: 50,000원</p>
-                    <p>• 판정: 표준정비시간(0.8H) 기준 적정</p>
-                  </div>
+                  {laborAvg > 0 && (
+                    <p className="text-body-2 text-hyundai-gray-600">
+                      • 시장 평균: {formatPrice(laborAvg)}
+                      {laborUser > laborAvg && (
+                        <span className="text-semantic-warning-main ml-1">
+                          (평균 대비 +{formatPrice(laborUser - laborAvg)})
+                        </span>
+                      )}
+                    </p>
+                  )}
                 </div>
               </div>
             </Card>
@@ -130,8 +237,9 @@ const ItemDetailPage: React.FC = () => {
             {/* 부품 설명 */}
             <Card variant="default" padding="md">
               <button
+                type="button"
                 onClick={() => setShowPartInfo(!showPartInfo)}
-                className="w-full flex items-center justify-between"
+                className="w-full flex items-center justify-between text-left"
               >
                 <div className="flex items-center gap-2">
                   <Info className="w-5 h-5 text-hyundai-gray-600" />
@@ -146,43 +254,14 @@ const ItemDetailPage: React.FC = () => {
 
               {showPartInfo && (
                 <div className="mt-4 space-y-4 pt-4 border-t border-hyundai-gray-200">
-                  <div className="text-center py-6 bg-hyundai-gray-50 rounded-lg border border-hyundai-gray-200">
-                    <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-hyundai-gray-200 flex items-center justify-center">
-                      <div className="w-8 h-8 rounded-full bg-hyundai-gray-400" />
-                    </div>
-                    <p className="text-body-2 text-hyundai-gray-600">브레이크 패드 위치</p>
-                  </div>
-
-                  <div>
-                    <h4 className="text-body-1 font-semibold text-hyundai-gray-900 mb-2">
-                      브레이크 패드란?
-                    </h4>
-                    <p className="text-body-2 text-hyundai-gray-700 leading-relaxed">
-                      브레이크를 밟으면 패드가 디스크(원판)를 눌러서 차를 멈추게 해요. 마찰로
-                      닳기 때문에 주기적으로 교체가 필요한 소모품이에요.
-                    </p>
-                  </div>
-
-                  <div>
-                    <h4 className="text-body-1 font-semibold text-hyundai-gray-900 mb-2">
-                      일반적인 교체 주기
-                    </h4>
-                    <ul className="text-body-2 text-hyundai-gray-700 space-y-1">
-                      <li>• 주행거리: 30,000~50,000km</li>
-                      <li>• 기간: 약 2~3년</li>
-                      <li>• 내 차: 45,000km → 교체 시기 도래</li>
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h4 className="text-body-1 font-semibold text-hyundai-gray-900 mb-2">
-                      교체하지 않으면?
-                    </h4>
-                    <ul className="text-body-2 text-hyundai-gray-700 space-y-1">
-                      <li>• 제동 거리 증가 (안전 문제)</li>
-                      <li>• 디스크 손상 → 더 큰 수리비 발생</li>
-                    </ul>
-                  </div>
+                  <p className="text-body-2 text-hyundai-gray-700 leading-relaxed">
+                    검증 결과는 블루핸즈 표준 공임 및 시장 데이터를 기준으로 합니다. 정확한
+                    작업 내용·부품 설명은 정비소에 문의해 주세요.
+                  </p>
+                  <p className="text-caption text-hyundai-gray-500">
+                    정비사에게 물어볼 질문이 있으면 [정비사에게 물어볼 질문이 있어요]에서
+                    안내를 확인할 수 있어요.
+                  </p>
                 </div>
               )}
             </Card>
@@ -194,13 +273,19 @@ const ItemDetailPage: React.FC = () => {
                 <h3 className="text-h4 text-hyundai-gray-900">데이터 출처</h3>
               </div>
               <div className="space-y-2 text-body-2 text-hyundai-gray-600">
-                <p>• 비교 대상: 투싼 NX4 2021~2023년식</p>
                 <p>• 표본 수: {item.sampleCount}건</p>
-                <p>• 기간: 최근 6개월</p>
                 <p>• 출처: 블루핸즈 정비 데이터</p>
-                <p>• 지역: 수도권</p>
+                <p>• 비교: 동일 차종·유사 작업 견적 기준</p>
               </div>
             </Card>
+
+            <button
+              type="button"
+              onClick={() => router.push('/verify/result')}
+              className="w-full py-3 text-body-1 font-medium text-hyundai-blue-500 border border-hyundai-blue-500 rounded-xl"
+            >
+              검증 결과로 돌아가기
+            </button>
           </div>
         </Container>
       </main>

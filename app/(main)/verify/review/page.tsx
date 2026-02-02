@@ -1,21 +1,47 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { FileText, Car, Building2, Wrench, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { FileText, Car, Building2, Wrench, Image as ImageIcon, Loader2, Calendar, Receipt } from 'lucide-react';
 import { Header, Container } from '@/components/layout';
-import { Card, Button } from '@/components/ui';
+import { Card, Button, BottomSheet, Input } from '@/components/ui';
 import { mockEstimate } from '@/lib/mockData';
 import { formatPrice } from '@/lib/utils';
 import { createEstimate, saveVehicle, uploadEstimateImageAction, createVerificationResult } from '@/lib/supabase/actions';
 import { VerificationEngine } from '@/lib/verification/engine';
 import type { EstimateItem } from '@/types';
+import type { BluehandsShop } from '@/lib/data/bluehands-seoul';
+
+type EditSheetMode = 'vehicle' | 'shop' | 'date' | 'vat' | 'item' | null;
 
 const ReviewPage: React.FC = () => {
   const router = useRouter();
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [showImage, setShowImage] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 추가 필드 (점검/정비 의뢰일자, VAT)
+  const [requestDate, setRequestDate] = useState<string>(() => {
+    const d = new Date();
+    return d.toISOString().slice(0, 10);
+  });
+  const [vatIncluded, setVatIncluded] = useState<boolean>(true);
+  const [vatAmount, setVatAmount] = useState<number>(0);
+
+  // 수정 바텀시트
+  const [editSheetOpen, setEditSheetOpen] = useState(false);
+  const [editSheetMode, setEditSheetMode] = useState<EditSheetMode>(null);
+
+  // 정비소 (편집 가능, bluehands_seoul 기반 검색)
+  const [shopName, setShopName] = useState(mockEstimate.shopName);
+  const [shopSearchQuery, setShopSearchQuery] = useState('');
+  const [shopSearchResults, setShopSearchResults] = useState<BluehandsShop[]>([]);
+  const [shopSearching, setShopSearching] = useState(false);
+
+  // 정비 항목 (편집 가능)
+  const [items, setItems] = useState<EstimateItem[]>(() => [...mockEstimate.items]);
+  const [editItemIndex, setEditItemIndex] = useState<number | null>(null);
+  const [editItemForm, setEditItemForm] = useState({ name: '', partCost: 0, laborCost: 0 });
 
   // sessionStorage에서 촬영된 이미지 가져오기
   useEffect(() => {
@@ -25,8 +51,30 @@ const ReviewPage: React.FC = () => {
     }
   }, []);
 
-  // 목업 데이터 사용 (실제로는 OCR 결과)
-  const estimate = mockEstimate;
+  // 정비소 검색 (bluehands_seoul.csv 기반)
+  const searchShops = useCallback(async (q: string) => {
+    setShopSearching(true);
+    try {
+      const res = await fetch(`/api/shops?q=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      setShopSearchResults(data.shops ?? []);
+    } catch {
+      setShopSearchResults([]);
+    } finally {
+      setShopSearching(false);
+    }
+  }, []);
+
+  // 정비소 검색: 시트가 'shop' 모드로 열리거나 검색어가 바뀔 때
+  useEffect(() => {
+    if (!editSheetOpen || editSheetMode !== 'shop') return;
+    const t = setTimeout(() => searchShops(shopSearchQuery), editSheetMode === 'shop' && !shopSearchQuery ? 0 : 300);
+    return () => clearTimeout(t);
+  }, [editSheetOpen, editSheetMode, shopSearchQuery, searchShops]);
+
+  // 목업 데이터 사용 (실제로는 OCR 결과), 항목/총액은 편집 반영
+  const totalAmount = items.reduce((sum, i) => sum + i.totalCost, 0);
+  const estimate = { ...mockEstimate, shopName, items, totalAmount };
 
   const handleVerify = async () => {
     setIsSubmitting(true);
@@ -195,21 +243,19 @@ const ReviewPage: React.FC = () => {
               </Card>
             )}
 
-            {/* 차량 정보 */}
+            {/* 점검/정비 의뢰일자 */}
             <Card variant="default" padding="md">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-hyundai-gray-100 flex items-center justify-center">
-                    <Car className="w-5 h-5 text-hyundai-gray-600" />
+                    <Calendar className="w-5 h-5 text-hyundai-gray-600" />
                   </div>
                   <div>
-                    <p className="text-caption text-hyundai-gray-600 mb-1">차량 정보</p>
-                    <p className="text-body-1 text-hyundai-gray-900">
-                      투싼 NX4 · 2022년식 · 45,000km
-                    </p>
+                    <p className="text-caption text-hyundai-gray-600 mb-1">점검/정비 의뢰일자</p>
+                    <p className="text-body-1 text-hyundai-gray-900">{requestDate}</p>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" onClick={() => { setEditSheetMode('date'); setEditSheetOpen(true); }}>
                   수정
                 </Button>
               </div>
@@ -227,7 +273,47 @@ const ReviewPage: React.FC = () => {
                     <p className="text-body-1 text-hyundai-gray-900">{estimate.shopName}</p>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" onClick={() => { setEditSheetMode('shop'); setEditSheetOpen(true); }}>
+                  수정
+                </Button>
+              </div>
+            </Card>
+
+            {/* 차량 정보 */}
+            <Card variant="default" padding="md">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-hyundai-gray-100 flex items-center justify-center">
+                    <Car className="w-5 h-5 text-hyundai-gray-600" />
+                  </div>
+                  <div>
+                    <p className="text-caption text-hyundai-gray-600 mb-1">차량 정보</p>
+                    <p className="text-body-1 text-hyundai-gray-900">
+                      투싼 NX4 · 2022년식 · 45,000km
+                    </p>
+                  </div>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => { setEditSheetMode('vehicle'); setEditSheetOpen(true); }}>
+                  수정
+                </Button>
+              </div>
+            </Card>
+
+            {/* VAT 금액 여부 및 금액 */}
+            <Card variant="default" padding="md">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-hyundai-gray-100 flex items-center justify-center">
+                    <Receipt className="w-5 h-5 text-hyundai-gray-600" />
+                  </div>
+                  <div>
+                    <p className="text-caption text-hyundai-gray-600 mb-1">VAT 금액 여부 및 금액</p>
+                    <p className="text-body-1 text-hyundai-gray-900">
+                      {vatIncluded ? `VAT 포함 · ${formatPrice(vatAmount || Math.round(estimate.totalAmount / 11))}` : 'VAT 미포함'}
+                    </p>
+                  </div>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => { setEditSheetMode('vat'); setEditSheetOpen(true); }}>
                   수정
                 </Button>
               </div>
@@ -260,7 +346,20 @@ const ReviewPage: React.FC = () => {
                           </p>
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setEditItemIndex(index);
+                          setEditItemForm({
+                            name: item.name,
+                            partCost: item.partCost,
+                            laborCost: item.laborCost,
+                          });
+                          setEditSheetMode('item');
+                          setEditSheetOpen(true);
+                        }}
+                      >
                         수정
                       </Button>
                     </div>
@@ -277,10 +376,223 @@ const ReviewPage: React.FC = () => {
                   {formatPrice(estimate.totalAmount)}
                 </p>
                 <p className="text-caption text-hyundai-gray-500 mt-1">
-                  (부가세 포함)
+                  {vatIncluded ? '(부가세 포함)' : '(부가세 미포함)'}
                 </p>
               </div>
             </Card>
+
+            {/* 수정 바텀시트 */}
+            <BottomSheet
+              isOpen={editSheetOpen}
+              onClose={() => {
+                setEditSheetOpen(false);
+                setEditSheetMode(null);
+                setEditItemIndex(null);
+                setShopSearchQuery('');
+                setShopSearchResults([]);
+              }}
+              title={
+                editSheetMode === 'vehicle'
+                  ? '차량 정보'
+                  : editSheetMode === 'shop'
+                    ? '정비소 검색'
+                    : editSheetMode === 'date'
+                      ? '점검/정비 의뢰일자'
+                      : editSheetMode === 'vat'
+                        ? 'VAT 금액'
+                        : editSheetMode === 'item'
+                          ? '정비 항목 수정'
+                          : undefined
+              }
+            >
+              {editSheetMode === 'vehicle' && (
+                <div className="py-4">
+                  <p className="text-body-2 text-hyundai-gray-600 mb-4">
+                    차량 정보는 [내 차 관리]에서 수정할 수 있어요.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="md"
+                    fullWidth
+                    onClick={() => router.push('/vehicle')}
+                  >
+                    내 차 관리로 이동
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="md"
+                    fullWidth
+                    className="mt-2"
+                    onClick={() => { setEditSheetOpen(false); setEditSheetMode(null); }}
+                  >
+                    닫기
+                  </Button>
+                </div>
+              )}
+
+              {editSheetMode === 'shop' && (
+                <div className="space-y-4 py-2">
+                  <Input
+                    placeholder="업체명, 구·군, 주소로 검색 (서울 블루핸즈)"
+                    value={shopSearchQuery}
+                    onChange={(e) => setShopSearchQuery(e.target.value)}
+                    fullWidth
+                  />
+                  <div className="max-h-64 overflow-y-auto space-y-2">
+                    {shopSearching && (
+                      <div className="flex justify-center py-4">
+                        <Loader2 className="w-6 h-6 animate-spin text-hyundai-blue-500" />
+                      </div>
+                    )}
+                    {!shopSearching && shopSearchQuery.trim() && shopSearchResults.length === 0 && (
+                      <p className="text-caption text-hyundai-gray-500 py-4 text-center">검색 결과가 없어요</p>
+                    )}
+                    {!shopSearching &&
+                      shopSearchResults.map((shop) => (
+                        <button
+                          key={`${shop.업체명}-${shop.주소}`}
+                          type="button"
+                          onClick={() => {
+                            setShopName(shop.업체명);
+                            setEditSheetOpen(false);
+                            setEditSheetMode(null);
+                            setShopSearchQuery('');
+                            setShopSearchResults([]);
+                          }}
+                          className="w-full text-left p-3 rounded-lg border border-hyundai-gray-200 hover:bg-hyundai-gray-50"
+                        >
+                          <p className="text-body-1 text-hyundai-gray-900 font-medium">{shop.업체명}</p>
+                          <p className="text-caption text-hyundai-gray-500 mt-0.5">{shop.시군구} · {shop.주소}</p>
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {editSheetMode === 'date' && (
+                <div className="py-4 space-y-4">
+                  <Input
+                    type="date"
+                    label="의뢰일자"
+                    value={requestDate}
+                    onChange={(e) => setRequestDate(e.target.value)}
+                    fullWidth
+                  />
+                  <Button
+                    variant="primary"
+                    size="md"
+                    fullWidth
+                    onClick={() => {
+                      setEditSheetOpen(false);
+                      setEditSheetMode(null);
+                    }}
+                  >
+                    완료
+                  </Button>
+                </div>
+              )}
+
+              {editSheetMode === 'vat' && (
+                <div className="py-4 space-y-4">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={vatIncluded}
+                      onChange={(e) => setVatIncluded(e.target.checked)}
+                      className="w-5 h-5 rounded border-hyundai-gray-300"
+                    />
+                    <span className="text-body-1 text-hyundai-gray-900">VAT 포함</span>
+                  </label>
+                  {vatIncluded && (
+                    <Input
+                      type="number"
+                      label="VAT 금액 (원, 선택)"
+                      placeholder={`자동: ${formatPrice(Math.round(estimate.totalAmount / 11))}`}
+                      value={vatAmount > 0 ? String(vatAmount) : ''}
+                      onChange={(e) => setVatAmount(Number(e.target.value) || 0)}
+                      fullWidth
+                    />
+                  )}
+                  <Button
+                    variant="primary"
+                    size="md"
+                    fullWidth
+                    onClick={() => {
+                      if (vatIncluded && vatAmount === 0) {
+                        setVatAmount(Math.round(estimate.totalAmount / 11));
+                      }
+                      setEditSheetOpen(false);
+                      setEditSheetMode(null);
+                    }}
+                  >
+                    완료
+                  </Button>
+                </div>
+              )}
+
+              {editSheetMode === 'item' && editItemIndex !== null && (
+                <div className="py-4 space-y-4">
+                  <Input
+                    label="항목명"
+                    placeholder="정비 항목명"
+                    value={editItemForm.name}
+                    onChange={(e) => setEditItemForm((prev) => ({ ...prev, name: e.target.value }))}
+                    fullWidth
+                  />
+                  <Input
+                    type="number"
+                    label="부품비 (원)"
+                    placeholder="0"
+                    value={editItemForm.partCost > 0 ? String(editItemForm.partCost) : ''}
+                    onChange={(e) =>
+                      setEditItemForm((prev) => ({ ...prev, partCost: Number(e.target.value) || 0 }))
+                    }
+                    fullWidth
+                  />
+                  <Input
+                    type="number"
+                    label="공임비 (원)"
+                    placeholder="0"
+                    value={editItemForm.laborCost > 0 ? String(editItemForm.laborCost) : ''}
+                    onChange={(e) =>
+                      setEditItemForm((prev) => ({ ...prev, laborCost: Number(e.target.value) || 0 }))
+                    }
+                    fullWidth
+                  />
+                  <p className="text-caption text-hyundai-gray-500">
+                    소계: {formatPrice(editItemForm.partCost + editItemForm.laborCost)}
+                  </p>
+                  <Button
+                    variant="primary"
+                    size="md"
+                    fullWidth
+                    onClick={() => {
+                      const item = items[editItemIndex];
+                      if (!item) return;
+                      const totalCost = editItemForm.partCost + editItemForm.laborCost;
+                      setItems((prev) =>
+                        prev.map((it, i) =>
+                          i === editItemIndex
+                            ? {
+                                ...it,
+                                name: editItemForm.name || it.name,
+                                partCost: editItemForm.partCost,
+                                laborCost: editItemForm.laborCost,
+                                totalCost,
+                              }
+                            : it
+                        )
+                      );
+                      setEditSheetOpen(false);
+                      setEditSheetMode(null);
+                      setEditItemIndex(null);
+                    }}
+                  >
+                    완료
+                  </Button>
+                </div>
+              )}
+            </BottomSheet>
 
             {/* 검증하기 버튼 */}
             <Button

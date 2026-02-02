@@ -5,7 +5,7 @@ import { Button } from '@/components/ui';
 
 const VerificationCTA: React.FC = () => {
   return (
-    <Link href="/verify" className="block">
+    <Link href="/verify/camera" className="block">
       <Button
         variant="primary"
         size="lg"
