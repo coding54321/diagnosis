@@ -1,8 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
-import { CheckCircle2, AlertCircle, XCircle, ChevronRight, Wrench, MapPin } from 'lucide-react';
+import { CheckCircle2, AlertCircle, XCircle, ChevronRight, Wrench, MapPin, Settings } from 'lucide-react';
 import { Header, Container } from '@/components/layout';
-import UserMenu from '@/components/auth/UserMenu';
 import { Card, Badge, Button } from '@/components/ui';
 import VehicleInfo from '@/components/vehicle/VehicleInfo';
 import LoginPrompt from '@/components/auth/LoginPrompt';
@@ -70,7 +69,18 @@ export default async function VehiclePage() {
 
   return (
     <>
-      <Header title="내 차 관리" rightAction={<UserMenu />} />
+      <Header
+        title="내 차 관리"
+        rightAction={
+          <Link
+            href="/settings"
+            className="touch-target p-3 -mr-0 text-hyundai-gray-700 hover:text-hyundai-gray-900"
+            aria-label="설정"
+          >
+            <Settings className="w-5 h-5" strokeWidth={1.5} />
+          </Link>
+        }
+      />
 
       <main className="min-h-screen bg-hyundai-gray-50 pb-20">
         <Container>

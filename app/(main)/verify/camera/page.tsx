@@ -11,10 +11,12 @@ const CameraPage: React.FC = () => {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [showCrop, setShowCrop] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [albumError, setAlbumError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   // 카메라 시작
@@ -149,6 +151,41 @@ const CameraPage: React.FC = () => {
     router.back();
   };
 
+  // 앨범에서 바로 선택하기
+  const handleAlbumFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // 파일 타입 검증
+    if (!file.type.startsWith('image/')) {
+      setAlbumError('이미지 파일만 선택할 수 있습니다.');
+      return;
+    }
+
+    // 파일 크기 검증 (10MB 제한)
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setAlbumError('파일 크기는 10MB 이하여야 합니다.');
+      return;
+    }
+
+    setAlbumError(null);
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result;
+      if (typeof result === 'string') {
+        setCapturedImage(result);
+        // 카메라 중지
+        stopCamera();
+      }
+    };
+    reader.onerror = () => {
+      setAlbumError('이미지를 읽는 중 오류가 발생했습니다.');
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
     <>
       {showCrop && capturedImage && (
@@ -246,6 +283,14 @@ const CameraPage: React.FC = () => {
 
         {/* 숨겨진 캔버스 (촬영용) */}
         <canvas ref={canvasRef} className="hidden" />
+        {/* 숨겨진 파일 입력 (앨범 선택용) */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleAlbumFileSelect}
+        />
 
         {/* 하단 컨트롤 */}
         <div className="relative z-10 shrink-0 bg-white rounded-t-2xl px-5 pt-5 pb-8">
@@ -296,27 +341,33 @@ const CameraPage: React.FC = () => {
               </div>
 
               {/* 보조 액션 */}
-              <div className="flex gap-2.5">
-                <button
-                  onClick={() => {
-                    stopCamera();
-                    router.push('/verify/album');
-                  }}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl border border-hyundai-gray-200 text-sm font-medium text-hyundai-gray-700 active:bg-hyundai-gray-50 transition-colors"
-                >
-                  <Image className="w-4 h-4" strokeWidth={1.5} />
-                  앨범에서 선택
-                </button>
-                <button
-                  onClick={() => {
-                    stopCamera();
-                    router.push('/verify/manual');
-                  }}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl border border-hyundai-gray-200 text-sm font-medium text-hyundai-gray-700 active:bg-hyundai-gray-50 transition-colors"
-                >
-                  <PenTool className="w-4 h-4" strokeWidth={1.5} />
-                  직접 입력
-                </button>
+              <div className="space-y-2">
+                <div className="flex gap-2.5">
+                  <button
+                    onClick={() => {
+                      // 카메라 일시 정지 후 앨범에서 바로 선택
+                      stopCamera();
+                      fileInputRef.current?.click();
+                    }}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl border border-hyundai-gray-200 text-sm font-medium text-hyundai-gray-700 active:bg-hyundai-gray-50 transition-colors"
+                  >
+                    <Image className="w-4 h-4" strokeWidth={1.5} />
+                    앨범에서 선택
+                  </button>
+                  <button
+                    onClick={() => {
+                      stopCamera();
+                      router.push('/verify/manual');
+                    }}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl border border-hyundai-gray-200 text-sm font-medium text-hyundai-gray-700 active:bg-hyundai-gray-50 transition-colors"
+                  >
+                    <PenTool className="w-4 h-4" strokeWidth={1.5} />
+                    직접 입력
+                  </button>
+                </div>
+                {albumError && (
+                  <p className="text-xs text-semantic-error-main text-center">{albumError}</p>
+                )}
               </div>
             </>
           )}

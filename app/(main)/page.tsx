@@ -57,7 +57,7 @@ export default async function HomePage() {
     <>
       <Header title="정비 견적 검증" rightAction={<UserMenu />} />
 
-      <main className="min-h-screen bg-hyundai-gray-50 pb-[76px]">
+      <main className="min-h-[calc(100vh-60px)] bg-hyundai-gray-50">
         <Container>
           <div className="py-5 space-y-4">
             {user ? (
