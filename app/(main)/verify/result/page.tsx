@@ -2,14 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, XCircle, CheckCircle2, MessageCircle, Save, Loader2 } from 'lucide-react';
+import { AlertCircle, XCircle, CheckCircle2, Save, Loader2, Share2 } from 'lucide-react';
 import { Header, Container } from '@/components/layout';
-import { Button } from '@/components/ui';
+import { Button, Badge } from '@/components/ui';
 import VerificationSummary from '@/components/verification/VerificationSummary';
 import EstimateCard from '@/components/verification/EstimateCard';
 import { mockVerificationResult } from '@/lib/mockData';
 import { createVerificationResult, fetchVerificationResult } from '@/lib/supabase/actions';
-import LoginModal from '@/components/auth/LoginModal';
+import { copyLink, formatVerificationResultForShare, shareNative } from '@/lib/share';
+import { toast } from 'sonner';
 import { useAuth } from '@/components/auth/AuthProvider';
 import type { VerificationResult, ItemVerification } from '@/types';
 
@@ -22,7 +23,6 @@ const VerificationResultPage: React.FC = () => {
   const [result, setResult] = useState<VerificationResult | null>(null);
   const [itemNames, setItemNames] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
-  const [showLoginModal, setShowLoginModal] = useState(false);
 
   // sessionStorage에서 estimateId 가져오기 및 검증 결과 조회
   useEffect(() => {
@@ -120,6 +120,22 @@ const VerificationResultPage: React.FC = () => {
     (item) => item.status === 'recheck_recommended'
   );
 
+  const handleShare = async () => {
+    try {
+      const shareData = formatVerificationResultForShare(result.totalAmount, result.status, itemCounts);
+      const ok = await shareNative(shareData);
+      if (ok) return;
+
+      // Web Share API 미지원(대부분 데스크톱) → 링크 복사로 폴백
+      const copied = await copyLink(shareData.url);
+      if (copied) toast.success('공유 기능을 지원하지 않아 링크를 복사했어요.');
+      else toast.error('공유 기능을 지원하지 않아 링크 복사에 실패했어요.');
+    } catch (e) {
+      console.error('Share failed:', e);
+      toast.error('공유 중 오류가 발생했습니다.');
+    }
+  };
+
   return (
     <>
       <Header title="검증 결과" showBackButton onBack={() => router.back()} />
@@ -144,7 +160,7 @@ const VerificationResultPage: React.FC = () => {
                       확인 필요 ({reviewNeededItems.length}건)
                     </h3>
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-6">
                     {reviewNeededItems.map((item) => (
                       <EstimateCard
                         key={item.itemId}
@@ -168,7 +184,7 @@ const VerificationResultPage: React.FC = () => {
                       재검토 권장 ({recheckItems.length}건)
                     </h3>
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-6">
                     {recheckItems.map((item) => (
                       <EstimateCard
                         key={item.itemId}
@@ -192,7 +208,7 @@ const VerificationResultPage: React.FC = () => {
                       적정 ({appropriateItems.length}건)
                     </h3>
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-6">
                     {appropriateItems.map((item) => (
                       <EstimateCard
                         key={item.itemId}
@@ -212,41 +228,24 @@ const VerificationResultPage: React.FC = () => {
             {/* 액션 버튼 */}
             <div className="space-y-3 pt-4">
               <Button
-                variant="primary"
-                size="lg"
-                fullWidth
-                onClick={() => {
-                  // TODO: 정비 진행 로직
-                  alert('정비 진행 기능은 추후 구현됩니다');
-                }}
-                className="flex items-center justify-center gap-2"
-              >
-                <CheckCircle2 className="w-5 h-5" />
-                이 견적으로 진행할게요
-              </Button>
-
-              <Button
                 variant="outline"
                 size="md"
                 fullWidth
-                onClick={() => {
-                  // TODO: 정비사 상담 가이드
-                  router.push('/verify/result/guide');
-                }}
+                onClick={() => handleShare()}
                 className="flex items-center justify-center gap-2"
               >
-                <MessageCircle className="w-4 h-4" />
-                정비사에게 물어볼 질문이 있어요
+                <Share2 className="w-4 h-4" />
+                공유하기
               </Button>
 
               <Button
-                variant="ghost"
+                variant="primary"
                 size="md"
                 fullWidth
                 onClick={async () => {
                   // 로그인 확인
                   if (!isAuthenticated) {
-                    setShowLoginModal(true);
+                    router.push('/auth/login');
                     return;
                   }
 
@@ -283,20 +282,20 @@ const VerificationResultPage: React.FC = () => {
                     });
 
                     if (saveResult.success) {
-                      alert('검증 결과가 저장되었습니다.');
-                      router.push('/');
+                      toast.success('검증 결과가 저장되었습니다.');
+                      router.push('/vehicle');
                     } else {
                       throw new Error(saveResult.error || '저장 실패');
                     }
                   } catch (error) {
                     console.error('Error saving verification result:', error);
-                    alert('저장 중 오류가 발생했습니다. 다시 시도해주세요.');
+                    toast.error('저장 중 오류가 발생했습니다. 다시 시도해주세요.');
                   } finally {
                     setIsSaving(false);
                   }
                 }}
                 disabled={!estimateId || isSaving}
-                className="flex items-center justify-center gap-2"
+                className="flex items-center justify-center gap-2 bg-hyundai-gray-900 hover:bg-hyundai-gray-800 text-white"
               >
                 {isSaving ? (
                   <>
@@ -306,7 +305,12 @@ const VerificationResultPage: React.FC = () => {
                 ) : (
                   <>
                     <Save className="w-4 h-4" />
-                    저장만 하기
+                    <span>내 검증 내역에 저장</span>
+                    {!isAuthenticated && (
+                      <Badge variant="info" size="sm" className="ml-1">
+                        로그인 필요
+                      </Badge>
+                    )}
                   </>
                 )}
               </Button>
@@ -315,12 +319,6 @@ const VerificationResultPage: React.FC = () => {
         </Container>
       </main>
 
-      <LoginModal
-        isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
-        onSuccess={() => router.refresh()}
-        message="검증 결과를 저장하려면 로그인이 필요합니다."
-      />
     </>
   );
 };

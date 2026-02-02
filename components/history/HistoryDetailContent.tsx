@@ -1,14 +1,16 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CheckCircle2, AlertCircle, XCircle } from 'lucide-react';
+import { CheckCircle2, AlertCircle, XCircle, Share2 } from 'lucide-react';
 import { Header, Container } from '@/components/layout';
 import { Card, Badge } from '@/components/ui';
 import VerificationSummary from '@/components/verification/VerificationSummary';
 import PriceChart from '@/components/verification/PriceChart';
 import { formatDate, formatPrice } from '@/lib/utils';
 import { mockEstimate, mockVerificationResult } from '@/lib/mockData';
+import { copyLink, formatVerificationResultForShare, shareNative } from '@/lib/share';
+import { toast } from 'sonner';
 import type { VerificationHistory } from '@/types';
 
 interface HistoryDetailContentProps {
@@ -38,17 +40,52 @@ export default function HistoryDetailContent({ history }: HistoryDetailContentPr
   const config = statusConfig[history.status];
   const StatusIcon = config.Icon;
   const verificationResult = mockVerificationResult; // TODO: history.estimateId로 실제 검증 결과 조회
-  const itemCounts = {
-    appropriate: verificationResult.items.filter((item) => item.status === 'appropriate').length,
-    reviewNeeded: verificationResult.items.filter((item) => item.status === 'review_needed').length,
-    recheckRecommended: verificationResult.items.filter(
-      (item) => item.status === 'recheck_recommended'
-    ).length,
+
+  // 현재는 목업 검증 결과 기준으로 항목 개수 계산
+  const itemCounts = useMemo(() => {
+    const items = verificationResult.items ?? [];
+    return {
+      appropriate: items.filter((item) => item.status === 'appropriate').length,
+      reviewNeeded: items.filter((item) => item.status === 'review_needed').length,
+      recheckRecommended: items.filter((item) => item.status === 'recheck_recommended').length,
+    };
+  }, [verificationResult.items]);
+
+  const shareData = useMemo(() => {
+    return formatVerificationResultForShare(history.totalAmount, history.status, itemCounts);
+  }, [history.totalAmount, history.status, itemCounts]);
+
+  const handleShare = async () => {
+    try {
+      const ok = await shareNative(shareData);
+      if (ok) return;
+
+      const copied = await copyLink(shareData.url);
+      if (copied) toast.success('공유 기능을 지원하지 않아 링크를 복사했어요.');
+      else toast.error('공유 기능을 지원하지 않아 링크 복사에 실패했어요.');
+    } catch (e) {
+      console.error('Share failed:', e);
+      toast.error('공유 중 오류가 발생했습니다.');
+    }
   };
 
   return (
     <>
-      <Header title="검증 내역 상세" showBackButton onBack={() => router.back()} />
+      <Header
+        title="검증 내역 상세"
+        showBackButton
+        onBack={() => router.back()}
+        rightAction={
+          <button
+            type="button"
+            onClick={() => handleShare()}
+            className="touch-target p-2 -mr-2 text-hyundai-gray-700 hover:text-hyundai-gray-900"
+            aria-label="공유하기"
+          >
+            <Share2 className="w-5 h-5" />
+          </button>
+        }
+      />
 
       <main className="min-h-screen bg-hyundai-gray-50 pb-20">
         <Container>
@@ -83,8 +120,8 @@ export default function HistoryDetailContent({ history }: HistoryDetailContentPr
             </Card>
 
             <VerificationSummary
-              totalAmount={verificationResult.totalAmount}
-              status={verificationResult.status}
+              totalAmount={history.totalAmount}
+              status={history.status}
               itemCounts={itemCounts}
             />
 
