@@ -2,12 +2,11 @@ import React from 'react';
 import Link from 'next/link';
 import { Header, Container } from '@/components/layout';
 import UserMenu from '@/components/auth/UserMenu';
-import VerificationCTA from '@/components/verification/VerificationCTA';
 import RecentHistory from '@/components/verification/RecentHistory';
 import VehicleInfo from '@/components/vehicle/VehicleInfo';
 import { fetchVehicle, fetchRecentHistory } from '@/lib/supabase/actions';
 import { getCurrentUser } from '@/lib/supabase/auth-server';
-import { Camera, Search, CheckCircle, Car, ChevronRight, Shield } from 'lucide-react';
+import { Camera, Search, CheckCircle, Car, ChevronRight } from 'lucide-react';
 import { Card } from '@/components/ui';
 import type { Vehicle, VerificationHistory } from '@/types';
 
@@ -37,6 +36,7 @@ export default async function HomePage() {
         items: item.items,
         totalAmount: item.totalAmount,
         status: item.status as VerificationHistory['status'],
+        shopName: item.shopName,
       }))
     : [];
 
@@ -48,7 +48,7 @@ export default async function HomePage() {
   const totalVerifications = recentHistory.length;
   const appropriateCount = recentHistory.filter(h => h.status === 'appropriate').length;
 
-  // 다음 예상 정비 (차량 주행거리 기반 간단 추정)
+  // 다음 예상 정비
   const nextMaintenance = vehicle
     ? getNextMaintenance(vehicle.mileage)
     : null;
@@ -59,48 +59,65 @@ export default async function HomePage() {
 
       <main className="min-h-screen bg-hyundai-gray-50 pb-[76px]">
         <Container>
-          <div className="py-5 space-y-5">
+          <div className="py-5 space-y-4">
             {user ? (
               /* ===== 로그인 사용자 홈 ===== */
               <>
-                {/* 인사말 + CTA */}
-                <div className="mb-8">
-                  <h2 className="text-2xl font-bold text-hyundai-gray-900 tracking-tight mb-1">
-                    {userName}님,
+                {/* 인사말 */}
+                <div className="px-1 mb-2">
+                  <h2 className="text-xl font-bold text-hyundai-gray-900 tracking-tight">
+                    {userName}님, 안녕하세요
                   </h2>
-                  <p className="text-body-2 text-hyundai-gray-500 mb-4">
+                  <p className="text-sm text-hyundai-gray-400 mt-0.5">
                     오늘도 안심 정비하세요
                   </p>
-                  <VerificationCTA />
                 </div>
 
+                {/* 견적서 검증 CTA 배너 */}
+                <Link href="/verify/camera">
+                  <div className="flex items-center gap-3 px-4 py-3.5 bg-[#002C5F] rounded-2xl active:opacity-90 transition-opacity">
+                    <div className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center shrink-0">
+                      <Camera className="w-4.5 h-4.5 text-white" strokeWidth={1.5} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white">견적서 검증하기</p>
+                      <p className="text-[11px] text-white/60">사진 촬영 또는 직접 입력</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-white/40 shrink-0" strokeWidth={1.5} />
+                  </div>
+                </Link>
+
                 {/* 차량 정보 */}
-                <div>
-                  {vehicle ? (
-                    <VehicleInfo vehicle={vehicle} nextMaintenance={nextMaintenance ?? undefined} />
-                  ) : (
-                    <VehicleRegisterCard />
-                  )}
-                </div>
+                {vehicle ? (
+                  <VehicleInfo vehicle={vehicle} nextMaintenance={nextMaintenance ?? undefined} />
+                ) : (
+                  <VehicleRegisterCard />
+                )}
 
                 {/* 검증 요약 통계 */}
                 {totalVerifications > 0 && (
-                  <VerificationStats
-                    totalCount={totalVerifications}
-                    appropriateCount={appropriateCount}
-                  />
+                  <div className="grid grid-cols-2 gap-3">
+                    <Card variant="default" padding="sm" className="py-4 text-center">
+                      <p className="text-2xl font-bold text-hyundai-gray-900">{totalVerifications}회</p>
+                      <p className="text-xs text-hyundai-gray-400 mt-0.5">총 검증</p>
+                    </Card>
+                    <Card variant="default" padding="sm" className="py-4 text-center">
+                      <p className="text-2xl font-bold text-hyundai-gray-900">{appropriateCount}건</p>
+                      <p className="text-xs text-hyundai-gray-400 mt-0.5">적정 판정</p>
+                    </Card>
+                  </div>
                 )}
 
                 {/* 최근 검증 내역 */}
                 <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-lg font-bold text-hyundai-gray-900">
+                  <div className="flex items-center justify-between px-1 mb-2">
+                    <h3 className="text-sm font-bold text-hyundai-gray-900">
                       최근 검증 내역
                     </h3>
                     {recentHistory.length > 0 && (
-                      <Link href="/history" className="text-body-2 text-hyundai-gray-500 font-medium flex items-center gap-0.5">
+                      <Link href="/history" className="text-xs text-hyundai-gray-400 font-medium flex items-center gap-0.5">
                         전체보기
-                        <ChevronRight className="w-4 h-4" />
+                        <ChevronRight className="w-3.5 h-3.5" />
                       </Link>
                     )}
                   </div>
@@ -114,20 +131,30 @@ export default async function HomePage() {
             ) : (
               /* ===== 비로그인 사용자 홈 ===== */
               <>
-                {/* 가치 제안 헤드카피 + CTA */}
-                <div>
-                  <h2 className="text-2xl font-bold text-hyundai-gray-900 tracking-tight leading-snug mb-1">
+                {/* 가치 제안 */}
+                <div className="px-1 pt-2">
+                  <h2 className="text-xl font-bold text-hyundai-gray-900 tracking-tight leading-snug">
                     정비 견적,<br />
                     적정 가격인지 바로 확인하세요
                   </h2>
-                  <p className="text-body-2 text-hyundai-gray-500 mb-4">
+                  <p className="text-sm text-hyundai-gray-400 mt-1 mb-4">
                     정비소에서 받은 견적서를 시장 평균가와 비교해드려요
                   </p>
-                  <VerificationCTA />
-                  <p className="text-caption text-center text-hyundai-gray-400 mt-2">
-                    로그인 없이 바로 사용할 수 있어요
-                  </p>
                 </div>
+
+                {/* 견적서 검증 CTA 배너 */}
+                <Link href="/verify/camera">
+                  <div className="flex items-center gap-3 px-4 py-3.5 bg-[#002C5F] rounded-2xl active:opacity-90 transition-opacity">
+                    <div className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center shrink-0">
+                      <Camera className="w-4.5 h-4.5 text-white" strokeWidth={1.5} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white">견적서 검증하기</p>
+                      <p className="text-[11px] text-white/60">로그인 없이 바로 사용할 수 있어요</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-white/40 shrink-0" strokeWidth={1.5} />
+                  </div>
+                </Link>
 
                 {/* 서비스 프로세스 안내 */}
                 <HowItWorksSection />
@@ -155,22 +182,22 @@ function HowItWorksSection() {
 
   return (
     <Card variant="default" padding="md">
-      <p className="text-body-1 font-bold text-hyundai-gray-900 mb-4">
+      <p className="text-sm font-bold text-hyundai-gray-900 mb-4">
         이렇게 검증해드려요
       </p>
       <div className="flex items-start justify-between gap-2">
         {steps.map((step, i) => (
           <React.Fragment key={step.label}>
             <div className="flex-1 flex flex-col items-center text-center">
-              <div className="w-12 h-12 rounded-full bg-hyundai-gray-50 flex items-center justify-center mb-2">
+              <div className="w-11 h-11 rounded-full bg-hyundai-gray-50 flex items-center justify-center mb-2">
                 <step.icon className="w-5 h-5 text-hyundai-gray-700" strokeWidth={1.5} />
               </div>
-              <p className="text-body-2 font-medium text-hyundai-gray-900">{step.label}</p>
-              <p className="text-caption text-hyundai-gray-400 mt-0.5">{step.desc}</p>
+              <p className="text-xs font-medium text-hyundai-gray-900">{step.label}</p>
+              <p className="text-[11px] text-hyundai-gray-400 mt-0.5">{step.desc}</p>
             </div>
             {i < steps.length - 1 && (
-              <div className="pt-5 shrink-0">
-                <ChevronRight className="w-4 h-4 text-hyundai-gray-300" />
+              <div className="pt-4 shrink-0">
+                <ChevronRight className="w-3.5 h-3.5 text-hyundai-gray-300" />
               </div>
             )}
           </React.Fragment>
@@ -184,7 +211,7 @@ function HowItWorksSection() {
 function LoginBenefitsCard() {
   return (
     <Card variant="default" padding="md">
-      <p className="text-body-1 font-bold text-hyundai-gray-900 mb-2">
+      <p className="text-sm font-bold text-hyundai-gray-900 mb-2">
         로그인하면 더 편리해요
       </p>
       <ul className="space-y-1.5 mb-4">
@@ -193,8 +220,8 @@ function LoginBenefitsCard() {
           '내 차량 정보 맞춤 분석',
           '다음 정비 시기 알림',
         ].map((text) => (
-          <li key={text} className="flex items-center gap-2 text-body-2 text-hyundai-gray-600">
-            <CheckCircle className="w-4 h-4 text-hyundai-gray-400 shrink-0" strokeWidth={1.5} />
+          <li key={text} className="flex items-center gap-2 text-xs text-hyundai-gray-500">
+            <CheckCircle className="w-3.5 h-3.5 text-hyundai-gray-300 shrink-0" strokeWidth={1.5} />
             {text}
           </li>
         ))}
@@ -202,13 +229,13 @@ function LoginBenefitsCard() {
       <div className="flex gap-2">
         <Link
           href="/auth/login"
-          className="flex-1 py-3 rounded-xl bg-hyundai-gray-900 text-white text-body-2 font-medium text-center hover:bg-hyundai-gray-800 transition-colors"
+          className="flex-1 py-2.5 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium text-center active:bg-hyundai-gray-800 transition-colors"
         >
           로그인
         </Link>
         <Link
           href="/auth/signup"
-          className="flex-1 py-3 rounded-xl bg-white text-hyundai-gray-900 border border-hyundai-gray-200 text-body-2 font-medium text-center hover:bg-hyundai-gray-50 transition-colors"
+          className="flex-1 py-2.5 rounded-xl bg-white text-hyundai-gray-900 border border-hyundai-gray-200 text-sm font-medium text-center active:bg-hyundai-gray-50 transition-colors"
         >
           회원가입
         </Link>
@@ -223,14 +250,14 @@ function VehicleRegisterCard() {
     <Link href="/vehicle">
       <Card variant="default" padding="md" className="active:opacity-90">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 shrink-0 rounded-full bg-hyundai-gray-50 flex items-center justify-center">
-            <Car className="w-6 h-6 text-hyundai-gray-700" strokeWidth={1.5} />
+          <div className="w-11 h-11 shrink-0 rounded-full bg-hyundai-gray-50 flex items-center justify-center">
+            <Car className="w-5 h-5 text-hyundai-gray-500" strokeWidth={1.5} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-body-1 font-medium text-hyundai-gray-900 mb-0.5">
+            <p className="text-sm font-medium text-hyundai-gray-900 mb-0.5">
               내 차량을 등록해보세요
             </p>
-            <p className="text-body-2 text-hyundai-gray-400">
+            <p className="text-xs text-hyundai-gray-400">
               차종별 맞춤 가격으로 더 정확하게 검증해요
             </p>
           </div>
@@ -241,46 +268,22 @@ function VehicleRegisterCard() {
   );
 }
 
-/** 검증 요약 통계 카드 (로그인 사용자) */
-function VerificationStats({ totalCount, appropriateCount }: { totalCount: number; appropriateCount: number }) {
-  return (
-    <Card variant="default" padding="md">
-      <div className="flex items-center gap-2 mb-3">
-        <Shield className="w-5 h-5 text-hyundai-gray-700" strokeWidth={1.5} />
-        <p className="text-body-1 font-bold text-hyundai-gray-900">검증 요약</p>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-xl bg-hyundai-gray-50 p-3 text-center">
-          <p className="text-2xl font-bold text-hyundai-gray-900">{totalCount}회</p>
-          <p className="text-caption text-hyundai-gray-400 mt-0.5">총 검증</p>
-        </div>
-        <div className="rounded-xl bg-hyundai-gray-50 p-3 text-center">
-          <p className="text-2xl font-bold text-hyundai-gray-900">{appropriateCount}건</p>
-          <p className="text-caption text-hyundai-gray-400 mt-0.5">적정 판정</p>
-        </div>
-      </div>
-    </Card>
-  );
-}
-
 /** 빈 검증 이력 상태 카드 */
 function EmptyHistoryCard() {
   return (
-    <Link href="/verify/camera">
-      <Card variant="default" padding="md" className="active:opacity-90">
-        <div className="text-center py-4">
-          <div className="w-12 h-12 rounded-full bg-hyundai-gray-50 flex items-center justify-center mx-auto mb-3">
-            <Search className="w-5 h-5 text-hyundai-gray-400" strokeWidth={1.5} />
-          </div>
-          <p className="text-body-1 text-hyundai-gray-700 font-medium mb-1">
-            아직 검증 내역이 없어요
-          </p>
-          <p className="text-body-2 text-hyundai-gray-400 font-medium">
-            첫 견적서를 검증해보세요 →
-          </p>
+    <Card variant="default" padding="md">
+      <div className="text-center py-6">
+        <div className="w-11 h-11 rounded-full bg-hyundai-gray-50 flex items-center justify-center mx-auto mb-3">
+          <Search className="w-5 h-5 text-hyundai-gray-300" strokeWidth={1.5} />
         </div>
-      </Card>
-    </Link>
+        <p className="text-sm text-hyundai-gray-500 mb-0.5">
+          아직 검증 내역이 없어요
+        </p>
+        <p className="text-xs text-hyundai-gray-300">
+          첫 견적서를 검증해보세요
+        </p>
+      </div>
+    </Card>
   );
 }
 

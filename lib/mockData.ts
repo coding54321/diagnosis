@@ -108,6 +108,7 @@ export const mockRecentHistory: VerificationHistory[] = [
     items: '브레이크 패드 교체 외 1건',
     totalAmount: 203500,
     status: 'appropriate',
+    shopName: '블루핸즈 강남점',
   },
   {
     id: 'history-2',
@@ -116,6 +117,7 @@ export const mockRecentHistory: VerificationHistory[] = [
     items: '엔진오일 교환',
     totalAmount: 95000,
     status: 'appropriate',
+    shopName: '블루핸즈 서초점',
   },
   {
     id: 'history-3',
@@ -124,6 +126,7 @@ export const mockRecentHistory: VerificationHistory[] = [
     items: '인젝터 클리닝 외 2건',
     totalAmount: 320000,
     status: 'review_needed',
+    shopName: '오토큐 역삼점',
   },
 ];
 

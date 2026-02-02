@@ -2,9 +2,9 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Camera, Image, PenTool, Lightbulb, RotateCcw, X, Crop } from 'lucide-react';
-import { Header, Container } from '@/components/layout';
-import { Card, Button } from '@/components/ui';
+import { Camera, Image, PenTool, RotateCcw, X, Crop, ChevronRight } from 'lucide-react';
+import { Header } from '@/components/layout';
+import { Button } from '@/components/ui';
 import ImageCropOverlay from '@/components/verification/ImageCropOverlay';
 
 const CameraPage: React.FC = () => {
@@ -20,15 +20,15 @@ const CameraPage: React.FC = () => {
   // 카메라 시작
   useEffect(() => {
     let isMounted = true;
-    
+
     const initCamera = async () => {
       if (isMounted) {
         await startCamera();
       }
     };
-    
+
     initCamera();
-    
+
     return () => {
       isMounted = false;
       stopCamera();
@@ -40,7 +40,7 @@ const CameraPage: React.FC = () => {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       // 기존 스트림 정리
       if (stream) {
         stream.getTracks().forEach((track) => track.stop());
@@ -48,7 +48,7 @@ const CameraPage: React.FC = () => {
       if (videoRef.current) {
         videoRef.current.srcObject = null;
       }
-      
+
       // 모바일에서는 후면 카메라 우선, 데스크톱에서는 기본 카메라
       const constraints: MediaStreamConstraints = {
         video: {
@@ -61,11 +61,11 @@ const CameraPage: React.FC = () => {
 
       const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
       setStream(mediaStream);
-      
+
       if (videoRef.current) {
         const video = videoRef.current;
         video.srcObject = mediaStream;
-        
+
         // 비디오가 로드될 때까지 기다린 후 재생
         const handleLoadedMetadata = async () => {
           try {
@@ -76,9 +76,9 @@ const CameraPage: React.FC = () => {
           }
           video.removeEventListener('loadedmetadata', handleLoadedMetadata);
         };
-        
+
         video.addEventListener('loadedmetadata', handleLoadedMetadata);
-        
+
         // 이미 로드된 경우 즉시 재생 시도
         if (video.readyState >= 2) {
           handleLoadedMetadata();
@@ -112,7 +112,7 @@ const CameraPage: React.FC = () => {
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    
+
     // 비디오 크기에 맞춰 캔버스 크기 설정
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -121,11 +121,11 @@ const CameraPage: React.FC = () => {
     const ctx = canvas.getContext('2d');
     if (ctx) {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      
+
       // 캔버스를 이미지로 변환
       const imageData = canvas.toDataURL('image/jpeg', 0.9);
       setCapturedImage(imageData);
-      
+
       // 카메라 중지
       stopCamera();
     }
@@ -162,187 +162,165 @@ const CameraPage: React.FC = () => {
         />
       )}
       <Header title="견적서 촬영" showBackButton onBack={handleBack} />
-      
-      <main className="min-h-screen bg-black pb-20">
-        <Container>
-          <div className="py-6 space-y-4">
-            {/* 카메라 뷰파인더 또는 촬영된 이미지 */}
-            <div className="relative aspect-[3/4] bg-hyundai-gray-900 rounded-lg overflow-hidden mb-4">
-              {capturedImage ? (
-                // 촬영된 이미지 미리보기
-                <div className="relative w-full h-full">
-                  <img
-                    src={capturedImage}
-                    alt="촬영된 견적서"
-                    className="w-full h-full object-contain"
-                  />
-                  <button
-                    onClick={retakePhoto}
-                    className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 transition-colors"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
+
+      <main className="flex flex-col h-[calc(100dvh-56px)] bg-hyundai-gray-900 overflow-hidden">
+        {/* 뷰파인더 - 화면 가득 채움 */}
+        <div className="relative flex-1">
+          {capturedImage ? (
+            <div className="absolute inset-0">
+              <img
+                src={capturedImage}
+                alt="촬영된 견적서"
+                className="w-full h-full object-contain bg-black"
+              />
+              <button
+                onClick={retakePhoto}
+                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white active:bg-black/60 transition-colors"
+              >
+                <X className="w-5 h-5" strokeWidth={1.5} />
+              </button>
+            </div>
+          ) : (
+            <div className="absolute inset-0">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-full object-cover"
+                onLoadedMetadata={async () => {
+                  if (videoRef.current) {
+                    try {
+                      await videoRef.current.play();
+                    } catch {
+                      console.log('비디오 재생 대기 중...');
+                    }
+                  }
+                }}
+              />
+
+              {/* 로딩 */}
+              {isLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                  <div className="text-white text-center">
+                    <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-white/10 flex items-center justify-center animate-pulse">
+                      <Camera className="w-6 h-6 text-white" strokeWidth={1.5} />
+                    </div>
+                    <p className="text-sm text-white/70">카메라 준비 중...</p>
+                  </div>
                 </div>
-              ) : (
-                // 카메라 뷰파인더
-                <>
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="w-full h-full object-cover"
-                    onLoadedMetadata={async () => {
-                      if (videoRef.current) {
-                        try {
-                          await videoRef.current.play();
-                        } catch (err) {
-                          // play() 에러는 무시
-                          console.log('비디오 재생 대기 중...');
-                        }
-                      }
-                    }}
-                  />
-                  
-                  {/* 로딩 상태 */}
-                  {isLoading && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                      <div className="text-white text-center">
-                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center animate-pulse">
-                          <Camera className="w-8 h-8 text-white" />
-                        </div>
-                        <p className="text-body-2">카메라 준비 중...</p>
-                      </div>
-                    </div>
-                  )}
+              )}
 
-                  {/* 에러 상태 */}
-                  {error && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/80">
-                      <div className="text-white text-center p-6">
-                        <p className="text-body-1 mb-4">{error}</p>
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={startCamera}
-                          className="flex items-center gap-2"
-                        >
-                          <RotateCcw className="w-4 h-4" />
-                          다시 시도
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+              {/* 에러 */}
+              {error && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+                  <div className="text-white text-center px-8">
+                    <p className="text-sm mb-4 text-white/80">{error}</p>
+                    <button
+                      onClick={startCamera}
+                      className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-white text-hyundai-gray-900 text-sm font-medium active:bg-hyundai-gray-100 transition-colors"
+                    >
+                      <RotateCcw className="w-4 h-4" strokeWidth={1.5} />
+                      다시 시도
+                    </button>
+                  </div>
+                </div>
+              )}
 
-                  {/* 가이드 프레임 */}
-                  {!isLoading && !error && (
-                    <div className="absolute inset-4 border-2 border-white border-dashed rounded-lg opacity-50 pointer-events-none" />
-                  )}
-                </>
+              {/* 가이드 프레임 — 코너만 표시 */}
+              {!isLoading && !error && (
+                <div className="absolute inset-6 pointer-events-none">
+                  {/* 좌상 */}
+                  <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-white/60 rounded-tl-md" />
+                  {/* 우상 */}
+                  <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-white/60 rounded-tr-md" />
+                  {/* 좌하 */}
+                  <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-white/60 rounded-bl-md" />
+                  {/* 우하 */}
+                  <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-white/60 rounded-br-md" />
+                </div>
               )}
             </div>
+          )}
+        </div>
 
-            {/* 숨겨진 캔버스 (촬영용) */}
-            <canvas ref={canvasRef} className="hidden" />
+        {/* 숨겨진 캔버스 (촬영용) */}
+        <canvas ref={canvasRef} className="hidden" />
 
-            <Card variant="default" padding="md" className="bg-white/90 backdrop-blur">
-              {capturedImage ? (
-                // 촬영 완료 후 버튼
-                <div className="space-y-3">
-                  <div className="text-center space-y-2 mb-4">
-                    <p className="text-body-1 text-hyundai-gray-900 font-medium">
-                      촬영이 완료되었습니다
-                    </p>
-                    <p className="text-body-2 text-hyundai-gray-600">
-                      사진을 확인하고 다음 단계로 진행하세요
-                    </p>
-                  </div>
-                  <div className="flex gap-3">
-                    <Button
-                      variant="secondary"
-                      fullWidth
-                      onClick={retakePhoto}
-                      className="flex items-center justify-center gap-2"
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                      다시 촬영
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      fullWidth
-                      onClick={() => setShowCrop(true)}
-                      className="flex items-center justify-center gap-2"
-                    >
-                      <Crop className="w-4 h-4" />
-                      자르기
-                    </Button>
-                    <Button
-                      variant="primary"
-                      fullWidth
-                      onClick={handleUsePhoto}
-                      className="flex items-center justify-center gap-2"
-                    >
-                      <Camera className="w-4 h-4" />
-                      분석하기
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                // 촬영 전 버튼
-                <>
-                  <div className="text-center space-y-2 mb-4">
-                    <div className="flex items-center justify-center gap-2">
-                      <Lightbulb className="w-5 h-5 text-hyundai-blue-500" />
-                      <p className="text-body-1 text-hyundai-gray-900 font-medium">
-                        견적서 전체가 보이도록 촬영해주세요
-                      </p>
-                    </div>
-                    <p className="text-body-2 text-hyundai-gray-600">
-                      글씨가 선명하게 나오면 인식률이 높아져요
-                    </p>
-                  </div>
+        {/* 하단 컨트롤 */}
+        <div className="relative z-10 shrink-0 bg-white rounded-t-2xl px-5 pt-5 pb-8">
+          {capturedImage ? (
+            <>
+              <p className="text-center text-sm text-hyundai-gray-400 mb-4">
+                사진을 확인하고 다음 단계로 진행하세요
+              </p>
+              <div className="flex gap-2.5">
+                <button
+                  onClick={retakePhoto}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl border border-hyundai-gray-200 text-sm font-medium text-hyundai-gray-700 active:bg-hyundai-gray-50 transition-colors"
+                >
+                  <RotateCcw className="w-4 h-4" strokeWidth={1.5} />
+                  재촬영
+                </button>
+                <button
+                  onClick={() => setShowCrop(true)}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl border border-hyundai-gray-200 text-sm font-medium text-hyundai-gray-700 active:bg-hyundai-gray-50 transition-colors"
+                >
+                  <Crop className="w-4 h-4" strokeWidth={1.5} />
+                  자르기
+                </button>
+                <button
+                  onClick={handleUsePhoto}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl bg-hyundai-gray-900 text-sm font-medium text-white active:bg-hyundai-gray-800 transition-colors"
+                >
+                  분석하기
+                  <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-center text-sm text-hyundai-gray-400 mb-4">
+                견적서 전체가 보이도록 촬영해주세요
+              </p>
 
-                  <div className="flex gap-3">
-                    <Button
-                      variant="secondary"
-                      fullWidth
-                      onClick={() => {
-                        stopCamera();
-                        router.push('/verify/album');
-                      }}
-                      className="flex items-center justify-center gap-2"
-                    >
-                      <Image className="w-4 h-4" />
-                      앨범
-                    </Button>
-                    <Button
-                      variant="primary"
-                      fullWidth
-                      onClick={capturePhoto}
-                      disabled={isLoading || !!error || !stream}
-                      className="flex items-center justify-center gap-2"
-                    >
-                      <Camera className="w-4 h-4" />
-                      촬영
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      fullWidth
-                      onClick={() => {
-                        stopCamera();
-                        router.push('/verify/manual');
-                      }}
-                      className="flex items-center justify-center gap-2"
-                    >
-                      <PenTool className="w-4 h-4" />
-                      직접입력
-                    </Button>
-                  </div>
-                </>
-              )}
-            </Card>
-          </div>
-        </Container>
+              {/* 촬영 버튼 (메인) */}
+              <div className="flex items-center justify-center mb-5">
+                <button
+                  onClick={capturePhoto}
+                  disabled={isLoading || !!error || !stream}
+                  className="w-16 h-16 rounded-full border-[3px] border-hyundai-gray-900 flex items-center justify-center active:scale-95 transition-transform disabled:opacity-30 disabled:active:scale-100"
+                >
+                  <div className="w-12 h-12 rounded-full bg-hyundai-gray-900" />
+                </button>
+              </div>
+
+              {/* 보조 액션 */}
+              <div className="flex gap-2.5">
+                <button
+                  onClick={() => {
+                    stopCamera();
+                    router.push('/verify/album');
+                  }}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl border border-hyundai-gray-200 text-sm font-medium text-hyundai-gray-700 active:bg-hyundai-gray-50 transition-colors"
+                >
+                  <Image className="w-4 h-4" strokeWidth={1.5} />
+                  앨범에서 선택
+                </button>
+                <button
+                  onClick={() => {
+                    stopCamera();
+                    router.push('/verify/manual');
+                  }}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl border border-hyundai-gray-200 text-sm font-medium text-hyundai-gray-700 active:bg-hyundai-gray-50 transition-colors"
+                >
+                  <PenTool className="w-4 h-4" strokeWidth={1.5} />
+                  직접 입력
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </main>
     </>
   );

@@ -1,9 +1,9 @@
 import React from 'react';
 import Link from 'next/link';
-import { BarChart3, Calendar, Clock } from 'lucide-react';
+import { CheckCircle2, AlertCircle, XCircle, ChevronRight, Wrench, MapPin } from 'lucide-react';
 import { Header, Container } from '@/components/layout';
 import UserMenu from '@/components/auth/UserMenu';
-import { Card, Button } from '@/components/ui';
+import { Card, Badge, Button } from '@/components/ui';
 import VehicleInfo from '@/components/vehicle/VehicleInfo';
 import LoginPrompt from '@/components/auth/LoginPrompt';
 import { fetchVehicle, fetchRecentHistory } from '@/lib/supabase/actions';
@@ -12,10 +12,27 @@ import { mockVehicle, mockRecentHistory } from '@/lib/mockData';
 import { formatPrice } from '@/lib/utils';
 import type { Vehicle, VerificationHistory } from '@/types';
 
+const statusConfig = {
+  appropriate: {
+    label: '적정',
+    variant: 'success' as const,
+    Icon: CheckCircle2,
+  },
+  review_needed: {
+    label: '확인 필요',
+    variant: 'warning' as const,
+    Icon: AlertCircle,
+  },
+  recheck_recommended: {
+    label: '재검토',
+    variant: 'error' as const,
+    Icon: XCircle,
+  },
+};
+
 export default async function VehiclePage() {
   const user = await getCurrentUser();
 
-  // 로그인한 사용자만 Supabase에서 조회 (비로그인 시 타인 데이터 노출 방지)
   const vehicleResult = user ? await fetchVehicle() : { success: false, data: null };
   const historyResult = user ? await fetchRecentHistory(100) : { success: false, data: null };
 
@@ -39,6 +56,7 @@ export default async function VehiclePage() {
         items: item.items,
         totalAmount: item.totalAmount,
         status: item.status as VerificationHistory['status'],
+        shopName: item.shopName,
       }))
     : mockRecentHistory;
 
@@ -47,123 +65,124 @@ export default async function VehiclePage() {
   const maintenanceCount = history.length;
   const averageSpent = maintenanceCount > 0 ? Math.floor(totalSpent / maintenanceCount) : 0;
 
+  // 다음 예상 정비
+  const nextMaintenance = getNextMaintenance(vehicle.mileage);
+
   return (
     <>
       <Header title="내 차 관리" rightAction={<UserMenu />} />
-      
+
       <main className="min-h-screen bg-hyundai-gray-50 pb-20">
         <Container>
-          <div className="py-6 space-y-6">
+          <div className="py-5 space-y-5">
             {!user && (
               <LoginPrompt message="로그인하시면 차량 정보와 정비 통계를 저장하고 관리할 수 있어요" />
             )}
 
             {/* 차량 정보 */}
-            <VehicleInfo vehicle={vehicle} />
+            <VehicleInfo vehicle={vehicle} nextMaintenance={nextMaintenance ?? undefined} />
 
-            {/* 정비 통계 */}
-            <Card variant="default" padding="md">
-              <div className="flex items-center gap-2 mb-4">
-                <BarChart3 className="w-5 h-5 text-hyundai-gray-600" />
-                <h3 className="text-h4 text-hyundai-gray-900">정비 통계</h3>
-              </div>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-body-1 text-hyundai-gray-700">총 정비 횟수</span>
-                  <span className="text-h3 text-hyundai-gray-900 font-bold">
-                    {maintenanceCount}회
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-body-1 text-hyundai-gray-700">누적 정비 비용</span>
-                  <span className="text-h3 text-hyundai-blue-600 font-bold">
-                    {formatPrice(totalSpent)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-body-1 text-hyundai-gray-700">평균 정비 비용</span>
-                  <span className="text-body-1 text-hyundai-gray-900 font-semibold">
-                    {formatPrice(averageSpent)}
-                  </span>
-                </div>
-              </div>
-            </Card>
+            {/* 정비 통계 - 가로 3열 */}
+            <div className="grid grid-cols-3 gap-3">
+              <Card variant="default" padding="sm" className="text-center py-4">
+                <p className="text-2xl font-bold text-hyundai-gray-900">{maintenanceCount}</p>
+                <p className="text-caption text-hyundai-gray-400 mt-1">총 정비</p>
+              </Card>
+              <Card variant="default" padding="sm" className="text-center py-4">
+                <p className="text-2xl font-bold text-hyundai-gray-900">{formatCompact(totalSpent)}</p>
+                <p className="text-caption text-hyundai-gray-400 mt-1">누적 비용</p>
+              </Card>
+              <Card variant="default" padding="sm" className="text-center py-4">
+                <p className="text-2xl font-bold text-hyundai-gray-900">{formatCompact(averageSpent)}</p>
+                <p className="text-caption text-hyundai-gray-400 mt-1">평균 비용</p>
+              </Card>
+            </div>
 
-            {/* 정비 이력 타임라인 */}
-            <Card variant="default" padding="md">
-              <div className="flex items-center gap-2 mb-4">
-                <Calendar className="w-5 h-5 text-hyundai-gray-600" />
-                <h3 className="text-h4 text-hyundai-gray-900">정비 이력</h3>
-              </div>
-              <div className="space-y-4">
-                {history.map((historyItem, index) => (
-                  <div key={historyItem.id} className="relative">
-                    {index < history.length - 1 && (
-                      <div className="absolute left-4 top-8 bottom-0 w-0.5 bg-hyundai-gray-200" />
-                    )}
-                    <div className="flex gap-4">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-hyundai-blue-500 flex items-center justify-center">
-                        <div className="w-3 h-3 rounded-full bg-white" />
-                      </div>
-                      <div className="flex-1 pb-4">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-body-1 font-medium text-hyundai-gray-900">
-                            {historyItem.items}
-                          </span>
-                          <span className="text-body-2 text-hyundai-gray-600">
-                            {new Date(historyItem.date).toLocaleDateString('ko-KR', {
-                              month: 'short',
-                              day: 'numeric',
-                            })}
-                          </span>
-                        </div>
-                        <p className="text-body-2 text-hyundai-gray-600">
-                          {formatPrice(historyItem.totalAmount)}
-                        </p>
-                      </div>
-                    </div>
+            {/* 정비 이력 */}
+            <div>
+              <h3 className="text-lg font-bold text-hyundai-gray-900 mb-3">정비 이력</h3>
+              {history.length === 0 ? (
+                <Card variant="default" padding="md">
+                  <div className="text-center py-8">
+                    <Wrench className="w-8 h-8 text-hyundai-gray-300 mx-auto mb-3" strokeWidth={1.5} />
+                    <p className="text-body-2 text-hyundai-gray-400">아직 정비 이력이 없어요</p>
                   </div>
-                ))}
-              </div>
-            </Card>
+                </Card>
+              ) : (
+                <Card variant="default" padding="none">
+                  {history.map((item, index) => {
+                    const config = statusConfig[item.status];
+                    const StatusIcon = config.Icon;
+
+                    return (
+                      <Link key={item.id} href={`/history/${item.id}`}>
+                        <div className={`px-5 py-4 active:bg-hyundai-gray-50 transition-colors ${
+                          index < history.length - 1 ? 'border-b border-hyundai-gray-100' : ''
+                        }`}>
+                          {/* 상단: 날짜 + 상태 배지 */}
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-caption text-hyundai-gray-400">
+                              {formatHistoryDate(item.date)}
+                            </span>
+                            <Badge variant={config.variant} size="sm" className="flex items-center gap-1">
+                              <StatusIcon className="w-3 h-3" />
+                              {config.label}
+                            </Badge>
+                          </div>
+
+                          {/* 중간: 정비 항목 + 금액 */}
+                          <div className="flex items-center justify-between mb-1.5">
+                            <p className="text-body-1 font-medium text-hyundai-gray-900 flex-1 mr-3">
+                              {item.items}
+                            </p>
+                            <p className="text-body-1 font-bold text-hyundai-gray-900 shrink-0">
+                              {formatPrice(item.totalAmount)}
+                            </p>
+                          </div>
+
+                          {/* 하단: 정비소 이름 */}
+                          {item.shopName && (
+                            <div className="flex items-center gap-1">
+                              <MapPin className="w-3.5 h-3.5 text-hyundai-gray-300" strokeWidth={1.5} />
+                              <span className="text-caption text-hyundai-gray-400">
+                                {item.shopName}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </Card>
+              )}
+            </div>
 
             {/* 다음 예상 정비 */}
-            <Card variant="highlighted" padding="md">
-              <div className="flex items-center gap-2 mb-4">
-                <Clock className="w-5 h-5 text-hyundai-gray-600" />
-                <h3 className="text-h4 text-hyundai-gray-900">다음 예상 정비</h3>
-              </div>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-body-1 font-medium text-hyundai-gray-900">
-                      엔진오일 교환
-                    </p>
-                    <p className="text-body-2 text-hyundai-gray-600">
-                      약 5,000km 후 또는 6개월 후
-                    </p>
+            <div>
+              <h3 className="text-lg font-bold text-hyundai-gray-900 mb-3">다음 예상 정비</h3>
+              <Card variant="default" padding="none">
+                {getUpcomingMaintenances(vehicle.mileage).map((item, index, arr) => (
+                  <div
+                    key={item.name}
+                    className={`px-5 py-4 flex items-center justify-between ${
+                      index < arr.length - 1 ? 'border-b border-hyundai-gray-100' : ''
+                    }`}
+                  >
+                    <div>
+                      <p className="text-body-1 font-medium text-hyundai-gray-900">
+                        {item.name}
+                      </p>
+                      <p className="text-caption text-hyundai-gray-400 mt-0.5">
+                        약 {item.remainingKm.toLocaleString('ko-KR')}km 후
+                      </p>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-hyundai-gray-300" />
                   </div>
-                  <Button variant="outline" size="sm">
-                    상세보기
-                  </Button>
-                </div>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-body-1 font-medium text-hyundai-gray-900">
-                      에어컨 필터 교체
-                    </p>
-                    <p className="text-body-2 text-hyundai-gray-600">
-                      약 10,000km 후 또는 1년 후
-                    </p>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    상세보기
-                  </Button>
-                </div>
-              </div>
-            </Card>
+                ))}
+              </Card>
+            </div>
 
-            {/* 차량 정보 수정 (로그인 사용자만) */}
+            {/* 차량 정보 수정 */}
             {user && (
               <Link href="/vehicle/edit" className="block">
                 <Button variant="outline" size="lg" fullWidth>
@@ -176,4 +195,45 @@ export default async function VehiclePage() {
       </main>
     </>
   );
+}
+
+/** 금액 축약 표시 (만원 단위) */
+function formatCompact(amount: number): string {
+  if (amount >= 10000) {
+    const man = Math.floor(amount / 10000);
+    return `${man}만`;
+  }
+  return amount.toLocaleString('ko-KR');
+}
+
+/** 정비 이력 날짜 포맷 (YYYY.MM.DD) */
+function formatHistoryDate(date: Date): string {
+  const d = new Date(date);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}.${m}.${day}`;
+}
+
+/** 주행거리 기반 다음 정비 추정 */
+function getNextMaintenance(mileage: number): { name: string; remainingKm: number } | null {
+  const items = getUpcomingMaintenances(mileage);
+  return items.length > 0 ? items[0] : null;
+}
+
+/** 예상 정비 목록 (가까운 순) */
+function getUpcomingMaintenances(mileage: number): Array<{ name: string; remainingKm: number }> {
+  const schedules = [
+    { name: '엔진오일 교환', interval: 10000 },
+    { name: '에어컨 필터 교체', interval: 15000 },
+    { name: '브레이크 패드 점검', interval: 30000 },
+    { name: '변속기 오일 교환', interval: 40000 },
+  ];
+
+  return schedules
+    .map((s) => ({
+      name: s.name,
+      remainingKm: s.interval - (mileage % s.interval),
+    }))
+    .sort((a, b) => a.remainingKm - b.remainingKm);
 }

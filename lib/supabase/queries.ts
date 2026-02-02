@@ -113,6 +113,7 @@ export async function getRecentVerificationHistory(
   items: string;
   totalAmount: number;
   status: string;
+  shopName?: string;
 }>> {
   if (!userId || userId === '') {
     return [];
@@ -146,6 +147,7 @@ export async function getRecentVerificationHistory(
     items: item.items_summary || '',
     totalAmount: item.total_amount || 0,
     status: item.status || 'appropriate',
+    shopName: item.shop_name || undefined,
   }));
 }
 

@@ -10,6 +10,7 @@ import ReactCrop, {
   convertToPixelCrop,
 } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
+import { X, Check } from 'lucide-react';
 
 export interface ImageCropOverlayProps {
   imageSrc: string;
@@ -21,16 +22,18 @@ export interface ImageCropOverlayProps {
 function getCroppedDataUrl(
   image: HTMLImageElement,
   crop: PixelCrop,
-  quality = 0.9
+  quality = 0.92
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const scaleX = image.naturalWidth / image.width;
     const scaleY = image.naturalHeight / image.height;
-    const pixelRatio = Math.min(2, window.devicePixelRatio ?? 1);
 
     const canvas = document.createElement('canvas');
-    canvas.width = Math.floor(crop.width * scaleX * pixelRatio);
-    canvas.height = Math.floor(crop.height * scaleY * pixelRatio);
+    const cropWidth = Math.floor(crop.width * scaleX);
+    const cropHeight = Math.floor(crop.height * scaleY);
+
+    canvas.width = cropWidth;
+    canvas.height = cropHeight;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) {
@@ -38,18 +41,17 @@ function getCroppedDataUrl(
       return;
     }
 
-    ctx.scale(pixelRatio, pixelRatio);
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(
       image,
-      crop.x * scaleX,
-      crop.y * scaleY,
-      crop.width * scaleX,
-      crop.height * scaleY,
+      Math.floor(crop.x * scaleX),
+      Math.floor(crop.y * scaleY),
+      cropWidth,
+      cropHeight,
       0,
       0,
-      crop.width * scaleX,
-      crop.height * scaleY
+      cropWidth,
+      cropHeight
     );
 
     try {
@@ -64,13 +66,17 @@ export default function ImageCropOverlay({ imageSrc, onApply, onCancel }: ImageC
   const imgRef = useRef<HTMLImageElement>(null);
   const [crop, setCrop] = useState<Crop | undefined>(undefined);
   const [completedCrop, setCompletedCrop] = useState<PercentCrop | undefined>(undefined);
+  const [imgLoaded, setImgLoaded] = useState(false);
 
   const onImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
-    const { width, height, naturalWidth, naturalHeight } = e.currentTarget;
+    const { width, height } = e.currentTarget;
+
+    // 초기 크롭: 중앙 80%, 비율 제한 없음
     const initialCrop = centerCrop(
       makeAspectCrop(
-        { unit: '%', width: 85 },
-        naturalWidth / naturalHeight,
+        { unit: '%', width: 80 },
+        // 원본 이미지 비율에 가깝되 약간 여유를 둔 비율
+        width / height,
         width,
         height
       ),
@@ -79,6 +85,7 @@ export default function ImageCropOverlay({ imageSrc, onApply, onCancel }: ImageC
     );
     setCrop(initialCrop);
     setCompletedCrop(initialCrop);
+    setImgLoaded(true);
   }, []);
 
   const handleApply = useCallback(async () => {
@@ -87,7 +94,7 @@ export default function ImageCropOverlay({ imageSrc, onApply, onCancel }: ImageC
       onCancel();
       return;
     }
-    const pixelCrop = convertToPixelCrop(completedCrop, img.offsetWidth, img.offsetHeight);
+    const pixelCrop = convertToPixelCrop(completedCrop, img.width, img.height);
     if (pixelCrop.width <= 0 || pixelCrop.height <= 0) {
       onCancel();
       return;
@@ -102,51 +109,60 @@ export default function ImageCropOverlay({ imageSrc, onApply, onCancel }: ImageC
   }, [completedCrop, onApply, onCancel]);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-black">
-      <div className="flex-1 flex flex-col min-h-0 p-4">
-        <p className="text-center text-white text-body-2 mb-2">
-          잘라낼 영역을 드래그해서 크기와 위치를 조정하세요
-        </p>
-        <div className="relative flex-1 min-h-0 rounded-lg overflow-hidden bg-hyundai-gray-900 [&_.ReactCrop]:h-full [&_.ReactCrop__crop-wrapper]:h-full [&_.ReactCrop__media]:max-h-full [&_.ReactCrop__media]:object-contain">
-          <ReactCrop
-            crop={crop}
-            onChange={(_, percentCrop) => {
-              setCrop(percentCrop);
-              setCompletedCrop(percentCrop);
+    <div className="fixed inset-0 z-[100] flex flex-col bg-black">
+      {/* 상단 바 */}
+      <div className="shrink-0 flex items-center justify-between px-4 h-14">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="w-10 h-10 flex items-center justify-center rounded-full text-white active:bg-white/10 transition-colors"
+        >
+          <X className="w-5 h-5" strokeWidth={1.5} />
+        </button>
+        <p className="text-sm font-medium text-white/80">사진 자르기</p>
+        <button
+          type="button"
+          onClick={handleApply}
+          disabled={!completedCrop || !imgLoaded}
+          className="w-10 h-10 flex items-center justify-center rounded-full text-white active:bg-white/10 transition-colors disabled:opacity-30"
+        >
+          <Check className="w-5 h-5" strokeWidth={1.5} />
+        </button>
+      </div>
+
+      {/* 크롭 영역 */}
+      <div className="flex-1 min-h-0 flex items-center justify-center px-4 pb-4">
+        <ReactCrop
+          crop={crop}
+          onChange={(_, percentCrop) => {
+            setCrop(percentCrop);
+          }}
+          onComplete={(_, percentCrop) => setCompletedCrop(percentCrop)}
+          keepSelection
+          style={{ maxHeight: '100%', maxWidth: '100%' }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            ref={imgRef}
+            src={imageSrc}
+            alt="크롭할 이미지"
+            onLoad={onImageLoad}
+            draggable={false}
+            style={{
+              maxHeight: 'calc(100dvh - 56px - 80px)',
+              maxWidth: '100%',
+              objectFit: 'contain',
+              display: 'block',
             }}
-            onComplete={(_, percentCrop) => setCompletedCrop(percentCrop)}
-            aspect={undefined}
-            keepSelection
-            className="h-full"
-          >
-            <img
-              ref={imgRef}
-              src={imageSrc}
-              alt="크롭할 이미지"
-              className="max-h-full w-auto object-contain"
-              style={{ maxHeight: 'min(70vh, 80vw)' }}
-              onLoad={onImageLoad}
-              draggable={false}
-            />
-          </ReactCrop>
-        </div>
-        <div className="flex gap-3 mt-4">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="flex-1 py-3 rounded-xl bg-white/20 text-white text-body-1 font-medium"
-          >
-            취소
-          </button>
-          <button
-            type="button"
-            onClick={handleApply}
-            disabled={!completedCrop}
-            className="flex-1 py-3 rounded-xl bg-hyundai-blue-500 text-white text-body-1 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            확인
-          </button>
-        </div>
+          />
+        </ReactCrop>
+      </div>
+
+      {/* 하단 안내 */}
+      <div className="shrink-0 pb-8 pt-3 px-5">
+        <p className="text-center text-xs text-white/50">
+          드래그하여 영역을 조정하세요
+        </p>
       </div>
     </div>
   );

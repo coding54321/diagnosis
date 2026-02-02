@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, XCircle, CheckCircle2, Save, Loader2, Share2 } from 'lucide-react';
+import { Loader2, Share2, Save } from 'lucide-react';
 import { Header, Container } from '@/components/layout';
-import { Button, Badge } from '@/components/ui';
+import { Card } from '@/components/ui';
 import VerificationSummary from '@/components/verification/VerificationSummary';
 import EstimateCard from '@/components/verification/EstimateCard';
 import { mockVerificationResult } from '@/lib/mockData';
@@ -24,18 +24,14 @@ const VerificationResultPage: React.FC = () => {
   const [itemNames, setItemNames] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
 
-  // sessionStorage에서 estimateId 가져오기 및 검증 결과 조회
   useEffect(() => {
     const loadVerificationResult = async () => {
-
       const id = sessionStorage.getItem('currentEstimateId');
       if (id) {
         setEstimateId(id);
-        
-        // Supabase에서 검증 결과 조회
+
         const verificationResult = await fetchVerificationResult(id);
         if (verificationResult.success && verificationResult.data) {
-          // 데이터베이스 형식을 앱 형식으로 변환
           const dbResult = verificationResult.data;
           const nameMap: Record<string, string> = {};
           const items: ItemVerification[] = dbResult.items.map((item: any) => {
@@ -44,7 +40,7 @@ const VerificationResultPage: React.FC = () => {
             if (itemId && itemName) {
               nameMap[itemId] = itemName;
             }
-            
+
             return {
               itemId,
               status: item.status as VerificationResult['status'],
@@ -78,11 +74,9 @@ const VerificationResultPage: React.FC = () => {
             confidence: dbResult.result.confidence || 0,
           });
         } else {
-          // 조회 실패 시 목업 데이터 사용
           setResult(mockVerificationResult);
         }
       } else {
-        // estimateId가 없으면 목업 데이터 사용
         setResult(mockVerificationResult);
       }
       setIsLoading(false);
@@ -91,17 +85,14 @@ const VerificationResultPage: React.FC = () => {
     loadVerificationResult();
   }, []);
 
-  // 로딩 중이거나 결과가 없으면 표시
   if (isLoading || !result) {
     return (
       <>
         <Header title="검증 결과" showBackButton onBack={() => router.back()} />
-        <main className="min-h-screen bg-hyundai-gray-50 pb-20">
-          <Container>
-            <div className="py-6 flex items-center justify-center">
-              <Loader2 className="w-8 h-8 animate-spin text-hyundai-blue-500" />
-            </div>
-          </Container>
+        <main className="min-h-screen bg-hyundai-gray-50">
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-6 h-6 animate-spin text-hyundai-gray-300" strokeWidth={1.5} />
+          </div>
         </main>
       </>
     );
@@ -110,39 +101,83 @@ const VerificationResultPage: React.FC = () => {
   const itemCounts = {
     appropriate: result.items.filter((item) => item.status === 'appropriate').length,
     reviewNeeded: result.items.filter((item) => item.status === 'review_needed').length,
-    recheckRecommended: result.items.filter((item) => item.status === 'recheck_recommended')
-      .length,
+    recheckRecommended: result.items.filter((item) => item.status === 'recheck_recommended').length,
   };
 
-  const appropriateItems = result.items.filter((item) => item.status === 'appropriate');
-  const reviewNeededItems = result.items.filter((item) => item.status === 'review_needed');
-  const recheckItems = result.items.filter(
-    (item) => item.status === 'recheck_recommended'
-  );
+  // 우선순위: 재검토 → 확인필요 → 적정 순으로 정렬
+  const sortedItems = [...result.items].sort((a, b) => {
+    const order = { recheck_recommended: 0, review_needed: 1, appropriate: 2 };
+    return order[a.status] - order[b.status];
+  });
 
   const handleShare = async () => {
     try {
       const shareData = formatVerificationResultForShare(result.totalAmount, result.status, itemCounts);
       const ok = await shareNative(shareData);
       if (ok) return;
-
-      // Web Share API 미지원(대부분 데스크톱) → 링크 복사로 폴백
       const copied = await copyLink(shareData.url);
-      if (copied) toast.success('공유 기능을 지원하지 않아 링크를 복사했어요.');
-      else toast.error('공유 기능을 지원하지 않아 링크 복사에 실패했어요.');
+      if (copied) toast.success('링크를 복사했어요.');
+      else toast.error('링크 복사에 실패했어요.');
     } catch (e) {
       console.error('Share failed:', e);
       toast.error('공유 중 오류가 발생했습니다.');
     }
   };
 
+  const handleSave = async () => {
+    if (!isAuthenticated) {
+      router.push('/auth/login');
+      return;
+    }
+    if (!estimateId) {
+      alert('견적서 정보를 찾을 수 없습니다.');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const saveResult = await createVerificationResult({
+        estimateId,
+        totalAmount: result.totalAmount,
+        status: result.status,
+        confidence: result.confidence,
+        items: result.items.map((item) => ({
+          estimateItemId: item.itemId,
+          status: item.status,
+          userPrice: item.userPrice,
+          averagePrice: item.averagePrice,
+          minPrice: item.priceRange.min,
+          maxPrice: item.priceRange.max,
+          medianPrice: item.priceRange.median,
+          sampleCount: item.sampleCount,
+          partCostUser: item.breakdown.partCost.user,
+          partCostAverage: item.breakdown.partCost.average,
+          laborCostUser: item.breakdown.laborCost.user,
+          laborCostAverage: item.breakdown.laborCost.average,
+        })),
+      });
+
+      if (saveResult.success) {
+        toast.success('저장되었습니다.');
+        router.push('/vehicle');
+      } else {
+        throw new Error(saveResult.error || '저장 실패');
+      }
+    } catch (error) {
+      console.error('Error saving:', error);
+      toast.error('저장 중 오류가 발생했습니다.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <>
       <Header title="검증 결과" showBackButton onBack={() => router.back()} />
-      
-      <main className="min-h-screen bg-hyundai-gray-50 pb-20">
+
+      <main className="min-h-screen bg-hyundai-gray-50 pb-32">
         <Container>
-          <div className="py-6 space-y-6">
+          <div className="py-6 space-y-5">
             {/* 검증 결과 요약 */}
             <VerificationSummary
               totalAmount={result.totalAmount}
@@ -150,175 +185,61 @@ const VerificationResultPage: React.FC = () => {
               itemCounts={itemCounts}
             />
 
-            {/* 항목별 검증 결과 */}
-            <div className="space-y-4">
-              {reviewNeededItems.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <AlertCircle className="w-5 h-5 text-semantic-warning-main" />
-                    <h3 className="text-h4 text-hyundai-gray-900">
-                      확인 필요 ({reviewNeededItems.length}건)
-                    </h3>
-                  </div>
-                  <div className="space-y-6">
-                    {reviewNeededItems.map((item) => (
-                      <EstimateCard
-                        key={item.itemId}
-                        itemId={item.itemId}
-                        itemName={itemNames[item.itemId] || '항목명'}
-                        totalCost={item.userPrice}
-                        status={item.status}
-                        priceRange={item.priceRange}
-                        userPrice={item.userPrice}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {recheckItems.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <XCircle className="w-5 h-5 text-semantic-error-main" />
-                    <h3 className="text-h4 text-hyundai-gray-900">
-                      재검토 권장 ({recheckItems.length}건)
-                    </h3>
-                  </div>
-                  <div className="space-y-6">
-                    {recheckItems.map((item) => (
-                      <EstimateCard
-                        key={item.itemId}
-                        itemId={item.itemId}
-                        itemName={itemNames[item.itemId] || '항목명'}
-                        totalCost={item.userPrice}
-                        status={item.status}
-                        priceRange={item.priceRange}
-                        userPrice={item.userPrice}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {appropriateItems.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <CheckCircle2 className="w-5 h-5 text-semantic-success-main" />
-                    <h3 className="text-h4 text-hyundai-gray-900">
-                      적정 ({appropriateItems.length}건)
-                    </h3>
-                  </div>
-                  <div className="space-y-6">
-                    {appropriateItems.map((item) => (
-                      <EstimateCard
-                        key={item.itemId}
-                        itemId={item.itemId}
-                        itemName={itemNames[item.itemId] || '항목명'}
-                        totalCost={item.userPrice}
-                        status={item.status}
-                        priceRange={item.priceRange}
-                        userPrice={item.userPrice}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* 액션 버튼 */}
-            <div className="space-y-3 pt-4">
-              <Button
-                variant="outline"
-                size="md"
-                fullWidth
-                onClick={() => handleShare()}
-                className="flex items-center justify-center gap-2"
-              >
-                <Share2 className="w-4 h-4" />
-                공유하기
-              </Button>
-
-              <Button
-                variant="primary"
-                size="md"
-                fullWidth
-                onClick={async () => {
-                  // 로그인 확인
-                  if (!isAuthenticated) {
-                    router.push('/auth/login');
-                    return;
-                  }
-
-                  if (!estimateId) {
-                    alert('견적서 정보를 찾을 수 없습니다.');
-                    return;
-                  }
-
-                  setIsSaving(true);
-
-                  try {
-                    // 검증 결과 저장
-                    // TODO: 실제 검증 로직에서 받은 결과를 사용
-                    // 현재는 목업 데이터를 기반으로 저장
-                    const saveResult = await createVerificationResult({
-                      estimateId,
-                      totalAmount: result.totalAmount,
-                      status: result.status,
-                      confidence: result.confidence,
-                      items: result.items.map((item) => ({
-                        estimateItemId: item.itemId, // TODO: 실제 estimate_item_id 사용
-                        status: item.status,
-                        userPrice: item.userPrice,
-                        averagePrice: item.averagePrice,
-                        minPrice: item.priceRange.min,
-                        maxPrice: item.priceRange.max,
-                        medianPrice: item.priceRange.median,
-                        sampleCount: item.sampleCount,
-                        partCostUser: item.breakdown.partCost.user,
-                        partCostAverage: item.breakdown.partCost.average,
-                        laborCostUser: item.breakdown.laborCost.user,
-                        laborCostAverage: item.breakdown.laborCost.average,
-                      })),
-                    });
-
-                    if (saveResult.success) {
-                      toast.success('검증 결과가 저장되었습니다.');
-                      router.push('/vehicle');
-                    } else {
-                      throw new Error(saveResult.error || '저장 실패');
-                    }
-                  } catch (error) {
-                    console.error('Error saving verification result:', error);
-                    toast.error('저장 중 오류가 발생했습니다. 다시 시도해주세요.');
-                  } finally {
-                    setIsSaving(false);
-                  }
-                }}
-                disabled={!estimateId || isSaving}
-                className="flex items-center justify-center gap-2 bg-hyundai-gray-900 hover:bg-hyundai-gray-800 text-white"
-              >
-                {isSaving ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    저장 중...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    <span>내 검증 내역에 저장</span>
-                    {!isAuthenticated && (
-                      <Badge variant="info" size="sm" className="ml-1">
-                        로그인 필요
-                      </Badge>
-                    )}
-                  </>
-                )}
-              </Button>
+            {/* 항목별 검증 결과 — 단일 카드 + 디바이더 */}
+            <div>
+              <div className="flex items-center justify-between px-1 mb-2">
+                <h3 className="text-sm font-bold text-hyundai-gray-900">항목별 결과</h3>
+                <span className="text-xs text-hyundai-gray-400">{result.items.length}건</span>
+              </div>
+              <Card variant="default" padding="none">
+                {sortedItems.map((item, index) => (
+                  <React.Fragment key={item.itemId}>
+                    {index > 0 && <div className="mx-5 border-b border-hyundai-gray-100" />}
+                    <EstimateCard
+                      itemId={item.itemId}
+                      itemName={itemNames[item.itemId] || '항목명'}
+                      totalCost={item.userPrice}
+                      status={item.status}
+                      priceRange={item.priceRange}
+                      userPrice={item.userPrice}
+                    />
+                  </React.Fragment>
+                ))}
+              </Card>
             </div>
           </div>
         </Container>
-      </main>
 
+        {/* 하단 고정 바 */}
+        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-hyundai-gray-100">
+          <div className="max-w-lg mx-auto px-5 py-4 flex gap-2.5">
+            <button
+              onClick={handleShare}
+              className="flex items-center justify-center gap-1.5 px-5 py-3 rounded-xl border border-hyundai-gray-200 text-sm font-medium text-hyundai-gray-700 active:bg-hyundai-gray-50 transition-colors"
+            >
+              <Share2 className="w-4 h-4" strokeWidth={1.5} />
+              공유
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={!estimateId || isSaving}
+              className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl bg-hyundai-gray-900 text-sm font-medium text-white active:bg-hyundai-gray-800 transition-colors disabled:opacity-50"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
+                  저장 중...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" strokeWidth={1.5} />
+                  {isAuthenticated ? '내 검증 내역에 저장' : '로그인하고 저장'}
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </main>
     </>
   );
 };

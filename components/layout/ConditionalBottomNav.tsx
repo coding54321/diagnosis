@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import BottomNav from './BottomNav';
 import type { NavItem } from './BottomNav';
 
-const HIDE_NAV_PATHS = ['/verify/camera', '/verify/album'];
+const HIDE_NAV_PATHS = ['/verify/camera', '/verify/album', '/verify/review', '/verify/result'];
 
 export interface ConditionalBottomNavProps {
   items: NavItem[];

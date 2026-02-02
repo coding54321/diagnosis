@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { FileText, Car, Building2, Wrench, Image as ImageIcon, Loader2, Calendar, Receipt } from 'lucide-react';
+import { ChevronRight, Loader2, X } from 'lucide-react';
 import { Header, Container } from '@/components/layout';
-import { Card, Button, BottomSheet, Input } from '@/components/ui';
+import { Card, BottomSheet, Input } from '@/components/ui';
 import { mockEstimate } from '@/lib/mockData';
 import { formatPrice } from '@/lib/utils';
 import { createEstimate, saveVehicle, uploadEstimateImageAction, createVerificationResult } from '@/lib/supabase/actions';
@@ -17,10 +17,10 @@ type EditSheetMode = 'vehicle' | 'shop' | 'date' | 'vat' | 'item' | null;
 const ReviewPage: React.FC = () => {
   const router = useRouter();
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [showImage, setShowImage] = useState(true);
+  const [showImage, setShowImage] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 추가 필드 (점검/정비 의뢰일자, VAT)
+  // 추가 필드
   const [requestDate, setRequestDate] = useState<string>(() => {
     const d = new Date();
     return d.toISOString().slice(0, 10);
@@ -32,30 +32,27 @@ const ReviewPage: React.FC = () => {
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [editSheetMode, setEditSheetMode] = useState<EditSheetMode>(null);
 
-  // 정비소 (편집 가능, bluehands_seoul 기반 검색)
+  // 정비소
   const [shopName, setShopName] = useState(mockEstimate.shopName);
   const [shopSearchQuery, setShopSearchQuery] = useState('');
   const [shopSearchResults, setShopSearchResults] = useState<BluehandsShop[]>([]);
   const [shopSearching, setShopSearching] = useState(false);
 
-  // 정비 항목 (편집 가능)
+  // 정비 항목
   const [items, setItems] = useState<EstimateItem[]>(() => [...mockEstimate.items]);
   const [editItemIndex, setEditItemIndex] = useState<number | null>(null);
   const [editItemForm, setEditItemForm] = useState({ name: '', partCost: 0, laborCost: 0 });
 
-  // 이 견적서 기준 차량 정보 (이미지에서 잘렸을 수 있어 확인 페이지에서 입력)
+  // 차량 정보
   const [estimateMileage, setEstimateMileage] = useState<number>(45000);
   const [vehicleNumber, setVehicleNumber] = useState<string>('');
 
-  // sessionStorage에서 촬영된 이미지 가져오기
   useEffect(() => {
     const image = sessionStorage.getItem('capturedEstimateImage');
-    if (image) {
-      setCapturedImage(image);
-    }
+    if (image) setCapturedImage(image);
   }, []);
 
-  // 정비소 검색 (bluehands_seoul.csv 기반)
+  // 정비소 검색
   const searchShops = useCallback(async (q: string) => {
     setShopSearching(true);
     try {
@@ -69,22 +66,37 @@ const ReviewPage: React.FC = () => {
     }
   }, []);
 
-  // 정비소 검색: 시트가 'shop' 모드로 열리거나 검색어가 바뀔 때
   useEffect(() => {
     if (!editSheetOpen || editSheetMode !== 'shop') return;
     const t = setTimeout(() => searchShops(shopSearchQuery), editSheetMode === 'shop' && !shopSearchQuery ? 0 : 300);
     return () => clearTimeout(t);
   }, [editSheetOpen, editSheetMode, shopSearchQuery, searchShops]);
 
-  // 목업 데이터 사용 (실제로는 OCR 결과), 항목/총액은 편집 반영
   const totalAmount = items.reduce((sum, i) => sum + i.totalCost, 0);
   const estimate = { ...mockEstimate, shopName, items, totalAmount };
+
+  const openSheet = (mode: EditSheetMode) => {
+    setEditSheetMode(mode);
+    setEditSheetOpen(true);
+  };
+
+  const closeSheet = () => {
+    setEditSheetOpen(false);
+    setEditSheetMode(null);
+    setEditItemIndex(null);
+    setShopSearchQuery('');
+    setShopSearchResults([]);
+  };
+
+  const formatDate = (dateStr: string) => {
+    const [y, m, d] = dateStr.split('-');
+    return `${y}.${m}.${d}`;
+  };
 
   const handleVerify = async () => {
     setIsSubmitting(true);
 
     try {
-      // 차량 정보 저장/업데이트 (목업 데이터 기준)
       const vehicleResult = await saveVehicle({
         manufacturer: '현대',
         model: '투싼',
@@ -100,7 +112,6 @@ const ReviewPage: React.FC = () => {
 
       const vehicleId = vehicleResult.data.id;
 
-      // 견적서 저장 (이미지는 나중에 업로드)
       const estimateResult = await createEstimate({
         vehicleId,
         shopName: estimate.shopName,
@@ -121,23 +132,19 @@ const ReviewPage: React.FC = () => {
       const savedEstimateId = estimateResult.data.estimateId;
       const savedItems = estimateResult.data.items;
 
-      // 이미지 업로드 (있는 경우)
       if (capturedImage) {
         try {
           const uploadResult = await uploadEstimateImageAction(capturedImage, savedEstimateId);
           if (!uploadResult.success) {
             console.warn('Image upload failed:', uploadResult.error);
-            // 이미지 업로드 실패해도 계속 진행
           }
         } catch (error) {
           console.error('Image upload failed:', error);
-          // 이미지 업로드 실패해도 계속 진행
         }
       }
 
-      // 검증 엔진 실행
       const vehicleInfo = {
-        manufacturer: '현대', // TODO: 실제 차량 정보 사용
+        manufacturer: '현대',
         model: '투싼',
         year: 2022,
         mileage: estimateMileage > 0 ? estimateMileage : 45000,
@@ -158,7 +165,6 @@ const ReviewPage: React.FC = () => {
         vehicleInfo
       );
 
-      // 검증 결과 저장
       const saveVerificationResult = await createVerificationResult({
         estimateId: savedEstimateId,
         totalAmount: estimate.totalAmount,
@@ -182,13 +188,9 @@ const ReviewPage: React.FC = () => {
 
       if (!saveVerificationResult.success) {
         console.error('검증 결과 저장 실패:', saveVerificationResult.error);
-        // 검증 결과 저장 실패해도 계속 진행
       }
 
-      // 견적서 ID를 sessionStorage에 저장
       sessionStorage.setItem('currentEstimateId', savedEstimateId);
-
-      // 검증 결과 페이지로 이동
       router.push('/verify/result');
     } catch (error) {
       console.error('Error in handleVerify:', error);
@@ -201,442 +203,392 @@ const ReviewPage: React.FC = () => {
   return (
     <>
       <Header title="견적서 확인" showBackButton onBack={() => router.back()} />
-      
-      <main className="min-h-screen bg-hyundai-gray-50 pb-20">
+
+      <main className="min-h-screen bg-hyundai-gray-50 pb-36">
         <Container>
-          <div className="py-6 space-y-4">
-            <div className="mb-4">
-              <div className="flex items-center gap-2 mb-2">
-                <FileText className="w-6 h-6 text-hyundai-gray-600" />
-                <h2 className="text-h2 text-hyundai-gray-900">
-                  인식된 내용을 확인해주세요
-                </h2>
-              </div>
-              <p className="text-body-2 text-hyundai-gray-600">
+          <div className="py-5 space-y-4">
+            {/* 안내 문구 */}
+            <div className="px-1">
+              <h2 className="text-lg font-bold text-hyundai-gray-900 mb-1">
+                인식된 내용을 확인해주세요
+              </h2>
+              <p className="text-sm text-hyundai-gray-400">
                 잘못된 부분은 탭해서 수정할 수 있어요
               </p>
             </div>
 
-            {/* 촬영된 이미지 표시 */}
+            {/* 촬영 이미지 (축소 썸네일) */}
             {capturedImage && (
-              <Card variant="default" padding="md">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <ImageIcon className="w-5 h-5 text-hyundai-gray-600" />
-                    <p className="text-body-1 text-hyundai-gray-900 font-medium">
-                      촬영된 견적서
-                    </p>
+              <>
+                <button
+                  type="button"
+                  onClick={() => setShowImage(!showImage)}
+                  className="w-full flex items-center gap-3 px-4 py-3 bg-white rounded-2xl active:bg-hyundai-gray-50 transition-colors"
+                >
+                  <div className="w-10 h-10 rounded-lg overflow-hidden bg-hyundai-gray-100 shrink-0">
+                    <img src={capturedImage} alt="" className="w-full h-full object-cover" />
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowImage(!showImage)}
-                  >
+                  <span className="text-sm text-hyundai-gray-700 flex-1 text-left">
+                    촬영된 견적서
+                  </span>
+                  <span className="text-xs text-hyundai-gray-400">
                     {showImage ? '숨기기' : '보기'}
-                  </Button>
-                </div>
+                  </span>
+                </button>
                 {showImage && (
-                  <div className="rounded-lg overflow-hidden border border-hyundai-gray-200">
-                    <img
-                      src={capturedImage}
-                      alt="촬영된 견적서"
-                      className="w-full h-auto object-contain bg-hyundai-gray-50"
-                    />
+                  <div className="relative rounded-2xl overflow-hidden">
+                    <img src={capturedImage} alt="촬영된 견적서" className="w-full h-auto bg-hyundai-gray-100" />
+                    <button
+                      onClick={() => setShowImage(false)}
+                      className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 flex items-center justify-center text-white"
+                    >
+                      <X className="w-4 h-4" strokeWidth={1.5} />
+                    </button>
                   </div>
                 )}
-              </Card>
+              </>
             )}
 
-            {/* 점검/정비 의뢰일자 */}
-            <Card variant="default" padding="md">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-hyundai-gray-100 flex items-center justify-center">
-                    <Calendar className="w-5 h-5 text-hyundai-gray-600" />
-                  </div>
-                  <div>
-                    <p className="text-caption text-hyundai-gray-600 mb-1">점검/정비 의뢰일자</p>
-                    <p className="text-body-1 text-hyundai-gray-900">{requestDate}</p>
-                  </div>
+            {/* 견적 정보 — 하나의 카드에 디바이더 패턴 */}
+            <Card variant="default" padding="none">
+              {/* 의뢰일자 */}
+              <button
+                type="button"
+                onClick={() => openSheet('date')}
+                className="w-full flex items-center justify-between px-5 py-4 active:bg-hyundai-gray-50 transition-colors"
+              >
+                <div className="text-left">
+                  <p className="text-xs text-hyundai-gray-400 mb-0.5">의뢰일자</p>
+                  <p className="text-sm font-medium text-hyundai-gray-900">{formatDate(requestDate)}</p>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => { setEditSheetMode('date'); setEditSheetOpen(true); }}>
-                  수정
-                </Button>
-              </div>
-            </Card>
+                <ChevronRight className="w-4 h-4 text-hyundai-gray-300" strokeWidth={1.5} />
+              </button>
 
-            {/* 정비소 정보 */}
-            <Card variant="default" padding="md">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-hyundai-gray-100 flex items-center justify-center">
-                    <Building2 className="w-5 h-5 text-hyundai-gray-600" />
-                  </div>
-                  <div>
-                    <p className="text-caption text-hyundai-gray-600 mb-1">정비소 정보</p>
-                    <p className="text-body-1 text-hyundai-gray-900">{estimate.shopName}</p>
-                  </div>
-                </div>
-                <Button variant="ghost" size="sm" onClick={() => { setEditSheetMode('shop'); setEditSheetOpen(true); }}>
-                  수정
-                </Button>
-              </div>
-            </Card>
+              <div className="mx-5 border-b border-hyundai-gray-100" />
 
-            {/* 차량 정보 */}
-            <Card variant="default" padding="md">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-hyundai-gray-100 flex items-center justify-center">
-                    <Car className="w-5 h-5 text-hyundai-gray-600" />
-                  </div>
-                  <div>
-                    <p className="text-caption text-hyundai-gray-600 mb-1">차량 정보</p>
-                    <p className="text-body-1 text-hyundai-gray-900">
-                      투싼 NX4 · 2022년식 · {estimateMileage.toLocaleString()}km
-                    </p>
-                    {vehicleNumber && (
-                      <p className="text-caption text-hyundai-gray-500 mt-0.5">차량번호 {vehicleNumber}</p>
-                    )}
-                  </div>
+              {/* 정비소 */}
+              <button
+                type="button"
+                onClick={() => openSheet('shop')}
+                className="w-full flex items-center justify-between px-5 py-4 active:bg-hyundai-gray-50 transition-colors"
+              >
+                <div className="text-left">
+                  <p className="text-xs text-hyundai-gray-400 mb-0.5">정비소</p>
+                  <p className="text-sm font-medium text-hyundai-gray-900">{estimate.shopName}</p>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => { setEditSheetMode('vehicle'); setEditSheetOpen(true); }}>
-                  수정
-                </Button>
-              </div>
-            </Card>
+                <ChevronRight className="w-4 h-4 text-hyundai-gray-300" strokeWidth={1.5} />
+              </button>
 
-            {/* VAT 금액 여부 및 금액 */}
-            <Card variant="default" padding="md">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-hyundai-gray-100 flex items-center justify-center">
-                    <Receipt className="w-5 h-5 text-hyundai-gray-600" />
-                  </div>
-                  <div>
-                    <p className="text-caption text-hyundai-gray-600 mb-1">VAT 금액 여부 및 금액</p>
-                    <p className="text-body-1 text-hyundai-gray-900">
-                      {vatIncluded ? `VAT 포함 · ${formatPrice(vatAmount || Math.round(estimate.totalAmount / 11))}` : 'VAT 미포함'}
-                    </p>
-                  </div>
+              <div className="mx-5 border-b border-hyundai-gray-100" />
+
+              {/* 차량 정보 */}
+              <button
+                type="button"
+                onClick={() => openSheet('vehicle')}
+                className="w-full flex items-center justify-between px-5 py-4 active:bg-hyundai-gray-50 transition-colors"
+              >
+                <div className="text-left">
+                  <p className="text-xs text-hyundai-gray-400 mb-0.5">차량</p>
+                  <p className="text-sm font-medium text-hyundai-gray-900">
+                    투싼 NX4 · {estimateMileage.toLocaleString()}km
+                  </p>
+                  {vehicleNumber && (
+                    <p className="text-xs text-hyundai-gray-400 mt-0.5">{vehicleNumber}</p>
+                  )}
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => { setEditSheetMode('vat'); setEditSheetOpen(true); }}>
-                  수정
-                </Button>
-              </div>
+                <ChevronRight className="w-4 h-4 text-hyundai-gray-300" strokeWidth={1.5} />
+              </button>
+
+              <div className="mx-5 border-b border-hyundai-gray-100" />
+
+              {/* VAT */}
+              <button
+                type="button"
+                onClick={() => openSheet('vat')}
+                className="w-full flex items-center justify-between px-5 py-4 active:bg-hyundai-gray-50 transition-colors"
+              >
+                <div className="text-left">
+                  <p className="text-xs text-hyundai-gray-400 mb-0.5">부가세</p>
+                  <p className="text-sm font-medium text-hyundai-gray-900">
+                    {vatIncluded ? `포함 · ${formatPrice(vatAmount || Math.round(estimate.totalAmount / 11))}` : '미포함'}
+                  </p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-hyundai-gray-300" strokeWidth={1.5} />
+              </button>
             </Card>
 
             {/* 정비 항목 */}
-            <Card variant="default" padding="md">
-              <div className="flex items-center gap-2 mb-4">
-                <Wrench className="w-5 h-5 text-hyundai-gray-600" />
-                <p className="text-caption text-hyundai-gray-600">정비 항목</p>
+            <div>
+              <div className="flex items-center justify-between px-1 mb-2">
+                <h3 className="text-sm font-bold text-hyundai-gray-900">
+                  정비 항목
+                </h3>
+                <span className="text-xs text-hyundai-gray-400">{items.length}건</span>
               </div>
-              <div className="space-y-3">
+              <Card variant="default" padding="none">
                 {estimate.items.map((item, index) => (
-                  <Card key={item.id} variant="outlined" padding="md">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-caption text-hyundai-gray-500">
-                            {index + 1}.
-                          </span>
-                          <h4 className="text-body-1 text-hyundai-gray-900 font-medium">
-                            {item.name}
-                          </h4>
-                        </div>
-                        <div className="text-body-2 text-hyundai-gray-600 space-y-1">
-                          <p>부품비: {formatPrice(item.partCost)}</p>
-                          <p>공임비: {formatPrice(item.laborCost)}</p>
-                          <p className="font-medium text-hyundai-gray-900">
-                            소계: {formatPrice(item.totalCost)}
-                          </p>
-                        </div>
+                  <React.Fragment key={item.id}>
+                    {index > 0 && <div className="mx-5 border-b border-hyundai-gray-100" />}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditItemIndex(index);
+                        setEditItemForm({
+                          name: item.name,
+                          partCost: item.partCost,
+                          laborCost: item.laborCost,
+                        });
+                        openSheet('item');
+                      }}
+                      className="w-full px-5 py-4 active:bg-hyundai-gray-50 transition-colors text-left"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-sm font-medium text-hyundai-gray-900">
+                          {item.name}
+                        </p>
+                        <p className="text-sm font-bold text-hyundai-gray-900 shrink-0 ml-3">
+                          {formatPrice(item.totalCost)}
+                        </p>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setEditItemIndex(index);
-                          setEditItemForm({
-                            name: item.name,
-                            partCost: item.partCost,
-                            laborCost: item.laborCost,
-                          });
-                          setEditSheetMode('item');
-                          setEditSheetOpen(true);
-                        }}
-                      >
-                        수정
-                      </Button>
-                    </div>
-                  </Card>
+                      <div className="flex items-center gap-2 text-xs text-hyundai-gray-400">
+                        <span>부품 {formatPrice(item.partCost)}</span>
+                        <span className="text-hyundai-gray-200">|</span>
+                        <span>공임 {formatPrice(item.laborCost)}</span>
+                      </div>
+                    </button>
+                  </React.Fragment>
                 ))}
-              </div>
-            </Card>
+              </Card>
+            </div>
+          </div>
+        </Container>
 
-            {/* 총 금액 */}
-            <Card variant="highlighted" padding="md">
-              <div className="text-center">
-                <p className="text-caption text-hyundai-gray-600 mb-1">총 금액</p>
-                <p className="text-h2 text-hyundai-blue-600 font-bold">
+        {/* 하단 고정 바 */}
+        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-hyundai-gray-100">
+          <div className="max-w-lg mx-auto px-5 py-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm text-hyundai-gray-400">총 금액</span>
+              <div className="text-right">
+                <span className="text-xl font-bold text-hyundai-gray-900">
                   {formatPrice(estimate.totalAmount)}
-                </p>
-                <p className="text-caption text-hyundai-gray-500 mt-1">
-                  {vatIncluded ? '(부가세 포함)' : '(부가세 미포함)'}
-                </p>
+                </span>
+                <span className="text-xs text-hyundai-gray-400 ml-1">
+                  {vatIncluded ? '(VAT 포함)' : '(VAT 미포함)'}
+                </span>
               </div>
-            </Card>
-
-            {/* 수정 바텀시트 */}
-            <BottomSheet
-              isOpen={editSheetOpen}
-              onClose={() => {
-                setEditSheetOpen(false);
-                setEditSheetMode(null);
-                setEditItemIndex(null);
-                setShopSearchQuery('');
-                setShopSearchResults([]);
-              }}
-              title={
-                editSheetMode === 'vehicle'
-                  ? '차량 정보'
-                  : editSheetMode === 'shop'
-                    ? '정비소 검색'
-                    : editSheetMode === 'date'
-                      ? '점검/정비 의뢰일자'
-                      : editSheetMode === 'vat'
-                        ? 'VAT 금액'
-                        : editSheetMode === 'item'
-                          ? '정비 항목 수정'
-                          : undefined
-              }
-            >
-              {editSheetMode === 'vehicle' && (
-                <div className="py-4 space-y-4">
-                  <p className="text-body-2 text-hyundai-gray-600">
-                    이미지에 없을 수 있어요. 이 견적서 기준으로 입력해 주세요.
-                  </p>
-                  <Input
-                    type="number"
-                    label="주행거리 (km)"
-                    placeholder="예: 45000"
-                    value={estimateMileage > 0 ? String(estimateMileage) : ''}
-                    onChange={(e) => setEstimateMileage(Number(e.target.value) || 0)}
-                    fullWidth
-                  />
-                  <Input
-                    label="차량번호 (선택)"
-                    placeholder="예: 12가 3456"
-                    value={vehicleNumber}
-                    onChange={(e) => setVehicleNumber(e.target.value.trim())}
-                    fullWidth
-                  />
-                  <Button
-                    variant="outline"
-                    size="md"
-                    fullWidth
-                    onClick={() => router.push('/vehicle')}
-                  >
-                    내 차 관리에서 전체 수정
-                  </Button>
-                  <Button
-                    variant="primary"
-                    size="md"
-                    fullWidth
-                    onClick={() => { setEditSheetOpen(false); setEditSheetMode(null); }}
-                  >
-                    완료
-                  </Button>
-                </div>
-              )}
-
-              {editSheetMode === 'shop' && (
-                <div className="space-y-4 py-2">
-                  <Input
-                    placeholder="업체명, 구·군, 주소로 검색 (서울 블루핸즈)"
-                    value={shopSearchQuery}
-                    onChange={(e) => setShopSearchQuery(e.target.value)}
-                    fullWidth
-                  />
-                  <div className="max-h-64 overflow-y-auto space-y-2">
-                    {shopSearching && (
-                      <div className="flex justify-center py-4">
-                        <Loader2 className="w-6 h-6 animate-spin text-hyundai-blue-500" />
-                      </div>
-                    )}
-                    {!shopSearching && shopSearchQuery.trim() && shopSearchResults.length === 0 && (
-                      <p className="text-caption text-hyundai-gray-500 py-4 text-center">검색 결과가 없어요</p>
-                    )}
-                    {!shopSearching &&
-                      shopSearchResults.map((shop) => (
-                        <button
-                          key={`${shop.업체명}-${shop.주소}`}
-                          type="button"
-                          onClick={() => {
-                            setShopName(shop.업체명);
-                            setEditSheetOpen(false);
-                            setEditSheetMode(null);
-                            setShopSearchQuery('');
-                            setShopSearchResults([]);
-                          }}
-                          className="w-full text-left p-3 rounded-lg border border-hyundai-gray-200 hover:bg-hyundai-gray-50"
-                        >
-                          <p className="text-body-1 text-hyundai-gray-900 font-medium">{shop.업체명}</p>
-                          <p className="text-caption text-hyundai-gray-500 mt-0.5">{shop.시군구} · {shop.주소}</p>
-                        </button>
-                      ))}
-                  </div>
-                </div>
-              )}
-
-              {editSheetMode === 'date' && (
-                <div className="py-4 space-y-4">
-                  <Input
-                    type="date"
-                    label="의뢰일자"
-                    value={requestDate}
-                    onChange={(e) => setRequestDate(e.target.value)}
-                    max={new Date().toISOString().slice(0, 10)}
-                    fullWidth
-                  />
-                  <Button
-                    variant="primary"
-                    size="md"
-                    fullWidth
-                    onClick={() => {
-                      setEditSheetOpen(false);
-                      setEditSheetMode(null);
-                    }}
-                  >
-                    완료
-                  </Button>
-                </div>
-              )}
-
-              {editSheetMode === 'vat' && (
-                <div className="py-4 space-y-4">
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={vatIncluded}
-                      onChange={(e) => setVatIncluded(e.target.checked)}
-                      className="w-5 h-5 rounded border-hyundai-gray-300"
-                    />
-                    <span className="text-body-1 text-hyundai-gray-900">VAT 포함</span>
-                  </label>
-                  {vatIncluded && (
-                    <Input
-                      type="number"
-                      label="VAT 금액 (원, 선택)"
-                      placeholder={`자동: ${formatPrice(Math.round(estimate.totalAmount / 11))}`}
-                      value={vatAmount > 0 ? String(vatAmount) : ''}
-                      onChange={(e) => setVatAmount(Number(e.target.value) || 0)}
-                      fullWidth
-                    />
-                  )}
-                  <Button
-                    variant="primary"
-                    size="md"
-                    fullWidth
-                    onClick={() => {
-                      if (vatIncluded && vatAmount === 0) {
-                        setVatAmount(Math.round(estimate.totalAmount / 11));
-                      }
-                      setEditSheetOpen(false);
-                      setEditSheetMode(null);
-                    }}
-                  >
-                    완료
-                  </Button>
-                </div>
-              )}
-
-              {editSheetMode === 'item' && editItemIndex !== null && (
-                <div className="py-4 space-y-4">
-                  <Input
-                    label="항목명"
-                    placeholder="정비 항목명"
-                    value={editItemForm.name}
-                    onChange={(e) => setEditItemForm((prev) => ({ ...prev, name: e.target.value }))}
-                    fullWidth
-                  />
-                  <Input
-                    type="number"
-                    label="부품비 (원)"
-                    placeholder="0"
-                    value={editItemForm.partCost > 0 ? String(editItemForm.partCost) : ''}
-                    onChange={(e) =>
-                      setEditItemForm((prev) => ({ ...prev, partCost: Number(e.target.value) || 0 }))
-                    }
-                    fullWidth
-                  />
-                  <Input
-                    type="number"
-                    label="공임비 (원)"
-                    placeholder="0"
-                    value={editItemForm.laborCost > 0 ? String(editItemForm.laborCost) : ''}
-                    onChange={(e) =>
-                      setEditItemForm((prev) => ({ ...prev, laborCost: Number(e.target.value) || 0 }))
-                    }
-                    fullWidth
-                  />
-                  <p className="text-caption text-hyundai-gray-500">
-                    소계: {formatPrice(editItemForm.partCost + editItemForm.laborCost)}
-                  </p>
-                  <Button
-                    variant="primary"
-                    size="md"
-                    fullWidth
-                    onClick={() => {
-                      const item = items[editItemIndex];
-                      if (!item) return;
-                      const totalCost = editItemForm.partCost + editItemForm.laborCost;
-                      setItems((prev) =>
-                        prev.map((it, i) =>
-                          i === editItemIndex
-                            ? {
-                                ...it,
-                                name: editItemForm.name || it.name,
-                                partCost: editItemForm.partCost,
-                                laborCost: editItemForm.laborCost,
-                                totalCost,
-                              }
-                            : it
-                        )
-                      );
-                      setEditSheetOpen(false);
-                      setEditSheetMode(null);
-                      setEditItemIndex(null);
-                    }}
-                  >
-                    완료
-                  </Button>
-                </div>
-              )}
-            </BottomSheet>
-
-            {/* 검증하기 버튼 */}
-            <Button
-              variant="primary"
-              size="lg"
-              fullWidth
+            </div>
+            <button
               onClick={handleVerify}
               disabled={isSubmitting}
-              className="flex items-center justify-center gap-2"
+              className="w-full py-3.5 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
                   저장 중...
                 </>
               ) : (
                 '검증하기'
               )}
-            </Button>
+            </button>
           </div>
-        </Container>
+        </div>
       </main>
+
+      {/* 수정 바텀시트 */}
+      <BottomSheet
+        isOpen={editSheetOpen}
+        onClose={closeSheet}
+        title={
+          editSheetMode === 'vehicle' ? '차량 정보'
+            : editSheetMode === 'shop' ? '정비소 검색'
+            : editSheetMode === 'date' ? '의뢰일자'
+            : editSheetMode === 'vat' ? '부가세'
+            : editSheetMode === 'item' ? '항목 수정'
+            : undefined
+        }
+      >
+        {editSheetMode === 'vehicle' && (
+          <div className="space-y-4">
+            <p className="text-xs text-hyundai-gray-400">
+              이 견적서 기준으로 입력해 주세요
+            </p>
+            <Input
+              type="number"
+              label="주행거리 (km)"
+              placeholder="예: 45000"
+              value={estimateMileage > 0 ? String(estimateMileage) : ''}
+              onChange={(e) => setEstimateMileage(Number(e.target.value) || 0)}
+              fullWidth
+            />
+            <Input
+              label="차량번호 (선택)"
+              placeholder="예: 12가 3456"
+              value={vehicleNumber}
+              onChange={(e) => setVehicleNumber(e.target.value.trim())}
+              fullWidth
+            />
+            <button
+              onClick={closeSheet}
+              className="w-full py-3 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 transition-colors"
+            >
+              완료
+            </button>
+          </div>
+        )}
+
+        {editSheetMode === 'shop' && (
+          <div className="space-y-3">
+            <Input
+              placeholder="업체명, 구·군, 주소로 검색"
+              value={shopSearchQuery}
+              onChange={(e) => setShopSearchQuery(e.target.value)}
+              fullWidth
+            />
+            <div className="max-h-64 overflow-y-auto -mx-1">
+              {shopSearching && (
+                <div className="flex justify-center py-6">
+                  <Loader2 className="w-5 h-5 animate-spin text-hyundai-gray-300" strokeWidth={1.5} />
+                </div>
+              )}
+              {!shopSearching && shopSearchQuery.trim() && shopSearchResults.length === 0 && (
+                <p className="text-xs text-hyundai-gray-400 py-6 text-center">검색 결과가 없어요</p>
+              )}
+              {!shopSearching &&
+                shopSearchResults.map((shop) => (
+                  <button
+                    key={`${shop.업체명}-${shop.주소}`}
+                    type="button"
+                    onClick={() => {
+                      setShopName(shop.업체명);
+                      closeSheet();
+                    }}
+                    className="w-full text-left px-3 py-3 rounded-xl active:bg-hyundai-gray-50 transition-colors"
+                  >
+                    <p className="text-sm font-medium text-hyundai-gray-900">{shop.업체명}</p>
+                    <p className="text-xs text-hyundai-gray-400 mt-0.5">{shop.시군구} · {shop.주소}</p>
+                  </button>
+                ))}
+            </div>
+          </div>
+        )}
+
+        {editSheetMode === 'date' && (
+          <div className="space-y-4">
+            <Input
+              type="date"
+              label="의뢰일자"
+              value={requestDate}
+              onChange={(e) => setRequestDate(e.target.value)}
+              max={new Date().toISOString().slice(0, 10)}
+              fullWidth
+            />
+            <button
+              onClick={closeSheet}
+              className="w-full py-3 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 transition-colors"
+            >
+              완료
+            </button>
+          </div>
+        )}
+
+        {editSheetMode === 'vat' && (
+          <div className="space-y-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={vatIncluded}
+                onChange={(e) => setVatIncluded(e.target.checked)}
+                className="w-5 h-5 rounded border-hyundai-gray-300 accent-hyundai-gray-900"
+              />
+              <span className="text-sm text-hyundai-gray-900">VAT 포함</span>
+            </label>
+            {vatIncluded && (
+              <Input
+                type="number"
+                label="VAT 금액 (원)"
+                placeholder={`자동: ${formatPrice(Math.round(estimate.totalAmount / 11))}`}
+                value={vatAmount > 0 ? String(vatAmount) : ''}
+                onChange={(e) => setVatAmount(Number(e.target.value) || 0)}
+                fullWidth
+              />
+            )}
+            <button
+              onClick={() => {
+                if (vatIncluded && vatAmount === 0) {
+                  setVatAmount(Math.round(estimate.totalAmount / 11));
+                }
+                closeSheet();
+              }}
+              className="w-full py-3 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 transition-colors"
+            >
+              완료
+            </button>
+          </div>
+        )}
+
+        {editSheetMode === 'item' && editItemIndex !== null && (
+          <div className="space-y-4">
+            <Input
+              label="항목명"
+              placeholder="정비 항목명"
+              value={editItemForm.name}
+              onChange={(e) => setEditItemForm((prev) => ({ ...prev, name: e.target.value }))}
+              fullWidth
+            />
+            <Input
+              type="number"
+              label="부품비 (원)"
+              placeholder="0"
+              value={editItemForm.partCost > 0 ? String(editItemForm.partCost) : ''}
+              onChange={(e) =>
+                setEditItemForm((prev) => ({ ...prev, partCost: Number(e.target.value) || 0 }))
+              }
+              fullWidth
+            />
+            <Input
+              type="number"
+              label="공임비 (원)"
+              placeholder="0"
+              value={editItemForm.laborCost > 0 ? String(editItemForm.laborCost) : ''}
+              onChange={(e) =>
+                setEditItemForm((prev) => ({ ...prev, laborCost: Number(e.target.value) || 0 }))
+              }
+              fullWidth
+            />
+            <div className="flex items-center justify-between py-2">
+              <span className="text-xs text-hyundai-gray-400">소계</span>
+              <span className="text-sm font-bold text-hyundai-gray-900">
+                {formatPrice(editItemForm.partCost + editItemForm.laborCost)}
+              </span>
+            </div>
+            <button
+              onClick={() => {
+                const item = items[editItemIndex];
+                if (!item) return;
+                const totalCost = editItemForm.partCost + editItemForm.laborCost;
+                setItems((prev) =>
+                  prev.map((it, i) =>
+                    i === editItemIndex
+                      ? {
+                          ...it,
+                          name: editItemForm.name || it.name,
+                          partCost: editItemForm.partCost,
+                          laborCost: editItemForm.laborCost,
+                          totalCost,
+                        }
+                      : it
+                  )
+                );
+                closeSheet();
+              }}
+              className="w-full py-3 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 transition-colors"
+            >
+              완료
+            </button>
+          </div>
+        )}
+      </BottomSheet>
     </>
   );
 };

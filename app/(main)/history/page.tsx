@@ -22,6 +22,7 @@ export default async function HistoryPage() {
         items: item.items,
         totalAmount: item.totalAmount,
         status: item.status as VerificationHistory['status'],
+        shopName: item.shopName,
       }))
     : mockRecentHistory;
 

@@ -1,6 +1,5 @@
 import React from 'react';
-import { CheckCircle2, AlertCircle, XCircle, FileText } from 'lucide-react';
-import { Card, Badge } from '@/components/ui';
+import { CheckCircle2, AlertCircle, XCircle } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import type { VerificationStatus } from '@/types';
 
@@ -18,22 +17,19 @@ const statusConfig = {
   appropriate: {
     label: '적정 범위입니다',
     Icon: CheckCircle2,
-    color: 'text-semantic-success-main',
-    bgColor: 'bg-semantic-success-light',
+    color: 'text-green-600',
     message: '비슷한 차량의 정비 비용과 비교했을 때 합리적인 금액이에요.',
   },
   review_needed: {
-    label: '확인이 필요한 항목이 있어요',
+    label: '확인이 필요해요',
     Icon: AlertCircle,
-    color: 'text-semantic-warning-main',
-    bgColor: 'bg-semantic-warning-light',
+    color: 'text-amber-500',
     message: '일부 항목이 평균보다 높은 편이에요. 아래 내용을 확인해보세요.',
   },
   recheck_recommended: {
     label: '재검토를 권장해요',
     Icon: XCircle,
-    color: 'text-semantic-error-main',
-    bgColor: 'bg-semantic-error-light',
+    color: 'text-red-500',
     message: '일부 항목이 평균보다 현저히 높아요. 정비사와 상담을 권장합니다.',
   },
 };
@@ -45,59 +41,49 @@ const VerificationSummary: React.FC<VerificationSummaryProps> = ({
 }) => {
   const config = statusConfig[status];
   const StatusIcon = config.Icon;
+  const totalItems = Object.values(itemCounts).reduce((a, b) => a + b, 0);
 
   return (
-    <Card variant="highlighted" padding="lg" className="text-center">
-      <div className="space-y-4">
-        <div className="flex justify-center mb-2">
-          <div className={`w-16 h-16 rounded-full ${config.bgColor} flex items-center justify-center`}>
-            <StatusIcon className={`w-8 h-8 ${config.color}`} />
-          </div>
-        </div>
-        
-        <div>
-          <p className="text-h1 text-hyundai-gray-900 mb-2">
-            {formatPrice(totalAmount)}
-          </p>
-          <div className="w-24 h-0.5 bg-hyundai-gray-300 mx-auto rounded-full mb-4" />
-          <p className={`text-h3 font-semibold ${config.color} mb-2`}>
-            {config.label}
-          </p>
-          <p className="text-body-2 text-hyundai-gray-600">
-            {config.message}
-          </p>
-        </div>
+    <div className="text-center">
+      {/* 상태 아이콘 + 메시지 */}
+      <StatusIcon className={`w-10 h-10 ${config.color} mx-auto mb-3`} strokeWidth={1.5} />
+      <p className={`text-lg font-bold ${config.color} mb-1`}>
+        {config.label}
+      </p>
+      <p className="text-xs text-hyundai-gray-400 mb-5 max-w-[260px] mx-auto leading-relaxed">
+        {config.message}
+      </p>
 
-        <div className="pt-4 border-t border-hyundai-gray-200">
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <FileText className="w-4 h-4 text-hyundai-gray-500" />
-            <p className="text-body-2 text-hyundai-gray-700">
-              전체 {Object.values(itemCounts).reduce((a, b) => a + b, 0)}개 항목
-            </p>
-          </div>
-          <div className="flex justify-center gap-2 flex-wrap">
-            {itemCounts.appropriate > 0 && (
-              <Badge variant="success" size="sm" className="flex items-center gap-1">
-                <CheckCircle2 className="w-3 h-3" />
-                적정 {itemCounts.appropriate}개
-              </Badge>
-            )}
-            {itemCounts.reviewNeeded > 0 && (
-              <Badge variant="warning" size="sm" className="flex items-center gap-1">
-                <AlertCircle className="w-3 h-3" />
-                확인 필요 {itemCounts.reviewNeeded}개
-              </Badge>
-            )}
-            {itemCounts.recheckRecommended > 0 && (
-              <Badge variant="error" size="sm" className="flex items-center gap-1">
-                <XCircle className="w-3 h-3" />
-                재검토 권장 {itemCounts.recheckRecommended}개
-              </Badge>
-            )}
-          </div>
-        </div>
+      {/* 총 금액 */}
+      <p className="text-3xl font-bold text-hyundai-gray-900 tracking-tight">
+        {formatPrice(totalAmount)}
+      </p>
+      <p className="text-xs text-hyundai-gray-400 mt-1 mb-5">
+        총 {totalItems}개 항목
+      </p>
+
+      {/* 항목 카운트 바 */}
+      <div className="flex gap-1.5 justify-center">
+        {itemCounts.appropriate > 0 && (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-50 text-[11px] font-medium text-green-600">
+            <CheckCircle2 className="w-3 h-3" />
+            적정 {itemCounts.appropriate}
+          </span>
+        )}
+        {itemCounts.reviewNeeded > 0 && (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-[11px] font-medium text-amber-500">
+            <AlertCircle className="w-3 h-3" />
+            확인 {itemCounts.reviewNeeded}
+          </span>
+        )}
+        {itemCounts.recheckRecommended > 0 && (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-50 text-[11px] font-medium text-red-500">
+            <XCircle className="w-3 h-3" />
+            재검토 {itemCounts.recheckRecommended}
+          </span>
+        )}
       </div>
-    </Card>
+    </div>
   );
 };
 

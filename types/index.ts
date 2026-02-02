@@ -78,4 +78,5 @@ export interface VerificationHistory {
   items: string; // 항목 요약 (예: "브레이크 패드 교체 외 1건")
   totalAmount: number;
   status: VerificationStatus;
+  shopName?: string; // 정비소 이름
 }
