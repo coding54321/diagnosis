@@ -144,7 +144,7 @@ export default function ImageCropOverlay({ imageSrc, onApply, onCancel }: ImageC
             disabled={!completedCrop}
             className="flex-1 py-3 rounded-xl bg-hyundai-blue-500 text-white text-body-1 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            적용
+            확인
           </button>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BottomNav } from '@/components/layout';
+import { ConditionalBottomNav } from '@/components/layout';
 import { AuthProvider } from '@/components/auth/AuthProvider';
 import { getCurrentUser } from '@/lib/supabase/auth-server';
 
@@ -66,8 +66,7 @@ export default async function MainLayout({
       <AuthProvider initialUser={initialUser}>
         {children}
       </AuthProvider>
-      <BottomNav items={navItems} />
-      <div className="h-[60px]" />
+      <ConditionalBottomNav items={navItems} />
     </>
   );
 }
