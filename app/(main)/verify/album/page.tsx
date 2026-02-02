@@ -2,14 +2,16 @@
 
 import React, { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Image, X, RotateCcw } from 'lucide-react';
+import { Image, X, RotateCcw, Crop } from 'lucide-react';
 import { Header, Container } from '@/components/layout';
 import { Card, Button } from '@/components/ui';
+import ImageCropOverlay from '@/components/verification/ImageCropOverlay';
 
 const AlbumPage: React.FC = () => {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [showCrop, setShowCrop] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,6 +72,16 @@ const AlbumPage: React.FC = () => {
 
   return (
     <>
+      {showCrop && selectedImage && (
+        <ImageCropOverlay
+          imageSrc={selectedImage}
+          onApply={(cropped) => {
+            setSelectedImage(cropped);
+            setShowCrop(false);
+          }}
+          onCancel={() => setShowCrop(false)}
+        />
+      )}
       <Header title="앨범에서 선택" showBackButton onBack={() => router.back()} />
       
       <main className="min-h-screen bg-hyundai-gray-50 pb-20">
@@ -125,13 +137,22 @@ const AlbumPage: React.FC = () => {
                         다시 선택
                       </Button>
                       <Button
+                        variant="secondary"
+                        fullWidth
+                        onClick={() => setShowCrop(true)}
+                        className="flex items-center justify-center gap-2"
+                      >
+                        <Crop className="w-4 h-4" />
+                        자르기
+                      </Button>
+                      <Button
                         variant="primary"
                         fullWidth
                         onClick={handleUseImage}
                         className="flex items-center justify-center gap-2"
                       >
                         <Image className="w-4 h-4" />
-                        이 사진 사용
+                        분석하기
                       </Button>
                     </div>
                   </div>

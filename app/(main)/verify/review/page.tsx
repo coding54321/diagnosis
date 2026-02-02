@@ -43,6 +43,10 @@ const ReviewPage: React.FC = () => {
   const [editItemIndex, setEditItemIndex] = useState<number | null>(null);
   const [editItemForm, setEditItemForm] = useState({ name: '', partCost: 0, laborCost: 0 });
 
+  // 이 견적서 기준 차량 정보 (이미지에서 잘렸을 수 있어 확인 페이지에서 입력)
+  const [estimateMileage, setEstimateMileage] = useState<number>(45000);
+  const [vehicleNumber, setVehicleNumber] = useState<string>('');
+
   // sessionStorage에서 촬영된 이미지 가져오기
   useEffect(() => {
     const image = sessionStorage.getItem('capturedEstimateImage');
@@ -86,7 +90,7 @@ const ReviewPage: React.FC = () => {
         model: '투싼',
         variant: 'NX4',
         year: 2022,
-        mileage: 45000,
+        mileage: estimateMileage > 0 ? estimateMileage : 45000,
         fuelType: '가솔린',
       });
 
@@ -136,7 +140,7 @@ const ReviewPage: React.FC = () => {
         manufacturer: '현대', // TODO: 실제 차량 정보 사용
         model: '투싼',
         year: 2022,
-        mileage: 45000,
+        mileage: estimateMileage > 0 ? estimateMileage : 45000,
       };
 
       const estimateItemsForVerification: EstimateItem[] = savedItems.map((item) => ({
@@ -289,8 +293,11 @@ const ReviewPage: React.FC = () => {
                   <div>
                     <p className="text-caption text-hyundai-gray-600 mb-1">차량 정보</p>
                     <p className="text-body-1 text-hyundai-gray-900">
-                      투싼 NX4 · 2022년식 · 45,000km
+                      투싼 NX4 · 2022년식 · {estimateMileage.toLocaleString()}km
                     </p>
+                    {vehicleNumber && (
+                      <p className="text-caption text-hyundai-gray-500 mt-0.5">차량번호 {vehicleNumber}</p>
+                    )}
                   </div>
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => { setEditSheetMode('vehicle'); setEditSheetOpen(true); }}>
@@ -406,26 +413,40 @@ const ReviewPage: React.FC = () => {
               }
             >
               {editSheetMode === 'vehicle' && (
-                <div className="py-4">
-                  <p className="text-body-2 text-hyundai-gray-600 mb-4">
-                    차량 정보는 [내 차 관리]에서 수정할 수 있어요.
+                <div className="py-4 space-y-4">
+                  <p className="text-body-2 text-hyundai-gray-600">
+                    이미지에 없을 수 있어요. 이 견적서 기준으로 입력해 주세요.
                   </p>
+                  <Input
+                    type="number"
+                    label="주행거리 (km)"
+                    placeholder="예: 45000"
+                    value={estimateMileage > 0 ? String(estimateMileage) : ''}
+                    onChange={(e) => setEstimateMileage(Number(e.target.value) || 0)}
+                    fullWidth
+                  />
+                  <Input
+                    label="차량번호 (선택)"
+                    placeholder="예: 12가 3456"
+                    value={vehicleNumber}
+                    onChange={(e) => setVehicleNumber(e.target.value.trim())}
+                    fullWidth
+                  />
                   <Button
                     variant="outline"
                     size="md"
                     fullWidth
                     onClick={() => router.push('/vehicle')}
                   >
-                    내 차 관리로 이동
+                    내 차 관리에서 전체 수정
                   </Button>
                   <Button
-                    variant="ghost"
+                    variant="primary"
                     size="md"
                     fullWidth
-                    className="mt-2"
                     onClick={() => { setEditSheetOpen(false); setEditSheetMode(null); }}
                   >
-                    닫기
+                    완료
                   </Button>
                 </div>
               )}
@@ -476,6 +497,7 @@ const ReviewPage: React.FC = () => {
                     label="의뢰일자"
                     value={requestDate}
                     onChange={(e) => setRequestDate(e.target.value)}
+                    max={new Date().toISOString().slice(0, 10)}
                     fullWidth
                   />
                   <Button

@@ -2,9 +2,10 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Camera, Image, PenTool, Lightbulb, RotateCcw, X } from 'lucide-react';
+import { Camera, Image, PenTool, Lightbulb, RotateCcw, X, Crop } from 'lucide-react';
 import { Header, Container } from '@/components/layout';
 import { Card, Button } from '@/components/ui';
+import ImageCropOverlay from '@/components/verification/ImageCropOverlay';
 
 const CameraPage: React.FC = () => {
   const router = useRouter();
@@ -12,6 +13,7 @@ const CameraPage: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [showCrop, setShowCrop] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -149,6 +151,16 @@ const CameraPage: React.FC = () => {
 
   return (
     <>
+      {showCrop && capturedImage && (
+        <ImageCropOverlay
+          imageSrc={capturedImage}
+          onApply={(cropped) => {
+            setCapturedImage(cropped);
+            setShowCrop(false);
+          }}
+          onCancel={() => setShowCrop(false)}
+        />
+      )}
       <Header title="견적서 촬영" showBackButton onBack={handleBack} />
       
       <main className="min-h-screen bg-black pb-20">
@@ -256,13 +268,22 @@ const CameraPage: React.FC = () => {
                       다시 촬영
                     </Button>
                     <Button
+                      variant="secondary"
+                      fullWidth
+                      onClick={() => setShowCrop(true)}
+                      className="flex items-center justify-center gap-2"
+                    >
+                      <Crop className="w-4 h-4" />
+                      자르기
+                    </Button>
+                    <Button
                       variant="primary"
                       fullWidth
                       onClick={handleUsePhoto}
                       className="flex items-center justify-center gap-2"
                     >
                       <Camera className="w-4 h-4" />
-                      이 사진 사용
+                      분석하기
                     </Button>
                   </div>
                 </div>

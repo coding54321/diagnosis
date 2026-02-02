@@ -7,7 +7,7 @@ import RecentHistory from '@/components/verification/RecentHistory';
 import VehicleInfo from '@/components/vehicle/VehicleInfo';
 import { fetchVehicle, fetchRecentHistory } from '@/lib/supabase/actions';
 import { getCurrentUser } from '@/lib/supabase/auth-server';
-import { Camera, Search, CheckCircle, Car, ChevronRight, Shield, Lightbulb } from 'lucide-react';
+import { Camera, Search, CheckCircle, Car, ChevronRight, Shield } from 'lucide-react';
 import { Card } from '@/components/ui';
 import type { Vehicle, VerificationHistory } from '@/types';
 
@@ -132,9 +132,6 @@ export default async function HomePage() {
                 {/* 서비스 프로세스 안내 */}
                 <HowItWorksSection />
 
-                {/* 동기 부여 통계 */}
-                <MotivationCard />
-
                 {/* 하단 로그인 유도 */}
                 <LoginBenefitsCard />
               </>
@@ -178,29 +175,6 @@ function HowItWorksSection() {
             )}
           </React.Fragment>
         ))}
-      </div>
-    </Card>
-  );
-}
-
-/** 동기 부여 통계 카드 (비로그인) */
-function MotivationCard() {
-  return (
-    <Card variant="default" padding="md">
-      <div className="flex items-start gap-3">
-        <div className="w-10 h-10 shrink-0 rounded-full bg-hyundai-gray-50 flex items-center justify-center">
-          <Lightbulb className="w-5 h-5 text-hyundai-gray-700" strokeWidth={1.5} />
-        </div>
-        <div>
-          <p className="text-body-1 font-bold text-hyundai-gray-900 mb-1">
-            알고 계셨나요?
-          </p>
-          <p className="text-body-2 text-hyundai-gray-600 leading-relaxed">
-            자동차 정비 견적의 <span className="font-semibold text-hyundai-gray-900">약 30%</span>는
-            시장 평균보다 높은 가격으로 책정됩니다.
-            미리 확인하면 불필요한 비용을 줄일 수 있어요.
-          </p>
-        </div>
       </div>
     </Card>
   );
