@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import BottomNav from './BottomNav';
 import type { NavItem } from './BottomNav';
 
-const HIDE_NAV_PATHS = ['/verify/camera', '/verify/album', '/verify/review', '/verify/result'];
+const HIDE_NAV_PATHS = ['/verify/camera', '/verify/album', '/verify/review', '/verify/result', '/verify/manual'];
 
 export interface ConditionalBottomNavProps {
   items: NavItem[];
@@ -22,7 +22,7 @@ export function ConditionalBottomNav({ items }: ConditionalBottomNavProps) {
   return (
     <>
       <BottomNav items={items} />
-      <div className="h-[60px]" />
+      <div className="h-[calc(60px+env(safe-area-inset-bottom,0px))]" />
     </>
   );
 }

@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { BarChart3 } from 'lucide-react';
 import { Card } from '@/components/ui';
 import { formatPrice } from '@/lib/utils';
 import type { PriceRange } from '@/types';
@@ -21,86 +20,74 @@ const PriceChart: React.FC<PriceChartProps> = ({
 }) => {
   const { min, max, median } = priceRange;
   const range = max - min;
-  const userPosition = ((userPrice - min) / range) * 100;
-  const medianPosition = ((median - min) / range) * 100;
+  const userPosition = range > 0 ? Math.max(0, Math.min(100, ((userPrice - min) / range) * 100)) : 50;
+  const medianPosition = range > 0 ? ((median - min) / range) * 100 : 50;
 
-  // 범위를 0-100으로 정규화
-  const normalizedMin = 0;
-  const normalizedMax = 100;
-  const normalizedMedian = medianPosition;
-  const normalizedUser = userPosition;
+  const diffPercent = median > 0 ? Math.round(((userPrice - median) / median) * 100) : 0;
 
   return (
-    <Card variant="default" padding="md" className={className}>
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-hyundai-gray-600" />
-            <h4 className="text-h4 text-hyundai-gray-900">가격 분포</h4>
-          </div>
-          <span className="text-caption text-hyundai-gray-500">
+    <Card variant="default" padding="none" className={className}>
+      <div className="px-5 py-4">
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-sm font-medium text-hyundai-gray-900">가격 분포</p>
+          <span className="text-xs text-hyundai-gray-400">
             유사 사례 {sampleCount}건
           </span>
         </div>
 
-        {/* 차트 영역 */}
-        <div className="relative h-16 bg-hyundai-gray-100 rounded-lg overflow-hidden">
-          {/* 분포 영역 (시각화) */}
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full h-8 bg-gradient-to-r from-hyundai-blue-200 via-hyundai-blue-400 to-hyundai-blue-200 rounded opacity-60" />
+        {/* 분포 바 */}
+        <div className="relative">
+          {/* 바 본체 */}
+          <div className="relative h-2 bg-hyundai-gray-100 rounded-full">
+            {/* 평균 구간 표시 */}
+            <div
+              className="absolute inset-y-0 bg-hyundai-gray-200 rounded-full"
+              style={{
+                left: `${Math.max(0, medianPosition - 15)}%`,
+                width: '30%',
+              }}
+            />
+            {/* 중앙값 마커 */}
+            <div
+              className="absolute top-1/2 -translate-y-1/2 w-0.5 h-3.5 bg-hyundai-gray-400 rounded-full"
+              style={{ left: `${medianPosition}%` }}
+            />
+            {/* 사용자 위치 마커 */}
+            <div
+              className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-hyundai-gray-900 border-2 border-white shadow-sm"
+              style={{ left: `${userPosition}%`, marginLeft: '-6px' }}
+            />
           </div>
 
-          {/* 중앙값 표시 */}
-          <div
-            className="absolute top-0 bottom-0 w-0.5 bg-hyundai-gray-600"
-            style={{ left: `${normalizedMedian}%` }}
-          >
-            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 text-caption text-hyundai-gray-600 whitespace-nowrap">
-              평균
-            </div>
-          </div>
-
-          {/* 사용자 견적 표시 */}
-          <div
-            className="absolute top-0 bottom-0 w-1 bg-hyundai-blue-600"
-            style={{ left: `${Math.max(0, Math.min(100, normalizedUser))}%` }}
-          >
-            <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-caption font-medium text-hyundai-blue-600 whitespace-nowrap">
-              내 견적
-            </div>
+          {/* 범위 라벨 */}
+          <div className="flex justify-between mt-2 text-[10px] text-hyundai-gray-300">
+            <span>{formatPrice(min)}</span>
+            <span>{formatPrice(max)}</span>
           </div>
         </div>
+      </div>
 
-        {/* 가격 범위 표시 */}
-        <div className="flex justify-between text-caption text-hyundai-gray-600">
-          <span>{formatPrice(min)}</span>
-          <span className="font-medium">{formatPrice(median)}</span>
-          <span>{formatPrice(max)}</span>
+      <div className="mx-5 border-b border-hyundai-gray-100" />
+
+      {/* 내 견적 vs 평균 비교 */}
+      <div className="px-5 py-3.5">
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-hyundai-gray-400">내 견적</span>
+          <span className="text-sm font-bold text-hyundai-gray-900">{formatPrice(userPrice)}</span>
         </div>
-
-        {/* 사용자 견적 정보 */}
-        <div className="pt-2 border-t border-hyundai-gray-200">
-          <div className="flex justify-between items-center">
-            <span className="text-body-2 text-hyundai-gray-700">내 견적</span>
-            <span className="text-body-1 font-semibold text-hyundai-gray-900">
-              {formatPrice(userPrice)}
-            </span>
-          </div>
-          <div className="flex justify-between items-center mt-1">
-            <span className="text-body-2 text-hyundai-gray-700">평균 대비</span>
-            <span
-              className={`text-body-1 font-medium ${
-                userPrice > median
-                  ? 'text-semantic-warning-main'
-                  : userPrice < median
-                  ? 'text-semantic-success-main'
-                  : 'text-hyundai-gray-700'
-              }`}
-            >
-              {userPrice > median ? '+' : ''}
-              {Math.round(((userPrice - median) / median) * 100)}%
-            </span>
-          </div>
+        <div className="flex items-center justify-between mt-1">
+          <span className="text-xs text-hyundai-gray-400">평균 대비</span>
+          <span
+            className={`text-xs font-medium ${
+              diffPercent > 0
+                ? 'text-red-400'
+                : diffPercent < 0
+                ? 'text-green-500'
+                : 'text-hyundai-gray-600'
+            }`}
+          >
+            {diffPercent > 0 ? '+' : ''}{diffPercent}%
+          </span>
         </div>
       </div>
     </Card>

@@ -34,7 +34,7 @@ const RecentHistory: React.FC<RecentHistoryProps> = ({ items, maxItems = 3 }) =>
   if (displayItems.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-body-2 text-hyundai-gray-400">
+        <p className="text-sm text-hyundai-gray-400">
           아직 검증 내역이 없습니다
         </p>
       </div>
@@ -55,7 +55,7 @@ const RecentHistory: React.FC<RecentHistoryProps> = ({ items, maxItems = 3 }) =>
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-caption text-hyundai-gray-400">
+                    <span className="text-xs text-hyundai-gray-400">
                       {formatShortDate(item.date)}
                     </span>
                     <Badge variant={config.variant} size="sm" className="flex items-center gap-1">
@@ -63,10 +63,10 @@ const RecentHistory: React.FC<RecentHistoryProps> = ({ items, maxItems = 3 }) =>
                       {config.label}
                     </Badge>
                   </div>
-                  <p className="text-body-1 text-hyundai-gray-900 font-medium mb-0.5">
+                  <p className="text-sm text-hyundai-gray-900 font-medium mb-0.5">
                     {item.items}
                   </p>
-                  <p className="text-body-2 text-hyundai-gray-500">
+                  <p className="text-xs text-hyundai-gray-500">
                     {formatPrice(item.totalAmount)}
                   </p>
                 </div>
