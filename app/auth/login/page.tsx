@@ -4,19 +4,19 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, Loader2 } from 'lucide-react';
 import { Header, Container } from '@/components/layout';
+import { toast } from 'sonner';
 import { Card, Input, Button } from '@/components/ui';
 import { signIn } from '@/lib/supabase/auth-client';
+import { getAuthErrorMessage } from '@/lib/auth-messages';
 
 const LoginPage: React.FC = () => {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setIsLoading(true);
 
     try {
@@ -26,10 +26,10 @@ const LoginPage: React.FC = () => {
         router.push('/');
         router.refresh();
       } else {
-        setError(result.error || '로그인에 실패했습니다.');
+        toast.error(getAuthErrorMessage(result.error ?? undefined));
       }
-    } catch (err) {
-      setError('로그인 중 오류가 발생했습니다.');
+    } catch {
+      toast.error(getAuthErrorMessage(undefined));
     } finally {
       setIsLoading(false);
     }
@@ -56,12 +56,6 @@ const LoginPage: React.FC = () => {
                     </button>
                   </p>
                 </div>
-
-                {error && (
-                  <div className="p-4 rounded-lg bg-semantic-error-light border border-semantic-error-main">
-                    <p className="text-body-2 text-semantic-error-dark">{error}</p>
-                  </div>
-                )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <Input
