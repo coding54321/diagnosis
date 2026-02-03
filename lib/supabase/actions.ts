@@ -8,6 +8,7 @@
 import {
   getVehicle,
   upsertVehicle,
+  getVehicleLookupByRegistrationNumber,
   getRecentVerificationHistory,
   getVerificationHistoryById,
   saveEstimate,
@@ -18,6 +19,27 @@ import {
 import { uploadEstimateImage as uploadImage, base64ToFile } from './storage';
 
 import { getCurrentUser } from './auth-server';
+
+/**
+ * 목업: 차량등록번호(번호판)로 차량 정보 조회 (vehicle_lookup_mock)
+ * API 미연동 시 프로토타입에서 이 번호들로 조회 가능
+ */
+export async function fetchVehicleByRegistrationNumber(registrationNumber: string) {
+  try {
+    const normalized = registrationNumber.replace(/\s|-/g, '').trim();
+    if (!normalized) {
+      return { success: false, error: '차량번호를 입력해 주세요.', data: null };
+    }
+    const data = await getVehicleLookupByRegistrationNumber(normalized);
+    if (!data) {
+      return { success: false, error: '등록된 차량이 없거나 조회되지 않았어요. 직접 입력해 주세요.', data: null };
+    }
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error in fetchVehicleByRegistrationNumber:', error);
+    return { success: false, error: '차량 정보 조회에 실패했습니다.', data: null };
+  }
+}
 
 /**
  * 차량 정보 조회 (Server Action)

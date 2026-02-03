@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Share2, Save } from 'lucide-react';
-import { Header, Container } from '@/components/layout';
+import { Loader2, Share2, Save, ArrowLeft } from 'lucide-react';
+import { Container } from '@/components/layout';
 import { Card } from '@/components/ui';
 import VerificationSummary from '@/components/verification/VerificationSummary';
 import EstimateCard from '@/components/verification/EstimateCard';
@@ -87,14 +87,21 @@ const VerificationResultPage: React.FC = () => {
 
   if (isLoading || !result) {
     return (
-      <>
-        <Header title="검증 결과" showBackButton onBack={() => router.back()} />
-        <main className="min-h-screen bg-hyundai-gray-50">
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-hyundai-gray-300" strokeWidth={1.5} />
-          </div>
-        </main>
-      </>
+      <main className="min-h-screen bg-white">
+        <div className="flex items-center px-4 pt-[env(safe-area-inset-top,0px)]">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="h-12 flex items-center text-hyundai-gray-700"
+            aria-label="뒤로가기"
+          >
+            <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
+          </button>
+        </div>
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-6 h-6 animate-spin text-hyundai-gray-300" strokeWidth={1.5} />
+        </div>
+      </main>
     );
   }
 
@@ -173,11 +180,27 @@ const VerificationResultPage: React.FC = () => {
 
   return (
     <>
-      <Header title="검증 결과" showBackButton onBack={() => router.back()} />
+      <main className="min-h-screen bg-white pb-32">
+        {/* 뒤로가기 헤더 */}
+        <div className="flex items-center px-4 pt-[env(safe-area-inset-top,0px)]">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="h-12 flex items-center text-hyundai-gray-700"
+            aria-label="뒤로가기"
+          >
+            <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
+          </button>
+        </div>
 
-      <main className="min-h-screen bg-hyundai-gray-50 pb-32">
         <Container>
-          <div className="py-6 space-y-5">
+          <div className="px-1 pt-4 pb-6">
+            <h1 className="text-[22px] font-bold text-hyundai-gray-900 leading-tight tracking-tight">
+              검증 결과
+            </h1>
+          </div>
+
+          <div className="space-y-5">
             {/* 검증 결과 요약 */}
             <VerificationSummary
               totalAmount={result.totalAmount}

@@ -2,14 +2,24 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronRight, Loader2, X } from 'lucide-react';
-import { Header, Container } from '@/components/layout';
+import { ChevronRight, Loader2, X, ArrowLeft } from 'lucide-react';
+import { Container } from '@/components/layout';
 import { Card, BottomSheet, Input } from '@/components/ui';
 import { mockEstimate } from '@/lib/mockData';
 import { formatPrice } from '@/lib/utils';
-import { createEstimate, saveVehicle, uploadEstimateImageAction, createVerificationResult } from '@/lib/supabase/actions';
+import { createEstimate, saveVehicle, uploadEstimateImageAction, createVerificationResult, fetchVehicleByRegistrationNumber, fetchVehicle } from '@/lib/supabase/actions';
 import { VerificationEngine } from '@/lib/verification/engine';
 import type { EstimateItem } from '@/types';
+
+/** 차량번호 조회로 채워지는 차량 정보 (주행거리 포함) */
+type VehicleInfoFromLookup = {
+  manufacturer: string;
+  model: string;
+  variant: string | null;
+  year: number;
+  mileage: number;
+  fuelType: string;
+};
 import type { BluehandsShop } from '@/lib/data/bluehands-seoul';
 
 type EditSheetMode = 'vehicle' | 'shop' | 'date' | 'vat' | 'item' | null;
@@ -43,13 +53,39 @@ const ReviewPage: React.FC = () => {
   const [editItemIndex, setEditItemIndex] = useState<number | null>(null);
   const [editItemForm, setEditItemForm] = useState({ name: '', partCost: 0, laborCost: 0 });
 
-  // 차량 정보
-  const [estimateMileage, setEstimateMileage] = useState<number>(45000);
+  // 차량 정보 (차량번호 조회로 채워짐)
+  const [vehicleInfo, setVehicleInfo] = useState<VehicleInfoFromLookup | null>(null);
+  const [estimateMileage, setEstimateMileage] = useState<number>(0);
   const [vehicleNumber, setVehicleNumber] = useState<string>('');
+  const [vehicleLoading, setVehicleLoading] = useState(false);
+
+  // 저장된 내 차 정보
+  const [savedVehicle, setSavedVehicle] = useState<VehicleInfoFromLookup | null>(null);
+  const [savedVehicleDismissed, setSavedVehicleDismissed] = useState(false);
 
   useEffect(() => {
     const image = sessionStorage.getItem('capturedEstimateImage');
     if (image) setCapturedImage(image);
+
+    // 저장된 차량 정보 불러오기
+    const loadSavedVehicle = async () => {
+      try {
+        const res = await fetchVehicle();
+        if (res.success && res.data) {
+          setSavedVehicle({
+            manufacturer: res.data.manufacturer,
+            model: res.data.model,
+            variant: res.data.variant || null,
+            year: res.data.year,
+            mileage: res.data.mileage,
+            fuelType: res.data.fuel_type,
+          });
+        }
+      } catch {
+        // 무시
+      }
+    };
+    loadSavedVehicle();
   }, []);
 
   // 정비소 검색
@@ -93,17 +129,49 @@ const ReviewPage: React.FC = () => {
     return `${y}.${m}.${d}`;
   };
 
+  /** 차량번호로 차량 정보 불러오기 (카드·시트 공통) */
+  const handleFetchVehicleByNumber = async (numberToUse?: string) => {
+    const num = (numberToUse ?? vehicleNumber).replace(/\s|-/g, '').trim();
+    if (!num) {
+      alert('차량번호를 입력해 주세요.');
+      return;
+    }
+    setVehicleLoading(true);
+    try {
+      const res = await fetchVehicleByRegistrationNumber(num);
+      if (res.success && res.data) {
+        setVehicleInfo(res.data);
+        setEstimateMileage(res.data.mileage > 0 ? res.data.mileage : 0);
+        setVehicleNumber(num); // 표시용 통일 (예: 12가3456)
+      } else {
+        alert(res.error ?? '등록된 차량이 없어요. 아래에서 제조사·차종 등을 직접 입력해 주세요.');
+      }
+    } finally {
+      setVehicleLoading(false);
+    }
+  };
+
   const handleVerify = async () => {
+    if (!vehicleInfo) {
+      alert('차량 정보를 입력해 주세요. 차량번호를 입력하고 [차량 정보 불러오기]를 눌러 주세요.');
+      return;
+    }
+    const mileage = estimateMileage > 0 ? estimateMileage : vehicleInfo.mileage;
+    if (mileage <= 0) {
+      alert('주행거리를 입력해 주세요.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       const vehicleResult = await saveVehicle({
-        manufacturer: '현대',
-        model: '투싼',
-        variant: 'NX4',
-        year: 2022,
-        mileage: estimateMileage > 0 ? estimateMileage : 45000,
-        fuelType: '가솔린',
+        manufacturer: vehicleInfo.manufacturer,
+        model: vehicleInfo.model,
+        variant: vehicleInfo.variant ?? undefined,
+        year: vehicleInfo.year,
+        mileage,
+        fuelType: vehicleInfo.fuelType,
       });
 
       if (!vehicleResult.success || !vehicleResult.data) {
@@ -143,11 +211,11 @@ const ReviewPage: React.FC = () => {
         }
       }
 
-      const vehicleInfo = {
-        manufacturer: '현대',
-        model: '투싼',
-        year: 2022,
-        mileage: estimateMileage > 0 ? estimateMileage : 45000,
+      const vehicleInfoForVerification = {
+        manufacturer: vehicleInfo.manufacturer,
+        model: vehicleInfo.model,
+        year: vehicleInfo.year,
+        mileage,
       };
 
       const estimateItemsForVerification: EstimateItem[] = savedItems.map((item) => ({
@@ -162,7 +230,7 @@ const ReviewPage: React.FC = () => {
       const verificationResult = await VerificationEngine.verifyEstimate(
         estimateItemsForVerification,
         estimate.totalAmount,
-        vehicleInfo
+        vehicleInfoForVerification
       );
 
       const saveVerificationResult = await createVerificationResult({
@@ -202,20 +270,30 @@ const ReviewPage: React.FC = () => {
 
   return (
     <>
-      <Header title="견적서 확인" showBackButton onBack={() => router.back()} />
+      <main className="min-h-screen bg-white pb-36">
+        {/* 뒤로가기 헤더 */}
+        <div className="flex items-center px-4 pt-[env(safe-area-inset-top,0px)]">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="h-12 flex items-center text-hyundai-gray-700"
+            aria-label="뒤로가기"
+          >
+            <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
+          </button>
+        </div>
 
-      <main className="min-h-screen bg-hyundai-gray-50 pb-36">
         <Container>
-          <div className="py-5 space-y-4">
-            {/* 안내 문구 */}
-            <div className="px-1">
-              <h2 className="text-lg font-bold text-hyundai-gray-900 mb-1">
-                인식된 내용을 확인해주세요
-              </h2>
-              <p className="text-sm text-hyundai-gray-400">
-                잘못된 부분은 탭해서 수정할 수 있어요
-              </p>
-            </div>
+          <div className="px-1 pt-4 pb-6">
+            <h1 className="text-[22px] font-bold text-hyundai-gray-900 leading-tight tracking-tight">
+              견적서 확인
+            </h1>
+            <p className="text-sm text-hyundai-gray-400 mt-1.5">
+              인식된 내용을 확인하고, 잘못된 부분은 탭해서 수정하세요
+            </p>
+          </div>
+
+          <div className="space-y-4">
 
             {/* 촬영 이미지 (축소 썸네일) */}
             {capturedImage && (
@@ -281,23 +359,91 @@ const ReviewPage: React.FC = () => {
 
               <div className="mx-5 border-b border-hyundai-gray-100" />
 
-              {/* 차량 정보 */}
-              <button
-                type="button"
-                onClick={() => openSheet('vehicle')}
-                className="w-full flex items-center justify-between px-5 py-4 active:bg-hyundai-gray-50 transition-colors"
-              >
-                <div className="text-left">
-                  <p className="text-xs text-hyundai-gray-400 mb-0.5">차량</p>
-                  <p className="text-sm font-medium text-hyundai-gray-900">
-                    투싼 NX4 · {estimateMileage.toLocaleString()}km
-                  </p>
-                  {vehicleNumber && (
-                    <p className="text-xs text-hyundai-gray-400 mt-0.5">{vehicleNumber}</p>
-                  )}
-                </div>
-                <ChevronRight className="w-4 h-4 text-hyundai-gray-300" strokeWidth={1.5} />
-              </button>
+              {/* 차량 정보: 저장된 차량 사용 or 차량번호 입력 */}
+              <div className="px-5 py-4">
+                <p className="text-xs text-hyundai-gray-400 mb-2">차량</p>
+
+                {/* 저장된 내 차 정보가 있고, 아직 차량 정보를 설정하지 않았을 때 */}
+                {savedVehicle && !vehicleInfo && !savedVehicleDismissed && (
+                  <div className="mb-3 p-3 bg-hyundai-gray-50 rounded-xl">
+                    <p className="text-xs text-hyundai-gray-500 mb-2">저장된 내 차 정보가 있어요</p>
+                    <p className="text-sm font-medium text-hyundai-gray-900 mb-2.5">
+                      {savedVehicle.manufacturer} {savedVehicle.model}
+                      {savedVehicle.variant ? ` ${savedVehicle.variant}` : ''} · {savedVehicle.year}년식 · {savedVehicle.fuelType}
+                      {savedVehicle.mileage > 0 ? ` · ${savedVehicle.mileage.toLocaleString()}km` : ''}
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setVehicleInfo(savedVehicle);
+                          setEstimateMileage(savedVehicle.mileage);
+                          setSavedVehicleDismissed(true);
+                        }}
+                        className="flex-1 py-2 rounded-lg bg-hyundai-gray-900 text-white text-xs font-medium active:bg-hyundai-gray-800 transition-colors"
+                      >
+                        이 차량으로 검증
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSavedVehicleDismissed(true)}
+                        className="py-2 px-3 rounded-lg bg-white text-hyundai-gray-500 text-xs font-medium active:bg-hyundai-gray-100 transition-colors border border-hyundai-gray-200"
+                      >
+                        다른 차량
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* 차량번호 입력 (저장된 차량 미사용 시) */}
+                {(savedVehicleDismissed || !savedVehicle || vehicleInfo) && !vehicleInfo && (
+                  <>
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="flex-1 min-w-0">
+                        <Input
+                          placeholder="예: 12가3456"
+                          value={vehicleNumber}
+                          onChange={(e) => setVehicleNumber(e.target.value.trim())}
+                          className="text-sm"
+                          fullWidth
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleFetchVehicleByNumber()}
+                        disabled={vehicleLoading || !vehicleNumber.trim()}
+                        className="shrink-0 py-2 px-3 rounded-lg bg-hyundai-gray-100 text-hyundai-gray-800 text-xs font-medium active:bg-hyundai-gray-200 disabled:opacity-50 disabled:pointer-events-none"
+                      >
+                        {vehicleLoading ? '조회 중...' : '차량 정보 불러오기'}
+                      </button>
+                    </div>
+                    <p className="text-xs text-hyundai-gray-400">
+                      차량번호를 입력한 뒤 버튼을 누르면 제조사·차종 등이 자동으로 채워져요.
+                    </p>
+                  </>
+                )}
+
+                {/* 조회된 차량 정보 표시 */}
+                {vehicleInfo && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => openSheet('vehicle')}
+                      className="w-full text-left -mx-1 px-1 py-1 rounded-lg active:bg-hyundai-gray-50 transition-colors"
+                    >
+                      <p className="text-sm font-medium text-hyundai-gray-900">
+                        {vehicleInfo.manufacturer} {vehicleInfo.model}
+                        {vehicleInfo.variant ? ` ${vehicleInfo.variant}` : ''} · {vehicleInfo.year}년식 · {vehicleInfo.fuelType}
+                        {estimateMileage > 0 ? ` · ${estimateMileage.toLocaleString()}km` : ''}
+                      </p>
+                      <p className="text-xs text-hyundai-gray-400 mt-0.5">탭하여 수정</p>
+                    </button>
+                    {estimateMileage <= 0 && (
+                      <p className="text-xs text-amber-600 mt-0.5">주행거리를 입력해 주세요.</p>
+                    )}
+                  </>
+                )}
+              </div>
 
               <div className="mx-5 border-b border-hyundai-gray-100" />
 
@@ -411,24 +557,44 @@ const ReviewPage: React.FC = () => {
         {editSheetMode === 'vehicle' && (
           <div className="space-y-4">
             <p className="text-xs text-hyundai-gray-400">
-              이 견적서 기준으로 입력해 주세요
+              차량등록번호(번호판)를 입력한 뒤 불러오기를 누르면 제조사·차종 등이 자동으로 채워져요.
             </p>
             <Input
-              type="number"
-              label="주행거리 (km)"
-              placeholder="예: 45000"
-              value={estimateMileage > 0 ? String(estimateMileage) : ''}
-              onChange={(e) => setEstimateMileage(Number(e.target.value) || 0)}
-              fullWidth
-            />
-            <Input
-              label="차량번호 (선택)"
-              placeholder="예: 12가 3456"
+              label="차량번호"
+              placeholder="예: 12가3456"
               value={vehicleNumber}
               onChange={(e) => setVehicleNumber(e.target.value.trim())}
               fullWidth
             />
             <button
+              type="button"
+              onClick={() => handleFetchVehicleByNumber(vehicleNumber)}
+              disabled={vehicleLoading || !vehicleNumber.trim()}
+              className="w-full py-2.5 rounded-xl bg-hyundai-gray-100 text-hyundai-gray-800 text-sm font-medium active:bg-hyundai-gray-200 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
+            >
+              {vehicleLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
+                  조회 중...
+                </>
+              ) : (
+                '차량 정보 불러오기'
+              )}
+            </button>
+            <Input
+              type="number"
+              label="주행거리 (km)"
+              placeholder="예: 45000"
+              value={estimateMileage > 0 ? String(estimateMileage) : ''}
+              onChange={(e) => {
+                const v = Number(e.target.value) || 0;
+                setEstimateMileage(v);
+                if (vehicleInfo) setVehicleInfo((prev) => (prev ? { ...prev, mileage: v } : null));
+              }}
+              fullWidth
+            />
+            <button
+              type="button"
               onClick={closeSheet}
               className="w-full py-3 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 transition-colors"
             >

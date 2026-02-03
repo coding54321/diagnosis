@@ -2,52 +2,11 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Bell, Database, User, MessageCircle, FileText, Lock, LogIn } from 'lucide-react';
-import { Header, Container } from '@/components/layout';
-import UserMenu from '@/components/auth/UserMenu';
-import { Card, Button } from '@/components/ui';
-import LoginPrompt from '@/components/auth/LoginPrompt';
+import { ChevronRight, LogOut, MessageCircle, FileText, Lock, LogIn } from 'lucide-react';
+import { Container } from '@/components/layout';
+import { Card } from '@/components/ui';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { signOut } from '@/lib/supabase/auth-client';
-
-type SettingItem = 
-  | { label: string; value: boolean; action?: never }
-  | { label: string; action: boolean; value?: never };
-
-interface SettingsCategory {
-  title: string;
-  Icon: React.ComponentType<{ className?: string }>;
-  items: SettingItem[];
-}
-
-function SettingsSkeleton() {
-  return (
-    <div className="space-y-6 animate-pulse">
-      <Card variant="default" padding="md">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-hyundai-gray-200" />
-          <div className="flex-1 space-y-2">
-            <div className="h-4 w-32 bg-hyundai-gray-200 rounded" />
-            <div className="h-3 w-48 bg-hyundai-gray-100 rounded" />
-          </div>
-        </div>
-      </Card>
-      {[1, 2, 3].map((i) => (
-        <Card key={i} variant="default" padding="md">
-          <div className="h-5 w-24 bg-hyundai-gray-200 rounded mb-4" />
-          <div className="space-y-3">
-            {[1, 2, 3].map((j) => (
-              <div key={j} className="flex justify-between py-2 border-b border-hyundai-gray-100 last:border-0">
-                <div className="h-4 w-28 bg-hyundai-gray-100 rounded" />
-                <div className="h-6 w-16 bg-hyundai-gray-100 rounded" />
-              </div>
-            ))}
-          </div>
-        </Card>
-      ))}
-    </div>
-  );
-}
 
 const SettingsPage: React.FC = () => {
   const router = useRouter();
@@ -61,160 +20,214 @@ const SettingsPage: React.FC = () => {
     router.refresh();
   };
 
-  const settingsCategories: SettingsCategory[] = [
-    {
-      title: '알림 설정',
-      Icon: Bell,
-      items: [
-        { label: '정비 시기 알림', value: true },
-        { label: '검증 완료 알림', value: true },
-        { label: '마케팅 알림', value: false },
-      ],
-    },
-    {
-      title: '데이터 관리',
-      Icon: Database,
-      items: [
-        { label: '검증 내역 자동 저장', value: true },
-        { label: '익명 데이터 기여', value: true },
-      ],
-    },
-    {
-      title: '계정',
-      Icon: User,
-      items: [
-        { label: '프로필 수정', action: true },
-        { label: '로그아웃', action: true },
-      ],
-    },
-  ];
+  const userName = user
+    ? (user.user_metadata?.name as string | undefined) || user.email?.split('@')[0] || '사용자'
+    : null;
 
-  return (
-    <>
-      <Header title="설정" rightAction={<UserMenu />} />
-      
-      <main className="min-h-screen bg-hyundai-gray-50 pb-20">
-        <Container>
-          <div className="py-6 space-y-6">
-            {isLoading ? (
-              <SettingsSkeleton />
-            ) : !user ? (
-              <>
-                <LoginPrompt message="로그인하시면 설정을 관리하고 개인화된 서비스를 이용할 수 있어요" />
-                <Card variant="default" padding="md">
-                  <div className="text-center py-8">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-hyundai-gray-100 flex items-center justify-center">
-                      <User className="w-8 h-8 text-hyundai-gray-400" />
-                    </div>
-                    <p className="text-body-1 text-hyundai-gray-600 mb-4">
-                      로그인하여 설정을 관리하세요
-                    </p>
-                    <Button
-                      variant="primary"
-                      onClick={() => router.push('/auth/login')}
-                      className="flex items-center gap-2 mx-auto"
-                    >
-                      <LogIn className="w-4 h-4" />
-                      로그인
-                    </Button>
-                  </div>
-                </Card>
-              </>
-            ) : (
-              <>
-                {/* 사용자 정보 (마이현대 스타일) */}
-                <Card variant="default" padding="md">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 shrink-0 rounded-full bg-hyundai-gray-200 flex items-center justify-center">
-                      <User className="w-7 h-7 text-hyundai-gray-500" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-base font-semibold text-hyundai-gray-900 mb-0.5">
-                        {(user.user_metadata?.name as string) || user.email?.split('@')[0] || '사용자'}님
-                      </h3>
-                      <p className="text-body-2 text-hyundai-gray-600 truncate">{user.email}</p>
-                    </div>
-                    <svg className="w-5 h-5 shrink-0 text-hyundai-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                </Card>
-              </>
-            )}
-
-            {/* 설정 카테고리 */}
-            {user && settingsCategories.map((category) => {
-              const CategoryIcon = category.Icon;
-              return (
-                <Card key={category.title} variant="default" padding="md">
-                  <div className="flex items-center gap-2 mb-4">
-                    <CategoryIcon className="w-5 h-5 text-hyundai-gray-600" />
-                    <h3 className="text-h4 text-hyundai-gray-900">{category.title}</h3>
-                  </div>
-                <div className="space-y-3">
-                  {category.items.map((item, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between py-2 border-b border-hyundai-gray-100 last:border-0"
-                    >
-                      <span className="text-body-1 text-hyundai-gray-900">{item.label}</span>
-                      {'action' in item ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            if (item.label === '로그아웃') {
-                              handleLogout();
-                            }
-                          }}
-                        >
-                          {item.label === '로그아웃' ? '로그아웃' : '설정'}
-                        </Button>
-                      ) : (
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            defaultChecked={item.value}
-                            className="sr-only peer"
-                          />
-                          <div className="w-11 h-6 bg-hyundai-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-hyundai-blue-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-hyundai-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-hyundai-blue-500"></div>
-                        </label>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </Card>
-              );
-            })}
-
-            {/* 앱 정보 */}
-            <Card variant="outlined" padding="md">
-              <div className="space-y-2 text-center">
-                <p className="text-body-2 text-hyundai-gray-600">앱 버전</p>
-                <p className="text-body-1 text-hyundai-gray-900 font-medium">1.0.0</p>
-              </div>
-            </Card>
-
-            {/* 고객 지원 */}
-            <div className="space-y-3">
-              <Button variant="outline" size="lg" fullWidth className="flex items-center justify-center gap-2">
-                <MessageCircle className="w-5 h-5" />
-                고객센터 문의
-              </Button>
-              <Button variant="outline" size="lg" fullWidth className="flex items-center justify-center gap-2">
-                <FileText className="w-5 h-5" />
-                이용약관
-              </Button>
-              <Button variant="outline" size="lg" fullWidth className="flex items-center justify-center gap-2">
-                <Lock className="w-5 h-5" />
-                개인정보처리방침
-              </Button>
+  if (isLoading) {
+    return (
+      <main className="min-h-[calc(100vh-52px)] bg-hyundai-gray-50">
+        <div className="bg-white pb-1">
+          <Container>
+            <div className="pt-6 pb-5 px-1">
+              <p className="text-xs text-hyundai-gray-400 mb-1">더보기</p>
+              <div className="h-7 w-32 bg-hyundai-gray-100 rounded animate-pulse" />
             </div>
+          </Container>
+        </div>
+        <Container>
+          <div className="py-4 space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-14 bg-white rounded-2xl animate-pulse" />
+            ))}
           </div>
         </Container>
       </main>
-    </>
+    );
+  }
+
+  return (
+    <main className="min-h-[calc(100vh-52px)] bg-hyundai-gray-50">
+      {/* 페이지 타이틀 */}
+      <div className="bg-white pb-1">
+        <Container>
+          <div className="pt-6 pb-5 px-1">
+            <p className="text-xs text-hyundai-gray-400 mb-1">더보기</p>
+            {user ? (
+              <>
+                <h2 className="text-[22px] font-bold text-hyundai-gray-900 leading-tight tracking-tight">
+                  {userName}님
+                </h2>
+                <p className="text-sm text-hyundai-gray-400 mt-1 truncate">{user.email}</p>
+              </>
+            ) : (
+              <>
+                <h2 className="text-[22px] font-bold text-hyundai-gray-900 leading-tight tracking-tight">
+                  로그인해주세요
+                </h2>
+                <p className="text-sm text-hyundai-gray-400 mt-1">
+                  검증 이력과 차량 정보를 관리할 수 있어요
+                </p>
+              </>
+            )}
+          </div>
+        </Container>
+      </div>
+
+      <Container>
+        <div className="py-4 space-y-4">
+
+          {/* 비로그인: 로그인 유도 */}
+          {!user && (
+            <button
+              type="button"
+              onClick={() => router.push('/auth/login')}
+              className="w-full"
+            >
+              <Card variant="default" padding="none">
+                <div className="flex items-center gap-3.5 px-5 py-4 active:bg-hyundai-gray-50 transition-colors">
+                  <div className="w-9 h-9 rounded-full bg-hyundai-gray-50 flex items-center justify-center shrink-0">
+                    <LogIn className="w-4 h-4 text-hyundai-gray-500" strokeWidth={1.5} />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-medium text-hyundai-gray-900">로그인 / 회원가입</p>
+                    <p className="text-xs text-hyundai-gray-400 mt-0.5">로그인하면 모든 기능을 이용할 수 있어요</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-hyundai-gray-300 shrink-0" strokeWidth={1.5} />
+                </div>
+              </Card>
+            </button>
+          )}
+
+          {/* 알림 설정 (로그인 시만) */}
+          {user && (
+            <div>
+              <p className="text-sm font-bold text-hyundai-gray-900 px-1 mb-2">알림</p>
+              <Card variant="default" padding="none">
+                <ToggleRow label="정비 시기 알림" defaultValue={true} />
+                <div className="mx-5 border-b border-hyundai-gray-100" />
+                <ToggleRow label="검증 완료 알림" defaultValue={true} />
+                <div className="mx-5 border-b border-hyundai-gray-100" />
+                <ToggleRow label="마케팅 알림" defaultValue={false} />
+              </Card>
+            </div>
+          )}
+
+          {/* 데이터 (로그인 시만) */}
+          {user && (
+            <div>
+              <p className="text-sm font-bold text-hyundai-gray-900 px-1 mb-2">데이터</p>
+              <Card variant="default" padding="none">
+                <ToggleRow label="검증 내역 자동 저장" defaultValue={true} />
+                <div className="mx-5 border-b border-hyundai-gray-100" />
+                <ToggleRow label="익명 데이터 기여" defaultValue={true} />
+              </Card>
+            </div>
+          )}
+
+          {/* 고객 지원 */}
+          <div>
+            <p className="text-sm font-bold text-hyundai-gray-900 px-1 mb-2">지원</p>
+            <Card variant="default" padding="none">
+              <MenuRow
+                icon={<MessageCircle className="w-4 h-4" strokeWidth={1.5} />}
+                label="고객센터 문의"
+              />
+              <div className="mx-5 border-b border-hyundai-gray-100" />
+              <MenuRow
+                icon={<FileText className="w-4 h-4" strokeWidth={1.5} />}
+                label="이용약관"
+              />
+              <div className="mx-5 border-b border-hyundai-gray-100" />
+              <MenuRow
+                icon={<Lock className="w-4 h-4" strokeWidth={1.5} />}
+                label="개인정보처리방침"
+              />
+            </Card>
+          </div>
+
+          {/* 로그아웃 */}
+          {user && (
+            <Card variant="default" padding="none">
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="w-full flex items-center gap-3 px-5 py-4 active:bg-hyundai-gray-50 transition-colors disabled:opacity-50"
+              >
+                <LogOut className="w-4 h-4 text-hyundai-gray-400" strokeWidth={1.5} />
+                <span className="text-sm text-hyundai-gray-500">
+                  {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
+                </span>
+              </button>
+            </Card>
+          )}
+
+          {/* 앱 버전 */}
+          <p className="text-center text-[11px] text-hyundai-gray-300 py-2">
+            앱 버전 1.0.0
+          </p>
+        </div>
+      </Container>
+    </main>
   );
 };
+
+/* ===== 서브 컴포넌트 ===== */
+
+function MenuRow({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full flex items-center justify-between px-5 py-3.5 active:bg-hyundai-gray-50 transition-colors"
+    >
+      <div className="flex items-center gap-3">
+        <span className="text-hyundai-gray-400">{icon}</span>
+        <span className="text-sm text-hyundai-gray-900">{label}</span>
+      </div>
+      <ChevronRight className="w-4 h-4 text-hyundai-gray-300" strokeWidth={1.5} />
+    </button>
+  );
+}
+
+function ToggleRow({
+  label,
+  defaultValue,
+}: {
+  label: string;
+  defaultValue: boolean;
+}) {
+  const [checked, setChecked] = useState(defaultValue);
+
+  return (
+    <div className="flex items-center justify-between px-5 py-3.5">
+      <span className="text-sm text-hyundai-gray-900">{label}</span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        onClick={() => setChecked(!checked)}
+        className={`relative w-10 h-[22px] rounded-full transition-colors ${
+          checked ? 'bg-hyundai-gray-900' : 'bg-hyundai-gray-200'
+        }`}
+      >
+        <span
+          className={`absolute top-[2px] left-[2px] w-[18px] h-[18px] bg-white rounded-full transition-transform shadow-sm ${
+            checked ? 'translate-x-[18px]' : 'translate-x-0'
+          }`}
+        />
+      </button>
+    </div>
+  );
+}
 
 export default SettingsPage;

@@ -255,6 +255,96 @@ export type Database = {
           },
         ]
       }
+      vehicle_lookup_mock: {
+        Row: {
+          id: string
+          created_at: string | null
+          registration_number: string
+          mileage: number | null
+          spec_management_number: string | null
+          model_type_name: string | null
+          model_type_kind_name: string | null
+          model_type_class_name: string | null
+          engine_type_name: string | null
+          form_name: string | null
+          displacement: number | null
+          seating_capacity: number | null
+          max_load_capacity: number | null
+          car_name: string | null
+          model_year: string | null
+          fuel_name: string | null
+          domestic_import_name: string | null
+          chassis_body_type_name: string | null
+          body_length: number | null
+          body_width: number | null
+          body_height: number | null
+          wheel_base: number | null
+          front_tread: number | null
+          rear_tread: number | null
+          transmission_type_name: string | null
+          spec_model_year: string | null
+          vin: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string | null
+          registration_number: string
+          mileage?: number | null
+          spec_management_number?: string | null
+          model_type_name?: string | null
+          model_type_kind_name?: string | null
+          model_type_class_name?: string | null
+          engine_type_name?: string | null
+          form_name?: string | null
+          displacement?: number | null
+          seating_capacity?: number | null
+          max_load_capacity?: number | null
+          car_name?: string | null
+          model_year?: string | null
+          fuel_name?: string | null
+          domestic_import_name?: string | null
+          chassis_body_type_name?: string | null
+          body_length?: number | null
+          body_width?: number | null
+          body_height?: number | null
+          wheel_base?: number | null
+          front_tread?: number | null
+          rear_tread?: number | null
+          transmission_type_name?: string | null
+          spec_model_year?: string | null
+          vin?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string | null
+          registration_number?: string
+          mileage?: number | null
+          spec_management_number?: string | null
+          model_type_name?: string | null
+          model_type_kind_name?: string | null
+          model_type_class_name?: string | null
+          engine_type_name?: string | null
+          form_name?: string | null
+          displacement?: number | null
+          seating_capacity?: number | null
+          max_load_capacity?: number | null
+          car_name?: string | null
+          model_year?: string | null
+          fuel_name?: string | null
+          domestic_import_name?: string | null
+          chassis_body_type_name?: string | null
+          body_length?: number | null
+          body_width?: number | null
+          body_height?: number | null
+          wheel_base?: number | null
+          front_tread?: number | null
+          rear_tread?: number | null
+          transmission_type_name?: string | null
+          spec_model_year?: string | null
+          vin?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       verification_history: {

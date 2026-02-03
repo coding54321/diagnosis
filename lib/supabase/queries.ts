@@ -99,6 +99,59 @@ export async function upsertVehicle(
   }
 }
 
+/** 목업: 차량등록번호로 조회 시 반환할 Vehicle 형태 */
+export interface VehicleLookupResult {
+  manufacturer: string;
+  model: string;
+  variant: string | null;
+  year: number;
+  mileage: number;
+  fuelType: string;
+  /** 원본 목업 행 (API 공통항목 전체) */
+  raw?: Record<string, unknown>;
+}
+
+/** 차량등록번호(번호판) 정규화: 공백·하이픈 제거 */
+function normalizeRegistrationNumber(num: string): string {
+  return num.replace(/\s|-/g, '').trim();
+}
+
+/** 목업: 차량등록번호로 vehicle_lookup_mock 조회 → 앱에서 쓸 Vehicle 형태로 변환 */
+export async function getVehicleLookupByRegistrationNumber(
+  registrationNumber: string
+): Promise<VehicleLookupResult | null> {
+  const supabase = await createServerClient();
+  const key = normalizeRegistrationNumber(registrationNumber);
+  if (!key) return null;
+
+  const { data, error } = await supabase
+    .from('vehicle_lookup_mock')
+    .select('*')
+    .eq('registration_number', key)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  const year = parseInt(String(data.spec_model_year || data.model_year || '0'), 10) || new Date().getFullYear();
+  const manufacturer =
+    typeof data.car_name === 'string' && /^(K3|K5|K7|EV6|스포티지|셀토스|소레뉴|카니발|니로|모닝|레이|스팅어)$/.test(data.car_name)
+      ? '기아'
+      : '현대';
+
+  const mileage =
+    data.mileage != null && typeof data.mileage === 'number' ? data.mileage : 0;
+
+  return {
+    manufacturer,
+    model: String(data.car_name || data.model_type_name || ''),
+    variant: data.form_name ? String(data.form_name) : null,
+    year: year || new Date().getFullYear(),
+    mileage,
+    fuelType: String(data.fuel_name || '가솔린'),
+    raw: data as Record<string, unknown>,
+  };
+}
+
 /**
  * 최근 검증 내역 조회
  * userId가 비어 있으면 [] 반환 (타인 데이터 노출 방지)

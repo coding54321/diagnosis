@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { CheckCircle2, AlertCircle, XCircle, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
-import { Header, Container } from '@/components/layout';
+import { CheckCircle2, AlertCircle, XCircle, ChevronDown, ChevronUp, Loader2, ArrowLeft } from 'lucide-react';
+import { Container } from '@/components/layout';
 import { Card } from '@/components/ui';
 import PriceChart from '@/components/verification/PriceChart';
 import { formatPrice } from '@/lib/utils';
@@ -101,36 +101,50 @@ const ItemDetailPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <>
-        <Header title="항목 상세" showBackButton onBack={() => router.back()} />
-        <main className="min-h-screen bg-hyundai-gray-50">
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-hyundai-gray-300" strokeWidth={1.5} />
-          </div>
-        </main>
-      </>
+      <main className="min-h-screen bg-white">
+        <div className="flex items-center px-4 pt-[env(safe-area-inset-top,0px)]">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="h-12 flex items-center text-hyundai-gray-700"
+            aria-label="뒤로가기"
+          >
+            <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
+          </button>
+        </div>
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-6 h-6 animate-spin text-hyundai-gray-300" strokeWidth={1.5} />
+        </div>
+      </main>
     );
   }
 
   if (!item) {
     return (
-      <>
-        <Header title="항목 상세" showBackButton onBack={() => router.back()} />
-        <main className="min-h-screen bg-hyundai-gray-50">
-          <Container>
-            <div className="text-center px-5 py-16">
-              <p className="text-sm text-hyundai-gray-400">항목을 찾을 수 없습니다</p>
-              <button
-                type="button"
-                onClick={() => router.back()}
-                className="mt-3 text-sm font-medium text-hyundai-gray-900"
-              >
-                돌아가기
-              </button>
-            </div>
-          </Container>
-        </main>
-      </>
+      <main className="min-h-screen bg-white">
+        <div className="flex items-center px-4 pt-[env(safe-area-inset-top,0px)]">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="h-12 flex items-center text-hyundai-gray-700"
+            aria-label="뒤로가기"
+          >
+            <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
+          </button>
+        </div>
+        <Container>
+          <div className="text-center px-5 py-16">
+            <p className="text-sm text-hyundai-gray-400">항목을 찾을 수 없습니다</p>
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="mt-3 text-sm font-medium text-hyundai-gray-900"
+            >
+              돌아가기
+            </button>
+          </div>
+        </Container>
+      </main>
     );
   }
 
@@ -146,16 +160,27 @@ const ItemDetailPage: React.FC = () => {
 
   return (
     <>
-      <Header
-        title={itemName.length > 12 ? `${itemName.slice(0, 12)}…` : itemName || '항목 상세'}
-        showBackButton
-        onBack={() => router.back()}
-      />
+      <main className="min-h-screen bg-white pb-20">
+        {/* 뒤로가기 헤더 */}
+        <div className="flex items-center px-4 pt-[env(safe-area-inset-top,0px)]">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="h-12 flex items-center text-hyundai-gray-700"
+            aria-label="뒤로가기"
+          >
+            <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
+          </button>
+        </div>
 
-      <main className="min-h-screen bg-hyundai-gray-50 pb-20">
         <Container>
-          <div className="py-5 space-y-4">
+          <div className="px-1 pt-2 pb-2">
+            <h1 className="text-[22px] font-bold text-hyundai-gray-900 leading-tight tracking-tight">
+              {itemName || '항목 상세'}
+            </h1>
+          </div>
 
+          <div className="space-y-4">
             {/* 상단 요약 — 금액 + 상태 + 평균 비교 */}
             <div className="px-1 text-center py-4">
               <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full ${config.bg} mb-3`}>

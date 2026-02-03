@@ -2,9 +2,7 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Camera, Image, PenTool, RotateCcw, X, Crop, ChevronRight } from 'lucide-react';
-import { Header } from '@/components/layout';
-import { Button } from '@/components/ui';
+import { Camera, Image, PenTool, RotateCcw, X, Crop, ChevronRight, Zap, ZapOff } from 'lucide-react';
 import ImageCropOverlay from '@/components/verification/ImageCropOverlay';
 
 const CameraPage: React.FC = () => {
@@ -18,6 +16,8 @@ const CameraPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [albumError, setAlbumError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [flashOn, setFlashOn] = useState(false);
+  const [flashSupported, setFlashSupported] = useState(false);
 
   // 카메라 시작
   useEffect(() => {
@@ -64,6 +64,10 @@ const CameraPage: React.FC = () => {
       const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
       setStream(mediaStream);
 
+      const videoTrack = mediaStream.getVideoTracks()[0];
+      const capabilities = videoTrack?.getCapabilities?.() as { torch?: boolean } | undefined;
+      setFlashSupported(Boolean(capabilities?.torch));
+
       if (videoRef.current) {
         const video = videoRef.current;
         video.srcObject = mediaStream;
@@ -95,17 +99,33 @@ const CameraPage: React.FC = () => {
   };
 
   const stopCamera = () => {
+    setFlashOn(false);
     if (stream) {
-      stream.getTracks().forEach((track) => {
-        track.stop();
-      });
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack && 'applyConstraints' in videoTrack) {
+        videoTrack.applyConstraints({ advanced: [{ torch: false }] as unknown as MediaTrackConstraintSet[] }).catch(() => {});
+      }
+      stream.getTracks().forEach((track) => track.stop());
       setStream(null);
     }
     if (videoRef.current) {
       const video = videoRef.current;
       video.pause();
       video.srcObject = null;
-      video.load(); // 비디오 요소 리셋
+      video.load();
+    }
+  };
+
+  const toggleFlash = async () => {
+    if (!stream || !flashSupported) return;
+    const videoTrack = stream.getVideoTracks()[0];
+    if (!videoTrack || !('applyConstraints' in videoTrack)) return;
+    const next = !flashOn;
+    try {
+      await videoTrack.applyConstraints({ advanced: [{ torch: next }] as unknown as MediaTrackConstraintSet[] });
+      setFlashOn(next);
+    } catch {
+      setFlashOn(false);
     }
   };
 
@@ -198,9 +218,42 @@ const CameraPage: React.FC = () => {
           onCancel={() => setShowCrop(false)}
         />
       )}
-      <Header title="견적서 촬영" showBackButton onBack={handleBack} />
+      <main className="flex flex-col h-[100dvh] bg-hyundai-gray-900 overflow-hidden">
+        {/* 얇은 상단바: 왼쪽 플래시, 오른쪽 X 닫기 */}
+        <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 pt-[max(env(safe-area-inset-top,12px),12px)] pb-3 min-h-[52px] bg-black/40 backdrop-blur-sm">
+          <div className="w-10 h-10 flex items-center justify-center">
+            {!capturedImage && (
+              <button
+                type="button"
+                onClick={toggleFlash}
+                disabled={!flashSupported}
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                  flashSupported
+                    ? flashOn
+                      ? 'bg-white/90 text-hyundai-gray-900'
+                      : 'bg-white/20 text-white active:bg-white/30'
+                    : 'bg-white/10 text-white/50 cursor-not-allowed'
+                }`}
+                aria-label={flashOn ? '플래시 끄기' : '플래시 켜기'}
+              >
+                {flashOn ? (
+                  <Zap className="w-5 h-5" strokeWidth={1.5} fill="currentColor" />
+                ) : (
+                  <ZapOff className="w-5 h-5" strokeWidth={1.5} />
+                )}
+              </button>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={handleBack}
+            className="w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center active:bg-white/30 transition-colors"
+            aria-label="닫기"
+          >
+            <X className="w-5 h-5" strokeWidth={1.5} />
+          </button>
+        </div>
 
-      <main className="flex flex-col h-[calc(100dvh-56px)] bg-hyundai-gray-900 overflow-hidden">
         {/* 뷰파인더 - 화면 가득 채움 */}
         <div className="relative flex-1">
           {capturedImage ? (
@@ -366,7 +419,7 @@ const CameraPage: React.FC = () => {
                   </button>
                 </div>
                 {albumError && (
-                  <p className="text-xs text-semantic-error-main text-center">{albumError}</p>
+                  <p className="text-xs text-red-500 text-center">{albumError}</p>
                 )}
               </div>
             </>

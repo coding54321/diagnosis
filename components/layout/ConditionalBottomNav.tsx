@@ -22,7 +22,7 @@ export function ConditionalBottomNav({ items }: ConditionalBottomNavProps) {
   return (
     <>
       <BottomNav items={items} />
-      <div className="h-[calc(60px+env(safe-area-inset-bottom,0px))]" />
+      <div className="h-[calc(52px+env(safe-area-inset-bottom,0px))]" />
     </>
   );
 }

@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Mail, Lock, Loader2 } from 'lucide-react';
-import { Header, Container } from '@/components/layout';
+import { ArrowLeft, Loader2 } from 'lucide-react';
+import { Container } from '@/components/layout';
+import { Input } from '@/components/ui';
 import { toast } from 'sonner';
-import { Card, Input, Button } from '@/components/ui';
 import { signIn } from '@/lib/supabase/auth-client';
 import { getAuthErrorMessage } from '@/lib/auth-messages';
 
@@ -36,84 +36,82 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <>
-      <Header title="로그인" showBackButton onBack={() => router.back()} />
-      
-      <main className="min-h-screen bg-hyundai-gray-50 pb-20">
-        <Container>
-          <div className="py-6">
-            <Card variant="default" padding="lg">
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-h2 text-hyundai-gray-900 mb-2">로그인</h2>
-                  <p className="text-body-2 text-hyundai-gray-600">
-                    계정이 없으신가요?{' '}
-                    <button
-                      onClick={() => router.push('/auth/signup')}
-                      className="text-hyundai-blue-600 font-medium hover:underline"
-                    >
-                      회원가입
-                    </button>
-                  </p>
-                </div>
+    <main className="min-h-screen bg-white">
+      {/* 뒤로가기만 있는 최소 헤더 */}
+      <div className="flex items-center px-4 pt-[env(safe-area-inset-top,0px)]">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="h-12 flex items-center text-hyundai-gray-700"
+          aria-label="뒤로가기"
+        >
+          <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
+        </button>
+      </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <Input
-                    label="이메일"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="example@email.com"
-                    required
-                    fullWidth
-                    icon={Mail}
-                  />
+      <Container>
+        <div className="px-1 pt-4 pb-8">
+          <h1 className="text-[22px] font-bold text-hyundai-gray-900 leading-tight tracking-tight">
+            로그인
+          </h1>
+          <p className="text-sm text-hyundai-gray-400 mt-1.5">
+            계정이 없으신가요?{' '}
+            <button
+              type="button"
+              onClick={() => router.push('/auth/signup')}
+              className="text-hyundai-gray-900 font-medium underline underline-offset-2"
+            >
+              회원가입
+            </button>
+          </p>
+        </div>
 
-                  <Input
-                    label="비밀번호"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="비밀번호를 입력하세요"
-                    required
-                    fullWidth
-                    icon={Lock}
-                  />
+        <form onSubmit={handleSubmit} className="space-y-5 pb-10">
+          <div className="space-y-4">
+            <div>
+              <p className="text-xs text-hyundai-gray-400 mb-1.5 px-0.5">이메일</p>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="example@email.com"
+                required
+                fullWidth
+                className="text-sm"
+              />
+            </div>
 
-                  <div className="flex items-center justify-between">
-                    <button
-                      type="button"
-                      onClick={() => router.push('/auth/forgot-password')}
-                      className="text-body-2 text-hyundai-blue-600 hover:underline"
-                    >
-                      비밀번호를 잊으셨나요?
-                    </button>
-                  </div>
-
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    size="lg"
-                    fullWidth
-                    disabled={isLoading}
-                    className="flex items-center justify-center gap-2"
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        로그인 중...
-                      </>
-                    ) : (
-                      '로그인'
-                    )}
-                  </Button>
-                </form>
-              </div>
-            </Card>
+            <div>
+              <p className="text-xs text-hyundai-gray-400 mb-1.5 px-0.5">비밀번호</p>
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="비밀번호를 입력하세요"
+                required
+                fullWidth
+                className="text-sm"
+              />
+            </div>
           </div>
-        </Container>
-      </main>
-    </>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-3.5 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
+                로그인 중...
+              </>
+            ) : (
+              '로그인'
+            )}
+          </button>
+        </form>
+      </Container>
+    </main>
   );
 };
 
