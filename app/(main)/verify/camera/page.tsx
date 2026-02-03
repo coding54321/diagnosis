@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Camera, Image, PenTool, RotateCcw, X, Crop, ChevronRight, Zap, ZapOff, Loader2 } from 'lucide-react';
 import ImageCropOverlay from '@/components/verification/ImageCropOverlay';
 import { analyzeEstimateImage } from '@/lib/openai/vision';
-import { compressImage } from '@/lib/utils/image';
+import { compressImage, analyzeImageQuality, ImageQualityResult } from '@/lib/utils/image';
 
 const CameraPage: React.FC = () => {
   const router = useRouter();
@@ -24,6 +24,11 @@ const CameraPage: React.FC = () => {
   const [ocrError, setOcrError] = useState<{
     type: 'NOT_ESTIMATE' | 'POOR_QUALITY' | 'ERROR';
     message: string;
+  } | null>(null);
+  const [qualityWarning, setQualityWarning] = useState<{
+    issues: ImageQualityResult['issues'];
+    sharpness: number;
+    brightness: number;
   } | null>(null);
 
   // 카메라 시작
@@ -175,10 +180,11 @@ const CameraPage: React.FC = () => {
 
   const retakePhoto = () => {
     setCapturedImage(null);
+    setQualityWarning(null);
     startCamera();
   };
 
-  const handleUsePhoto = async () => {
+  const runOcrAnalysis = async () => {
     console.log('[DEBUG] handleUsePhoto 호출됨');
     console.log('[DEBUG] capturedImage 존재 여부:', !!capturedImage);
     console.log('[DEBUG] capturedImage 길이:', capturedImage?.length || 0);
@@ -258,6 +264,31 @@ const CameraPage: React.FC = () => {
       console.log('[DEBUG] finally 블록 - isAnalyzing을 false로 설정');
       setIsAnalyzing(false);
     }
+  };
+
+  const handleUsePhoto = async () => {
+    if (!capturedImage) return;
+
+    // 1단계: 로컬 품질 체크 (API 호출 전에)
+    try {
+      const quality = await analyzeImageQuality(capturedImage);
+
+      // 품질 이슈가 있으면 사용자에게 먼저 물어본다
+      if (quality.issues.length > 0) {
+        setQualityWarning({
+          issues: quality.issues,
+          sharpness: quality.sharpness,
+          brightness: quality.brightness,
+        });
+        return;
+      }
+    } catch (e) {
+      // 로컬 품질 분석 실패 시에는 그냥 서버 분석으로 진행
+      console.warn('[DEBUG] 로컬 이미지 품질 분석 실패, 서버 분석으로 진행:', e);
+    }
+
+    // 2단계: 서버 측 OCR 분석
+    await runOcrAnalysis();
   };
 
   const handleBack = () => {
@@ -507,6 +538,34 @@ const CameraPage: React.FC = () => {
                     </button>
                   </>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 로컬 품질 경고 오버레이 */}
+        {qualityWarning && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black/80 z-50">
+            <div className="bg-white rounded-2xl p-6 mx-4 max-w-sm">
+              <p className="text-sm text-hyundai-gray-900 mb-3 font-medium">
+                사진을 조금만 더 선명하게 찍어볼까요?
+              </p>
+              <p className="text-xs text-hyundai-gray-500 mb-4">
+                {qualityWarning.issues.includes('blurry') && '사진이 살짝 흔들려 글자가 흐릿하게 보일 수 있어요. '}
+                {qualityWarning.issues.includes('too_dark') && '화면이 어두워 글자를 제대로 읽기 어려울 수 있어요. '}
+                {qualityWarning.issues.includes('too_bright') && '화면이 너무 밝아 글자가 날아갔을 수 있어요. '}
+                견적서를 또렷하게 인식하기 위해 다시 한 번 촬영을 부탁드려요.
+              </p>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => {
+                    setQualityWarning(null);
+                    retakePhoto();
+                  }}
+                  className="w-full py-2.5 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 transition-colors"
+                >
+                  다시 촬영하기
+                </button>
               </div>
             </div>
           </div>
