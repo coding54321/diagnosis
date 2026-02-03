@@ -5,11 +5,11 @@ import { useRouter } from 'next/navigation';
 import { ChevronRight, Loader2, X, ArrowLeft } from 'lucide-react';
 import { Container } from '@/components/layout';
 import { Card, BottomSheet, Input } from '@/components/ui';
-import { mockEstimate } from '@/lib/mockData';
 import { formatPrice } from '@/lib/utils';
 import { createEstimate, saveVehicle, uploadEstimateImageAction, createVerificationResult, fetchVehicleByRegistrationNumber, fetchVehicle } from '@/lib/supabase/actions';
 import { VerificationEngine } from '@/lib/verification/engine';
 import type { EstimateItem } from '@/types';
+import type { OCRResult } from '@/lib/openai/vision';
 
 /** 차량번호 조회로 채워지는 차량 정보 (주행거리 포함) */
 type VehicleInfoFromLookup = {
@@ -43,13 +43,17 @@ const ReviewPage: React.FC = () => {
   const [editSheetMode, setEditSheetMode] = useState<EditSheetMode>(null);
 
   // 정비소
-  const [shopName, setShopName] = useState(mockEstimate.shopName);
+  const [shopName, setShopName] = useState('');
   const [shopSearchQuery, setShopSearchQuery] = useState('');
   const [shopSearchResults, setShopSearchResults] = useState<BluehandsShop[]>([]);
   const [shopSearching, setShopSearching] = useState(false);
 
   // 정비 항목
-  const [items, setItems] = useState<EstimateItem[]>(() => [...mockEstimate.items]);
+  const [items, setItems] = useState<EstimateItem[]>([]);
+
+  // OCR에서 추출한 차량 정보
+  const [ocrVehicleModel, setOcrVehicleModel] = useState<string | null>(null);
+  const [ocrMileage, setOcrMileage] = useState<number | null>(null);
   const [editItemIndex, setEditItemIndex] = useState<number | null>(null);
   const [editItemForm, setEditItemForm] = useState({ name: '', partCost: 0, laborCost: 0 });
 
@@ -65,7 +69,92 @@ const ReviewPage: React.FC = () => {
 
   useEffect(() => {
     const image = sessionStorage.getItem('capturedEstimateImage');
+    const ocrResultJson = sessionStorage.getItem('ocrResult');
+
     if (image) setCapturedImage(image);
+
+    // OCR 결과가 있으면 초기 상태 설정
+    if (ocrResultJson) {
+      try {
+        const ocrResult: OCRResult = JSON.parse(ocrResultJson);
+
+        if (ocrResult.success && ocrResult.data) {
+          // 정비소명
+          if (ocrResult.data.shopName) {
+            setShopName(ocrResult.data.shopName);
+          }
+
+          // 의뢰일자
+          if (ocrResult.data.date) {
+            setRequestDate(ocrResult.data.date);
+          }
+
+          // 정비 항목
+          if (ocrResult.data.items && ocrResult.data.items.length > 0) {
+            setItems(
+              ocrResult.data.items.map((item, index) => ({
+                id: `ocr-item-${index}`,
+                name: item.name,
+                partCost: item.partCost || 0,
+                laborCost: item.laborCost || 0,
+                totalCost: item.totalCost || (item.partCost || 0) + (item.laborCost || 0),
+                category: item.category || '',
+              }))
+            );
+          }
+
+          // 차량번호
+          if (ocrResult.data.registrationNumber) {
+            setVehicleNumber(ocrResult.data.registrationNumber);
+          }
+
+          // OCR에서 추출한 차종
+          if (ocrResult.data.vehicleModel) {
+            setOcrVehicleModel(ocrResult.data.vehicleModel);
+          }
+
+          // OCR에서 추출한 주행거리
+          if (ocrResult.data.mileage) {
+            setOcrMileage(ocrResult.data.mileage);
+            setEstimateMileage(ocrResult.data.mileage);
+          }
+
+          // VAT 정보
+          if (ocrResult.data.vatIncluded !== undefined) {
+            setVatIncluded(ocrResult.data.vatIncluded);
+          }
+          if (ocrResult.data.vatAmount) {
+            setVatAmount(ocrResult.data.vatAmount);
+          }
+
+          // 부분 인식 안내 (토스트 또는 배지로 표시 가능)
+          if (ocrResult.status === 'PARTIAL') {
+            console.log('일부 항목만 인식되었습니다. 확인 후 수정해주세요.');
+          }
+
+          // OCR에서 차량번호가 있으면 자동으로 차량 정보 조회
+          if (ocrResult.data.registrationNumber) {
+            const num = ocrResult.data.registrationNumber.replace(/\s|-/g, '').trim();
+            fetchVehicleByRegistrationNumber(num).then((res) => {
+              if (res.success && res.data) {
+                setVehicleInfo(res.data);
+                // OCR 주행거리가 있으면 우선 사용, 없으면 조회된 주행거리 사용
+                if (ocrResult.data?.mileage) {
+                  setEstimateMileage(ocrResult.data.mileage);
+                } else if (res.data.mileage > 0) {
+                  setEstimateMileage(res.data.mileage);
+                }
+                setSavedVehicleDismissed(true); // 저장된 차량 선택 UI 숨기기
+              }
+            }).catch(() => {
+              // 조회 실패 시 무시 (사용자가 직접 입력 가능)
+            });
+          }
+        }
+      } catch (error) {
+        console.error('OCR 결과 파싱 오류:', error);
+      }
+    }
 
     // 저장된 차량 정보 불러오기
     const loadSavedVehicle = async () => {
@@ -109,7 +198,7 @@ const ReviewPage: React.FC = () => {
   }, [editSheetOpen, editSheetMode, shopSearchQuery, searchShops]);
 
   const totalAmount = items.reduce((sum, i) => sum + i.totalCost, 0);
-  const estimate = { ...mockEstimate, shopName, items, totalAmount };
+  const estimate = { shopName, items, totalAmount };
 
   const openSheet = (mode: EditSheetMode) => {
     setEditSheetMode(mode);
@@ -392,6 +481,21 @@ const ReviewPage: React.FC = () => {
                         다른 차량
                       </button>
                     </div>
+                  </div>
+                )}
+
+                {/* OCR에서 추출한 차량 정보 표시 (차량 조회 전) */}
+                {!vehicleInfo && (ocrVehicleModel || ocrMileage || vehicleNumber) && (
+                  <div className="mb-3 p-3 bg-blue-50 rounded-xl">
+                    <p className="text-xs text-blue-600 mb-1.5">📋 견적서에서 인식된 정보</p>
+                    <div className="space-y-1 text-sm text-hyundai-gray-700">
+                      {vehicleNumber && <p>차량번호: <span className="font-medium">{vehicleNumber}</span></p>}
+                      {ocrVehicleModel && <p>차종: <span className="font-medium">{ocrVehicleModel}</span></p>}
+                      {ocrMileage && <p>주행거리: <span className="font-medium">{ocrMileage.toLocaleString()}km</span></p>}
+                    </div>
+                    {vehicleLoading && (
+                      <p className="text-xs text-blue-500 mt-2">차량 정보 조회 중...</p>
+                    )}
                   </div>
                 )}
 
