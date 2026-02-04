@@ -217,13 +217,13 @@ export async function analyzeImageQuality(imageBase64: string): Promise<ImageQua
 
           const issues: ImageQualityResult['issues'] = [];
 
-          // 임계값은 경험적 값이며, 실제 운영 중 로그를 보며 조정 가능
-          if (sharpnessNorm < 0.25) {
+          // 임계값은 경험적 값. 너무 엄격하면 정상 사진도 막히므로 느슨하게 설정
+          if (sharpnessNorm < 0.15) {
             issues.push('blurry');
           }
-          if (brightnessNorm < 0.2) {
+          if (brightnessNorm < 0.12) {
             issues.push('too_dark');
-          } else if (brightnessNorm > 0.9) {
+          } else if (brightnessNorm > 0.95) {
             issues.push('too_bright');
           }
 

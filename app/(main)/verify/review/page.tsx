@@ -42,11 +42,12 @@ const ReviewPage: React.FC = () => {
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [editSheetMode, setEditSheetMode] = useState<EditSheetMode>(null);
 
-  // 정비소
+  // 정비소 (전국 표준데이터 검색)
   const [shopName, setShopName] = useState('');
   const [shopSearchQuery, setShopSearchQuery] = useState('');
   const [shopSearchResults, setShopSearchResults] = useState<BluehandsShop[]>([]);
   const [shopSearching, setShopSearching] = useState(false);
+  const [shopLookupLoading, setShopLookupLoading] = useState(false);
 
   // 정비 항목
   const [items, setItems] = useState<EstimateItem[]>([]);
@@ -79,9 +80,21 @@ const ReviewPage: React.FC = () => {
         const ocrResult: OCRResult = JSON.parse(ocrResultJson);
 
         if (ocrResult.success && ocrResult.data) {
-          // 정비소명
+          // 정비소명: DB에서 가장 유사한 결과만 사용, 없으면 빈 칸 (OCR 원본값 사용 안 함)
           if (ocrResult.data.shopName) {
-            setShopName(ocrResult.data.shopName);
+            const ocrShopName = ocrResult.data.shopName.trim();
+            setShopLookupLoading(true);
+            fetch(`/api/shops?q=${encodeURIComponent(ocrShopName)}`)
+              .then((res) => res.json())
+              .then((data: { shops?: (BluehandsShop & { score?: number })[] }) => {
+                if (data.shops && data.shops.length >= 1) {
+                  // 검색 결과가 있으면 가장 유사한 첫 번째 결과를 무조건 사용
+                  setShopName(data.shops[0].업체명);
+                }
+                // 검색 결과가 없으면 빈 칸 유지 (사용자가 직접 검색)
+              })
+              .catch(() => {})
+              .finally(() => setShopLookupLoading(false));
           }
 
           // 의뢰일자
@@ -95,6 +108,7 @@ const ReviewPage: React.FC = () => {
               ocrResult.data.items.map((item, index) => ({
                 id: `ocr-item-${index}`,
                 name: item.name,
+                normalizedName: item.normalizedName,
                 partCost: item.partCost || 0,
                 laborCost: item.laborCost || 0,
                 totalCost: item.totalCost || (item.partCost || 0) + (item.laborCost || 0),
@@ -197,7 +211,10 @@ const ReviewPage: React.FC = () => {
     return () => clearTimeout(t);
   }, [editSheetOpen, editSheetMode, shopSearchQuery, searchShops]);
 
+  // 총 금액 = 항목 합계 (견적서 화면에서는 항목 금액이 보통 부가세 포함이므로 이 합계가 VAT 포함 총액)
   const totalAmount = items.reduce((sum, i) => sum + i.totalCost, 0);
+  // VAT 포함일 때 부가세 = 총액/11 (부가세 포함가 기준: 공급가액×1.1=포함가 → 부가세=포함가/11)
+  const computedVatAmount = vatIncluded ? Math.round(totalAmount / 11) : 0;
   const estimate = { shopName, items, totalAmount };
 
   const openSheet = (mode: EditSheetMode) => {
@@ -307,9 +324,10 @@ const ReviewPage: React.FC = () => {
         mileage,
       };
 
-      const estimateItemsForVerification: EstimateItem[] = savedItems.map((item) => ({
+      const estimateItemsForVerification: EstimateItem[] = savedItems.map((item, index) => ({
         id: item.id,
         name: item.name,
+        normalizedName: estimate.items[index]?.normalizedName,
         partCost: item.part_cost,
         laborCost: item.labor_cost,
         totalCost: item.total_cost,
@@ -378,7 +396,7 @@ const ReviewPage: React.FC = () => {
               견적서 확인
             </h1>
             <p className="text-sm text-hyundai-gray-400 mt-1.5">
-              인식된 내용을 확인하고, 잘못된 부분은 탭해서 수정하세요
+              인식된 내용을 확인하세요. 정비소는 전국 등록 업체에서 검색해 선택할 수 있어요.
             </p>
           </div>
 
@@ -433,17 +451,26 @@ const ReviewPage: React.FC = () => {
 
               <div className="mx-5 border-b border-hyundai-gray-100" />
 
-              {/* 정비소 */}
+              {/* 정비소 (전국 등록 정비업체 검색) */}
               <button
                 type="button"
                 onClick={() => openSheet('shop')}
                 className="w-full flex items-center justify-between px-5 py-4 active:bg-hyundai-gray-50 transition-colors"
               >
-                <div className="text-left">
+                <div className="text-left min-w-0 flex-1">
                   <p className="text-xs text-hyundai-gray-400 mb-0.5">정비소</p>
-                  <p className="text-sm font-medium text-hyundai-gray-900">{estimate.shopName}</p>
+                  {shopLookupLoading ? (
+                    <p className="text-sm text-hyundai-gray-500 flex items-center gap-1.5">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" strokeWidth={1.5} />
+                      전국 등록 업체에서 확인 중...
+                    </p>
+                  ) : estimate.shopName ? (
+                    <p className="text-sm font-medium text-hyundai-gray-900 truncate">{estimate.shopName}</p>
+                  ) : (
+                    <p className="text-sm text-hyundai-gray-400">검색해서 선택</p>
+                  )}
                 </div>
-                <ChevronRight className="w-4 h-4 text-hyundai-gray-300" strokeWidth={1.5} />
+                <ChevronRight className="w-4 h-4 text-hyundai-gray-300 shrink-0 ml-2" strokeWidth={1.5} />
               </button>
 
               <div className="mx-5 border-b border-hyundai-gray-100" />
@@ -560,7 +587,7 @@ const ReviewPage: React.FC = () => {
                 <div className="text-left">
                   <p className="text-xs text-hyundai-gray-400 mb-0.5">부가세</p>
                   <p className="text-sm font-medium text-hyundai-gray-900">
-                    {vatIncluded ? `포함 · ${formatPrice(vatAmount || Math.round(estimate.totalAmount / 11))}` : '미포함'}
+                    {vatIncluded ? `포함 · ${formatPrice(computedVatAmount)}` : '미포함'}
                   </p>
                 </div>
                 <ChevronRight className="w-4 h-4 text-hyundai-gray-300" strokeWidth={1.5} />
@@ -709,6 +736,9 @@ const ReviewPage: React.FC = () => {
 
         {editSheetMode === 'shop' && (
           <div className="space-y-3">
+            <p className="text-xs text-hyundai-gray-500">
+              전국 등록 정비업체에서 검색해요. 업체명·주소로 찾을 수 있어요.
+            </p>
             <Input
               placeholder="업체명, 구·군, 주소로 검색"
               value={shopSearchQuery}
@@ -725,18 +755,23 @@ const ReviewPage: React.FC = () => {
                 <p className="text-xs text-hyundai-gray-400 py-6 text-center">검색 결과가 없어요</p>
               )}
               {!shopSearching &&
-                shopSearchResults.map((shop) => (
+                shopSearchResults.map((shop, idx) => (
                   <button
-                    key={`${shop.업체명}-${shop.주소}`}
+                    key={`${shop.업체명}-${shop.주소}-${idx}`}
                     type="button"
                     onClick={() => {
                       setShopName(shop.업체명);
                       closeSheet();
                     }}
-                    className="w-full text-left px-3 py-3 rounded-xl active:bg-hyundai-gray-50 transition-colors"
+                    className="w-full text-left px-3 py-3 rounded-xl active:bg-hyundai-gray-50 transition-colors border-b border-hyundai-gray-50 last:border-b-0"
                   >
                     <p className="text-sm font-medium text-hyundai-gray-900">{shop.업체명}</p>
-                    <p className="text-xs text-hyundai-gray-400 mt-0.5">{shop.시군구} · {shop.주소}</p>
+                    <p className="text-xs text-hyundai-gray-400 mt-0.5">
+                      {[shop.시군구, shop.주소].filter(Boolean).join(' · ')}
+                    </p>
+                    {shop.전화번호 && (
+                      <p className="text-xs text-hyundai-gray-500 mt-0.5">{shop.전화번호}</p>
+                    )}
                   </button>
                 ))}
             </div>
@@ -777,7 +812,7 @@ const ReviewPage: React.FC = () => {
               <Input
                 type="number"
                 label="VAT 금액 (원)"
-                placeholder={`자동: ${formatPrice(Math.round(estimate.totalAmount / 11))}`}
+                placeholder={`자동: ${formatPrice(computedVatAmount)}`}
                 value={vatAmount > 0 ? String(vatAmount) : ''}
                 onChange={(e) => setVatAmount(Number(e.target.value) || 0)}
                 fullWidth
@@ -786,7 +821,7 @@ const ReviewPage: React.FC = () => {
             <button
               onClick={() => {
                 if (vatIncluded && vatAmount === 0) {
-                  setVatAmount(Math.round(estimate.totalAmount / 11));
+                  setVatAmount(computedVatAmount);
                 }
                 closeSheet();
               }}

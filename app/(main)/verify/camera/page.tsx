@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Camera, Image, PenTool, RotateCcw, X, Crop, ChevronRight, Zap, ZapOff, Loader2 } from 'lucide-react';
+import { Camera, Image, PenTool, RotateCcw, X, Crop, ChevronRight, Zap, ZapOff, Loader2, FileText } from 'lucide-react';
 import ImageCropOverlay from '@/components/verification/ImageCropOverlay';
 import { analyzeEstimateImage } from '@/lib/openai/vision';
 import { compressImage, analyzeImageQuality, ImageQualityResult } from '@/lib/utils/image';
@@ -677,6 +677,16 @@ const CameraPage: React.FC = () => {
                     직접 입력
                   </button>
                 </div>
+                <button
+                  onClick={() => {
+                    stopCamera();
+                    router.push('/verify/paste');
+                  }}
+                  className="w-full flex items-center justify-center gap-1.5 py-3 rounded-xl border border-hyundai-gray-200 text-sm font-medium text-hyundai-gray-700 active:bg-hyundai-gray-50 transition-colors"
+                >
+                  <FileText className="w-4 h-4" strokeWidth={1.5} />
+                  텍스트 붙여넣기
+                </button>
                 {albumError && (
                   <p className="text-xs text-red-500 text-center">{albumError}</p>
                 )}

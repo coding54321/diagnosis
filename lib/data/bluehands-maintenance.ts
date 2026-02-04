@@ -1,6 +1,7 @@
 /**
  * 블루핸즈 표준 작업 목록 데이터
- * public/bluehands_maintenance.csv를 파싱하여 사용
+ * 기준 데이터: Supabase public.maintenance_standard_items (bluehands_maintenance.csv 마이그레이션)
+ * CSV 파싱(parseBluehandsMaintenanceCSV)은 시드/오프라인용 또는 DB 조회 전 목록 구성용
  */
 
 export interface BluehandsMaintenanceItem {

@@ -50,8 +50,9 @@ export class VerificationEngine {
     }
   ): Promise<VerificationResult> {
     // TODO: 실제 데이터베이스 쿼리로 대체
-    // 현재는 목업 데이터 기반 검증
-    const mockData = this.getMockVerificationData(item.name);
+    // 가격 비교는 정규화된 항목명(normalizedName) 우선 사용
+    const lookupName = item.normalizedName?.trim() || item.name;
+    const mockData = this.getMockVerificationData(lookupName);
 
     return {
       status: mockData.status,

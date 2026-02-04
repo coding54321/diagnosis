@@ -5,7 +5,8 @@
 // 견적서 관련 타입
 export interface EstimateItem {
   id: string;
-  name: string; // 정비 항목명
+  name: string; // 정비 항목명 (견적서 원문 - 사용자 표시용)
+  normalizedName?: string; // 블루핸즈 표준 작업명 (가격 비교용)
   partCost: number; // 부품비
   laborCost: number; // 공임비
   totalCost: number; // 총액

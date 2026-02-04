@@ -175,6 +175,78 @@ export type Database = {
           },
         ]
       }
+      maintenance_standard_items: {
+        Row: {
+          category: string
+          created_at: string | null
+          id: string
+          no: number
+          work_name: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          id?: string
+          no: number
+          work_name: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          id?: string
+          no?: number
+          work_name?: string
+        }
+        Relationships: []
+      }
+      national_repair_shops: {
+        Row: {
+          bsn_sttus: string | null
+          created_at: string | null
+          id: string
+          inspofc_nm: string | null
+          inspofc_type: string | null
+          instt_code: string | null
+          latitude: number | null
+          lnmadr: string | null
+          longitude: number | null
+          phone_number: string | null
+          rdnmadr: string | null
+          reference_date: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          bsn_sttus?: string | null
+          created_at?: string | null
+          id?: string
+          inspofc_nm?: string | null
+          inspofc_type?: string | null
+          instt_code?: string | null
+          latitude?: number | null
+          lnmadr?: string | null
+          longitude?: number | null
+          phone_number?: string | null
+          rdnmadr?: string | null
+          reference_date?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          bsn_sttus?: string | null
+          created_at?: string | null
+          id?: string
+          inspofc_nm?: string | null
+          inspofc_type?: string | null
+          instt_code?: string | null
+          latitude?: number | null
+          lnmadr?: string | null
+          longitude?: number | null
+          phone_number?: string | null
+          rdnmadr?: string | null
+          reference_date?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       vehicles: {
         Row: {
           created_at: string | null
