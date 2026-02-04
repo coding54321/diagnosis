@@ -260,3 +260,67 @@ function fuzzySort(
   // Fuse.js 매칭 실패 시 필터링된 결과 그대로 반환
   return filtered.slice(0, limit).map((shop) => ({ ...shop, score: 0.5 }));
 }
+
+/**
+ * 주소 기반 정비소 검색
+ * 주소는 정비소명보다 OCR 오류가 적고 매칭이 정확함
+ * @param address OCR에서 추출한 정비소 주소
+ * @param limit 최대 결과 수
+ */
+export async function searchNationalRepairShopsByAddress(
+  address: string,
+  limit = 10
+): Promise<NationalRepairShopWithScore[]> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return [];
+
+  const supabase = createClient<Database>(url, key);
+  const term = address.trim();
+
+  if (!term) return [];
+
+  // 주소에서 핵심 키워드 추출 (시/군/구 + 동/읍/면/리 + 번지/도로명)
+  const addressTokens = term
+    .replace(/[^가-힣0-9\s-]/g, ' ')
+    .split(/\s+/)
+    .filter((t) => t.length >= 2);
+
+  if (addressTokens.length === 0) return [];
+
+  // 주소 토큰으로 DB 검색 (도로명주소 또는 지번주소)
+  const patterns: string[] = [];
+  for (const token of addressTokens.slice(0, 5)) {
+    patterns.push(`rdnmadr.ilike.%${token}%`);
+    patterns.push(`lnmadr.ilike.%${token}%`);
+  }
+
+  const { data, error } = await supabase
+    .from('national_repair_shops')
+    .select('id, inspofc_nm, inspofc_type, rdnmadr, lnmadr, phone_number')
+    .or(patterns.join(','))
+    .limit(100);
+
+  if (error || !data || data.length === 0) {
+    return [];
+  }
+
+  // 주소 유사도로 정렬 (더 많은 토큰이 매칭될수록 높은 점수)
+  const scored = data.map((row) => {
+    const shopAddr = (row.rdnmadr || row.lnmadr || '').toLowerCase();
+    let matchCount = 0;
+    for (const token of addressTokens) {
+      if (shopAddr.includes(token.toLowerCase())) {
+        matchCount++;
+      }
+    }
+    const score = addressTokens.length > 0 ? matchCount / addressTokens.length : 0;
+    return { ...toDisplay(row), score };
+  });
+
+  // 점수 내림차순 정렬 후 상위 결과만 반환
+  return scored
+    .filter((shop) => shop.score > 0.3) // 최소 30% 이상 매칭
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
+}

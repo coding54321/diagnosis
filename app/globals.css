@@ -162,4 +162,13 @@
   .touch-target {
     @apply min-h-[44px] min-w-[44px];
   }
+
+  /* 스크롤바 숨기기 (iOS 스타일 피커 등) */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }

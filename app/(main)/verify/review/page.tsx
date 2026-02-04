@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronRight, Loader2, X, ArrowLeft } from 'lucide-react';
+import { ChevronRight, Loader2, X, ArrowLeft, Check, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Container } from '@/components/layout';
 import { Card, BottomSheet, Input } from '@/components/ui';
 import { formatPrice } from '@/lib/utils';
@@ -22,13 +22,21 @@ type VehicleInfoFromLookup = {
 };
 import type { BluehandsShop } from '@/lib/data/bluehands-seoul';
 
-type EditSheetMode = 'vehicle' | 'shop' | 'date' | 'vat' | 'item' | null;
+type EditSheetMode = 'vehicle' | 'shop' | 'vat' | 'item' | null;
+
+/** 위자드 스텝 (1~4) */
+type WizardStep = 1 | 2 | 3 | 4;
+
+/** 차량 확인 단계 */
+type VehicleVerificationStep = 'input' | 'checking' | 'owner' | 'confirming' | 'confirmed';
 
 const ReviewPage: React.FC = () => {
   const router = useRouter();
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [showImage, setShowImage] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 위자드 스텝 (1: 성공, 2: 정비정보, 3: 차량정보, 4: 견적목록)
+  const [wizardStep, setWizardStep] = useState<WizardStep>(1);
 
   // 추가 필드
   const [requestDate, setRequestDate] = useState<string>(() => {
@@ -68,6 +76,71 @@ const ReviewPage: React.FC = () => {
   const [savedVehicle, setSavedVehicle] = useState<VehicleInfoFromLookup | null>(null);
   const [savedVehicleDismissed, setSavedVehicleDismissed] = useState(false);
 
+  // 차량 확인 플로우 (차량번호 → 존재확인 → 소유주 → 확정)
+  const [vehicleStep, setVehicleStep] = useState<VehicleVerificationStep>('input');
+  const [ownerName, setOwnerName] = useState<string>('');
+  const [vehicleCheckError, setVehicleCheckError] = useState<string | null>(null);
+
+  // 데이트 피커 (iOS 스타일 스크롤)
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [tempYear, setTempYear] = useState<number>(new Date().getFullYear());
+  const [tempMonth, setTempMonth] = useState<number>(new Date().getMonth() + 1);
+  const [tempDay, setTempDay] = useState<number>(new Date().getDate());
+
+  // 데이트 피커 스크롤 ref
+  const yearScrollRef = useRef<HTMLDivElement>(null);
+  const monthScrollRef = useRef<HTMLDivElement>(null);
+  const dayScrollRef = useRef<HTMLDivElement>(null);
+
+  // Step 1 자동 전환
+  useEffect(() => {
+    if (wizardStep === 1) {
+      const timer = setTimeout(() => {
+        setWizardStep(2);
+      }, 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [wizardStep]);
+
+  // 데이트 피커 열릴 때 선택된 값으로 스크롤
+  useEffect(() => {
+    if (showDatePicker) {
+      // 약간의 지연 후 스크롤 (BottomSheet 애니메이션 완료 대기)
+      const timer = setTimeout(() => {
+        const ITEM_HEIGHT = 48; // h-12
+        const PADDING_TOP = 72; // 상단 패딩
+
+        // 년도 스크롤 (배열 인덱스 기준)
+        const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
+        const yearIndex = years.indexOf(tempYear);
+        if (yearScrollRef.current && yearIndex >= 0) {
+          yearScrollRef.current.scrollTo({
+            top: PADDING_TOP + yearIndex * ITEM_HEIGHT - 72,
+            behavior: 'instant',
+          });
+        }
+
+        // 월 스크롤 (1-12월, 인덱스는 0-11)
+        if (monthScrollRef.current) {
+          monthScrollRef.current.scrollTo({
+            top: PADDING_TOP + (tempMonth - 1) * ITEM_HEIGHT - 72,
+            behavior: 'instant',
+          });
+        }
+
+        // 일 스크롤
+        if (dayScrollRef.current) {
+          dayScrollRef.current.scrollTo({
+            top: PADDING_TOP + (tempDay - 1) * ITEM_HEIGHT - 72,
+            behavior: 'instant',
+          });
+        }
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showDatePicker]); // 피커가 열릴 때만 실행 (값 변경 시는 무시)
+
   useEffect(() => {
     const image = sessionStorage.getItem('capturedEstimateImage');
     const ocrResultJson = sessionStorage.getItem('ocrResult');
@@ -80,16 +153,24 @@ const ReviewPage: React.FC = () => {
         const ocrResult: OCRResult = JSON.parse(ocrResultJson);
 
         if (ocrResult.success && ocrResult.data) {
-          // 정비소명: DB에서 가장 유사한 결과만 사용, 없으면 빈 칸 (OCR 원본값 사용 안 함)
-          if (ocrResult.data.shopName) {
-            const ocrShopName = ocrResult.data.shopName.trim();
+          // 정비소명: 주소 우선 검색 후 정비소명으로 검색, 없으면 빈 칸
+          const ocrShopName = ocrResult.data.shopName?.trim() || '';
+          const ocrShopAddress = ocrResult.data.shopAddress?.trim() || '';
+
+          if (ocrShopAddress || ocrShopName) {
             setShopLookupLoading(true);
-            fetch(`/api/shops?q=${encodeURIComponent(ocrShopName)}`)
+            // 주소가 있으면 주소를 파라미터로 전달, 정비소명도 함께 전달
+            const params = new URLSearchParams();
+            if (ocrShopName) params.set('q', ocrShopName);
+            if (ocrShopAddress) params.set('address', ocrShopAddress);
+
+            fetch(`/api/shops?${params.toString()}`)
               .then((res) => res.json())
-              .then((data: { shops?: (BluehandsShop & { score?: number })[] }) => {
+              .then((data: { shops?: (BluehandsShop & { score?: number })[]; matchedBy?: string }) => {
                 if (data.shops && data.shops.length >= 1) {
-                  // 검색 결과가 있으면 가장 유사한 첫 번째 결과를 무조건 사용
+                  // 검색 결과가 있으면 첫 번째 결과 사용
                   setShopName(data.shops[0].업체명);
+                  console.log('[shop-match] 매칭 방식:', data.matchedBy, '결과:', data.shops[0].업체명);
                 }
                 // 검색 결과가 없으면 빈 칸 유지 (사용자가 직접 검색)
               })
@@ -97,9 +178,17 @@ const ReviewPage: React.FC = () => {
               .finally(() => setShopLookupLoading(false));
           }
 
-          // 의뢰일자
+          // 의뢰일자 (오늘 포함 이전만 허용 — 미래일 경우 오늘로)
           if (ocrResult.data.date) {
-            setRequestDate(ocrResult.data.date);
+            const today = new Date();
+            const todayYmd = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            const dateToSet = ocrResult.data.date > todayYmd ? todayYmd : ocrResult.data.date;
+            setRequestDate(dateToSet);
+            // 데이트 피커 초기값 설정
+            const [y, m, d] = dateToSet.split('-').map(Number);
+            setTempYear(y);
+            setTempMonth(m);
+            setTempDay(d);
           }
 
           // 정비 항목
@@ -235,31 +324,50 @@ const ReviewPage: React.FC = () => {
     return `${y}.${m}.${d}`;
   };
 
-  /** 차량번호로 차량 정보 불러오기 (카드·시트 공통) */
-  const handleFetchVehicleByNumber = async (numberToUse?: string) => {
-    const num = (numberToUse ?? vehicleNumber).replace(/\s|-/g, '').trim();
-    if (!num) {
-      alert('차량번호를 입력해 주세요.');
-      return;
-    }
-    setVehicleLoading(true);
+  const todayStr = (() => {
+    const t = new Date();
+    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+  })();
+
+  /** 차량번호로 차량 정보 불러오기 */
+  const handleCheckVehicle = async () => {
+    if (!vehicleNumber.trim()) return;
+    setVehicleStep('checking');
+    setVehicleCheckError(null);
     try {
-      const res = await fetchVehicleByRegistrationNumber(num);
+      const res = await fetchVehicleByRegistrationNumber(vehicleNumber.replace(/\s|-/g, '').trim());
       if (res.success && res.data) {
         setVehicleInfo(res.data);
-        setEstimateMileage(res.data.mileage > 0 ? res.data.mileage : 0);
-        setVehicleNumber(num); // 표시용 통일 (예: 12가3456)
+        if (ocrMileage) {
+          setEstimateMileage(ocrMileage);
+        } else if (res.data.mileage > 0) {
+          setEstimateMileage(res.data.mileage);
+        }
+        setVehicleStep('owner');
       } else {
-        alert(res.error ?? '등록된 차량이 없어요. 아래에서 제조사·차종 등을 직접 입력해 주세요.');
+        setVehicleCheckError('등록된 차량을 찾을 수 없어요. 차량번호를 다시 확인해 주세요.');
+        setVehicleStep('input');
       }
-    } finally {
-      setVehicleLoading(false);
+    } catch {
+      setVehicleCheckError('조회 중 오류가 발생했어요. 다시 시도해 주세요.');
+      setVehicleStep('input');
     }
   };
 
+  /** 소유주 확인 */
+  const handleConfirmOwner = () => {
+    if (!ownerName.trim()) {
+      setVehicleCheckError('소유주 이름을 입력해 주세요.');
+      return;
+    }
+    // TODO: 실제 API 연동 시 소유주 확인 로직 추가
+    setVehicleStep('confirmed');
+    setVehicleCheckError(null);
+  };
+
   const handleVerify = async () => {
-    if (!vehicleInfo) {
-      alert('차량 정보를 입력해 주세요. 차량번호를 입력하고 [차량 정보 불러오기]를 눌러 주세요.');
+    if (!vehicleInfo || vehicleStep !== 'confirmed') {
+      alert('차량 정보를 먼저 확인해 주세요. 차량번호 조회 후 소유주를 입력해 주세요.');
       return;
     }
     const mileage = estimateMileage > 0 ? estimateMileage : vehicleInfo.mileage;
@@ -375,302 +483,574 @@ const ReviewPage: React.FC = () => {
     }
   };
 
-  return (
-    <>
-      <main className="min-h-screen bg-white pb-36">
-        {/* 뒤로가기 헤더 */}
-        <div className="flex items-center px-4 pt-[env(safe-area-inset-top,0px)]">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="h-12 flex items-center text-hyundai-gray-700"
-            aria-label="뒤로가기"
-          >
-            <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
-          </button>
-        </div>
+  // 날짜 유효성 검사 (오늘 이전만)
+  const isDateValid = (y: number, m: number, d: number) => {
+    const today = new Date();
+    const selected = new Date(y, m - 1, d);
+    return selected <= today;
+  };
 
-        <Container>
-          <div className="px-1 pt-4 pb-6">
-            <h1 className="text-[22px] font-bold text-hyundai-gray-900 leading-tight tracking-tight">
-              견적서 확인
-            </h1>
-            <p className="text-sm text-hyundai-gray-400 mt-1.5">
-              인식된 내용을 확인하세요. 정비소는 전국 등록 업체에서 검색해 선택할 수 있어요.
-            </p>
+  // 해당 월의 일수 계산
+  const getDaysInMonth = (year: number, month: number) => {
+    return new Date(year, month, 0).getDate();
+  };
+
+  // 데이트 피커에서 날짜 선택 확정
+  const confirmDate = () => {
+    const daysInMonth = getDaysInMonth(tempYear, tempMonth);
+    const day = Math.min(tempDay, daysInMonth);
+    const dateStr = `${tempYear}-${String(tempMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    setRequestDate(dateStr);
+    setShowDatePicker(false);
+  };
+
+  // ========== 위자드 스텝별 렌더링 ==========
+
+  // Step 1: 성공 화면
+  const renderStep1 = () => (
+    <div className="flex flex-col items-center justify-center min-h-[70vh] px-6">
+      <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-6 animate-in zoom-in duration-300">
+        <CheckCircle2 className="w-10 h-10 text-green-500" strokeWidth={1.5} />
+      </div>
+      <h1 className="text-2xl font-bold text-hyundai-gray-900 text-center mb-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        견적서가 입력되었어요
+      </h1>
+      <p className="text-base text-hyundai-gray-500 text-center leading-relaxed animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
+        정확한 견적 검증을 위해<br />
+        몇 가지 정보를 확인할게요
+      </p>
+      <div className="mt-8 flex items-center gap-2 text-sm text-hyundai-gray-400 animate-in fade-in duration-700 delay-500">
+        <Loader2 className="w-4 h-4 animate-spin" />
+        잠시만 기다려주세요...
+      </div>
+    </div>
+  );
+
+  // Step 2: 정비 정보 (날짜 + 정비소)
+  const renderStep2 = () => (
+    <div className="px-5">
+      {/* 질문 헤더 */}
+      <div className="pt-8 pb-6">
+        <h1 className="text-[26px] font-bold text-hyundai-gray-900 leading-tight">
+          {formatDate(requestDate)}에<br />
+          {shopLookupLoading ? (
+            <span className="text-hyundai-gray-400">정비소 확인 중...</span>
+          ) : shopName ? (
+            <span className="text-hyundai-primary">{shopName}</span>
+          ) : (
+            <span className="text-hyundai-gray-400">정비소</span>
+          )}
+          을<br />
+          방문했어요
+        </h1>
+        <p className="text-sm text-hyundai-gray-400 mt-3">
+          날짜와 정비소 정보가 맞는지 확인해주세요
+        </p>
+      </div>
+
+      {/* 수정 카드들 */}
+      <div className="space-y-3">
+        {/* 날짜 수정 */}
+        <button
+          type="button"
+          onClick={() => setShowDatePicker(true)}
+          className="w-full flex items-center justify-between p-4 bg-hyundai-gray-50 rounded-2xl active:bg-hyundai-gray-100 transition-colors"
+        >
+          <div className="text-left">
+            <p className="text-xs text-hyundai-gray-400 mb-1">방문일</p>
+            <p className="text-base font-medium text-hyundai-gray-900">{formatDate(requestDate)}</p>
           </div>
+          <span className="text-sm text-hyundai-primary font-medium">변경</span>
+        </button>
 
-          <div className="space-y-4">
-
-            {/* 촬영 이미지 (축소 썸네일) */}
-            {capturedImage && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setShowImage(!showImage)}
-                  className="w-full flex items-center gap-3 px-4 py-3 bg-white rounded-2xl active:bg-hyundai-gray-50 transition-colors"
-                >
-                  <div className="w-10 h-10 rounded-lg overflow-hidden bg-hyundai-gray-100 shrink-0">
-                    <img src={capturedImage} alt="" className="w-full h-full object-cover" />
-                  </div>
-                  <span className="text-sm text-hyundai-gray-700 flex-1 text-left">
-                    촬영된 견적서
-                  </span>
-                  <span className="text-xs text-hyundai-gray-400">
-                    {showImage ? '숨기기' : '보기'}
-                  </span>
-                </button>
-                {showImage && (
-                  <div className="relative rounded-2xl overflow-hidden">
-                    <img src={capturedImage} alt="촬영된 견적서" className="w-full h-auto bg-hyundai-gray-100" />
-                    <button
-                      onClick={() => setShowImage(false)}
-                      className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 flex items-center justify-center text-white"
-                    >
-                      <X className="w-4 h-4" strokeWidth={1.5} />
-                    </button>
-                  </div>
-                )}
-              </>
+        {/* 정비소 수정 */}
+        <button
+          type="button"
+          onClick={() => openSheet('shop')}
+          className="w-full flex items-center justify-between p-4 bg-hyundai-gray-50 rounded-2xl active:bg-hyundai-gray-100 transition-colors"
+        >
+          <div className="text-left flex-1 min-w-0">
+            <p className="text-xs text-hyundai-gray-400 mb-1">정비소</p>
+            {shopLookupLoading ? (
+              <p className="text-sm text-hyundai-gray-500 flex items-center gap-1.5">
+                <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" strokeWidth={1.5} />
+                전국 등록 업체에서 확인 중...
+              </p>
+            ) : shopName ? (
+              <p className="text-base font-medium text-hyundai-gray-900 truncate">{shopName}</p>
+            ) : (
+              <p className="text-sm text-hyundai-gray-400">정비소를 선택해주세요</p>
             )}
-
-            {/* 견적 정보 — 하나의 카드에 디바이더 패턴 */}
-            <Card variant="default" padding="none">
-              {/* 의뢰일자 */}
-              <button
-                type="button"
-                onClick={() => openSheet('date')}
-                className="w-full flex items-center justify-between px-5 py-4 active:bg-hyundai-gray-50 transition-colors"
-              >
-                <div className="text-left">
-                  <p className="text-xs text-hyundai-gray-400 mb-0.5">의뢰일자</p>
-                  <p className="text-sm font-medium text-hyundai-gray-900">{formatDate(requestDate)}</p>
-                </div>
-                <ChevronRight className="w-4 h-4 text-hyundai-gray-300" strokeWidth={1.5} />
-              </button>
-
-              <div className="mx-5 border-b border-hyundai-gray-100" />
-
-              {/* 정비소 (전국 등록 정비업체 검색) */}
-              <button
-                type="button"
-                onClick={() => openSheet('shop')}
-                className="w-full flex items-center justify-between px-5 py-4 active:bg-hyundai-gray-50 transition-colors"
-              >
-                <div className="text-left min-w-0 flex-1">
-                  <p className="text-xs text-hyundai-gray-400 mb-0.5">정비소</p>
-                  {shopLookupLoading ? (
-                    <p className="text-sm text-hyundai-gray-500 flex items-center gap-1.5">
-                      <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" strokeWidth={1.5} />
-                      전국 등록 업체에서 확인 중...
-                    </p>
-                  ) : estimate.shopName ? (
-                    <p className="text-sm font-medium text-hyundai-gray-900 truncate">{estimate.shopName}</p>
-                  ) : (
-                    <p className="text-sm text-hyundai-gray-400">검색해서 선택</p>
-                  )}
-                </div>
-                <ChevronRight className="w-4 h-4 text-hyundai-gray-300 shrink-0 ml-2" strokeWidth={1.5} />
-              </button>
-
-              <div className="mx-5 border-b border-hyundai-gray-100" />
-
-              {/* 차량 정보: 저장된 차량 사용 or 차량번호 입력 */}
-              <div className="px-5 py-4">
-                <p className="text-xs text-hyundai-gray-400 mb-2">차량</p>
-
-                {/* 저장된 내 차 정보가 있고, 아직 차량 정보를 설정하지 않았을 때 */}
-                {savedVehicle && !vehicleInfo && !savedVehicleDismissed && (
-                  <div className="mb-3 p-3 bg-hyundai-gray-50 rounded-xl">
-                    <p className="text-xs text-hyundai-gray-500 mb-2">저장된 내 차 정보가 있어요</p>
-                    <p className="text-sm font-medium text-hyundai-gray-900 mb-2.5">
-                      {savedVehicle.manufacturer} {savedVehicle.model}
-                      {savedVehicle.variant ? ` ${savedVehicle.variant}` : ''} · {savedVehicle.year}년식 · {savedVehicle.fuelType}
-                      {savedVehicle.mileage > 0 ? ` · ${savedVehicle.mileage.toLocaleString()}km` : ''}
-                    </p>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setVehicleInfo(savedVehicle);
-                          setEstimateMileage(savedVehicle.mileage);
-                          setSavedVehicleDismissed(true);
-                        }}
-                        className="flex-1 py-2 rounded-lg bg-hyundai-gray-900 text-white text-xs font-medium active:bg-hyundai-gray-800 transition-colors"
-                      >
-                        이 차량으로 검증
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setSavedVehicleDismissed(true)}
-                        className="py-2 px-3 rounded-lg bg-white text-hyundai-gray-500 text-xs font-medium active:bg-hyundai-gray-100 transition-colors border border-hyundai-gray-200"
-                      >
-                        다른 차량
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* OCR에서 추출한 차량 정보 표시 (차량 조회 전) */}
-                {!vehicleInfo && (ocrVehicleModel || ocrMileage || vehicleNumber) && (
-                  <div className="mb-3 p-3 bg-blue-50 rounded-xl">
-                    <p className="text-xs text-blue-600 mb-1.5">📋 견적서에서 인식된 정보</p>
-                    <div className="space-y-1 text-sm text-hyundai-gray-700">
-                      {vehicleNumber && <p>차량번호: <span className="font-medium">{vehicleNumber}</span></p>}
-                      {ocrVehicleModel && <p>차종: <span className="font-medium">{ocrVehicleModel}</span></p>}
-                      {ocrMileage && <p>주행거리: <span className="font-medium">{ocrMileage.toLocaleString()}km</span></p>}
-                    </div>
-                    {vehicleLoading && (
-                      <p className="text-xs text-blue-500 mt-2">차량 정보 조회 중...</p>
-                    )}
-                  </div>
-                )}
-
-                {/* 차량번호 입력 (저장된 차량 미사용 시) */}
-                {(savedVehicleDismissed || !savedVehicle || vehicleInfo) && !vehicleInfo && (
-                  <>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="flex-1 min-w-0">
-                        <Input
-                          placeholder="예: 12가3456"
-                          value={vehicleNumber}
-                          onChange={(e) => setVehicleNumber(e.target.value.trim())}
-                          className="text-sm"
-                          fullWidth
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleFetchVehicleByNumber()}
-                        disabled={vehicleLoading || !vehicleNumber.trim()}
-                        className="shrink-0 py-2 px-3 rounded-lg bg-hyundai-gray-100 text-hyundai-gray-800 text-xs font-medium active:bg-hyundai-gray-200 disabled:opacity-50 disabled:pointer-events-none"
-                      >
-                        {vehicleLoading ? '조회 중...' : '차량 정보 불러오기'}
-                      </button>
-                    </div>
-                    <p className="text-xs text-hyundai-gray-400">
-                      차량번호를 입력한 뒤 버튼을 누르면 제조사·차종 등이 자동으로 채워져요.
-                    </p>
-                  </>
-                )}
-
-                {/* 조회된 차량 정보 표시 */}
-                {vehicleInfo && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => openSheet('vehicle')}
-                      className="w-full text-left -mx-1 px-1 py-1 rounded-lg active:bg-hyundai-gray-50 transition-colors"
-                    >
-                      <p className="text-sm font-medium text-hyundai-gray-900">
-                        {vehicleInfo.manufacturer} {vehicleInfo.model}
-                        {vehicleInfo.variant ? ` ${vehicleInfo.variant}` : ''} · {vehicleInfo.year}년식 · {vehicleInfo.fuelType}
-                        {estimateMileage > 0 ? ` · ${estimateMileage.toLocaleString()}km` : ''}
-                      </p>
-                      <p className="text-xs text-hyundai-gray-400 mt-0.5">탭하여 수정</p>
-                    </button>
-                    {estimateMileage <= 0 && (
-                      <p className="text-xs text-amber-600 mt-0.5">주행거리를 입력해 주세요.</p>
-                    )}
-                  </>
-                )}
-              </div>
-
-              <div className="mx-5 border-b border-hyundai-gray-100" />
-
-              {/* VAT */}
-              <button
-                type="button"
-                onClick={() => openSheet('vat')}
-                className="w-full flex items-center justify-between px-5 py-4 active:bg-hyundai-gray-50 transition-colors"
-              >
-                <div className="text-left">
-                  <p className="text-xs text-hyundai-gray-400 mb-0.5">부가세</p>
-                  <p className="text-sm font-medium text-hyundai-gray-900">
-                    {vatIncluded ? `포함 · ${formatPrice(computedVatAmount)}` : '미포함'}
-                  </p>
-                </div>
-                <ChevronRight className="w-4 h-4 text-hyundai-gray-300" strokeWidth={1.5} />
-              </button>
-            </Card>
-
-            {/* 정비 항목 */}
-            <div>
-              <div className="flex items-center justify-between px-1 mb-2">
-                <h3 className="text-sm font-bold text-hyundai-gray-900">
-                  정비 항목
-                </h3>
-                <span className="text-xs text-hyundai-gray-400">{items.length}건</span>
-              </div>
-              <Card variant="default" padding="none">
-                {estimate.items.map((item, index) => (
-                  <React.Fragment key={item.id}>
-                    {index > 0 && <div className="mx-5 border-b border-hyundai-gray-100" />}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditItemIndex(index);
-                        setEditItemForm({
-                          name: item.name,
-                          partCost: item.partCost,
-                          laborCost: item.laborCost,
-                        });
-                        openSheet('item');
-                      }}
-                      className="w-full px-5 py-4 active:bg-hyundai-gray-50 transition-colors text-left"
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <p className="text-sm font-medium text-hyundai-gray-900">
-                          {item.name}
-                        </p>
-                        <p className="text-sm font-bold text-hyundai-gray-900 shrink-0 ml-3">
-                          {formatPrice(item.totalCost)}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-hyundai-gray-400">
-                        <span>부품 {formatPrice(item.partCost)}</span>
-                        <span className="text-hyundai-gray-200">|</span>
-                        <span>공임 {formatPrice(item.laborCost)}</span>
-                      </div>
-                    </button>
-                  </React.Fragment>
-                ))}
-              </Card>
-            </div>
           </div>
-        </Container>
+          <span className="text-sm text-hyundai-primary font-medium shrink-0 ml-2">
+            {shopName ? '변경' : '검색'}
+          </span>
+        </button>
+      </div>
 
-        {/* 하단 고정 바 */}
-        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-hyundai-gray-100">
-          <div className="max-w-lg mx-auto px-5 py-4">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-hyundai-gray-400">총 금액</span>
-              <div className="text-right">
-                <span className="text-xl font-bold text-hyundai-gray-900">
-                  {formatPrice(estimate.totalAmount)}
-                </span>
-                <span className="text-xs text-hyundai-gray-400 ml-1">
-                  {vatIncluded ? '(VAT 포함)' : '(VAT 미포함)'}
-                </span>
-              </div>
-            </div>
+      {/* 다음 버튼 */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-hyundai-gray-100 px-5 py-4 pb-[calc(env(safe-area-inset-bottom)+16px)]">
+        <button
+          type="button"
+          onClick={() => setWizardStep(3)}
+          disabled={!shopName || shopLookupLoading}
+          className="w-full py-4 rounded-2xl bg-hyundai-gray-900 text-white text-base font-semibold active:bg-hyundai-gray-800 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+        >
+          다음
+        </button>
+      </div>
+    </div>
+  );
+
+  // Step 3: 차량 정보 (차량번호 + 소유주)
+  const renderStep3 = () => (
+    <div className="px-5">
+      {/* 질문 헤더 */}
+      <div className="pt-8 pb-6">
+        <h1 className="text-[26px] font-bold text-hyundai-gray-900 leading-tight">
+          어떤 차량의<br />
+          견적서인가요?
+        </h1>
+        <p className="text-sm text-hyundai-gray-400 mt-3">
+          차량 정보를 확인하면 더 정확한 검증이 가능해요
+        </p>
+      </div>
+
+      {/* 저장된 내 차 정보가 있고, 아직 차량 정보를 설정하지 않았을 때 */}
+      {savedVehicle && !vehicleInfo && !savedVehicleDismissed && vehicleStep === 'input' && (
+        <div className="mb-4 p-4 bg-hyundai-gray-50 rounded-2xl">
+          <p className="text-xs text-hyundai-gray-500 mb-2">저장된 내 차 정보</p>
+          <p className="text-base font-medium text-hyundai-gray-900 mb-3">
+            {savedVehicle.manufacturer} {savedVehicle.model}
+            {savedVehicle.variant ? ` ${savedVehicle.variant}` : ''} · {savedVehicle.year}년식
+          </p>
+          <div className="flex gap-2">
             <button
-              onClick={handleVerify}
-              disabled={isSubmitting}
-              className="w-full py-3.5 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              type="button"
+              onClick={() => {
+                setVehicleInfo(savedVehicle);
+                setEstimateMileage(savedVehicle.mileage);
+                setSavedVehicleDismissed(true);
+                setVehicleStep('confirmed');
+              }}
+              className="flex-1 py-2.5 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 transition-colors"
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
-                  저장 중...
-                </>
-              ) : (
-                '검증하기'
-              )}
+              이 차량 선택
+            </button>
+            <button
+              type="button"
+              onClick={() => setSavedVehicleDismissed(true)}
+              className="py-2.5 px-4 rounded-xl bg-white text-hyundai-gray-500 text-sm font-medium active:bg-hyundai-gray-100 transition-colors border border-hyundai-gray-200"
+            >
+              다른 차량
             </button>
           </div>
         </div>
+      )}
+
+      {/* 차량 확인 플로우 */}
+      {(savedVehicleDismissed || !savedVehicle) && vehicleStep !== 'confirmed' && (
+        <div className="space-y-4">
+          {/* OCR에서 인식된 정보 */}
+          {(ocrVehicleModel || ocrMileage || vehicleNumber) && vehicleStep === 'input' && (
+            <div className="p-4 bg-blue-50 rounded-2xl">
+              <p className="text-xs text-blue-600 mb-1">견적서에서 인식됨</p>
+              <div className="text-sm text-blue-900">
+                {vehicleNumber && <span className="font-medium">{vehicleNumber}</span>}
+                {vehicleNumber && ocrVehicleModel && <span> · </span>}
+                {ocrVehicleModel && <span>{ocrVehicleModel}</span>}
+                {(vehicleNumber || ocrVehicleModel) && ocrMileage && <span> · </span>}
+                {ocrMileage && <span>{ocrMileage.toLocaleString()}km</span>}
+              </div>
+            </div>
+          )}
+
+          {/* Step 3-1: 차량번호 입력 */}
+          {vehicleStep === 'input' && (
+            <div className="space-y-3">
+              <label className="block">
+                <span className="text-sm font-medium text-hyundai-gray-700 mb-2 block">차량번호</span>
+                <Input
+                  placeholder="예: 12가3456"
+                  value={vehicleNumber}
+                  onChange={(e) => {
+                    setVehicleNumber(e.target.value.trim());
+                    setVehicleCheckError(null);
+                  }}
+                  className="text-base"
+                  fullWidth
+                />
+              </label>
+              {vehicleCheckError && (
+                <p className="text-xs text-red-500 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {vehicleCheckError}
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={handleCheckVehicle}
+                disabled={!vehicleNumber.trim()}
+                className="w-full py-3.5 rounded-xl bg-hyundai-gray-100 text-hyundai-gray-800 text-sm font-medium active:bg-hyundai-gray-200 disabled:opacity-50 disabled:pointer-events-none"
+              >
+                차량 조회
+              </button>
+            </div>
+          )}
+
+          {/* Step 3-1.5: 조회 중 */}
+          {vehicleStep === 'checking' && (
+            <div className="flex flex-col items-center py-8">
+              <Loader2 className="w-8 h-8 animate-spin text-hyundai-gray-400 mb-3" />
+              <p className="text-sm text-hyundai-gray-500">차량 정보를 조회하고 있어요...</p>
+            </div>
+          )}
+
+          {/* Step 3-2: 소유주 확인 */}
+          {vehicleStep === 'owner' && vehicleInfo && (
+            <div className="space-y-4">
+              {/* 조회된 차량 정보 */}
+              <div className="p-4 bg-green-50 rounded-2xl">
+                <div className="flex items-start gap-2">
+                  <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shrink-0 mt-0.5">
+                    <Check className="w-3 h-3 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-base font-medium text-hyundai-gray-900">
+                      {vehicleInfo.manufacturer} {vehicleInfo.model}
+                      {vehicleInfo.variant ? ` ${vehicleInfo.variant}` : ''}
+                    </p>
+                    <p className="text-sm text-hyundai-gray-500 mt-0.5">
+                      {vehicleNumber} · {vehicleInfo.year}년식 · {vehicleInfo.fuelType}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 소유주 입력 */}
+              <label className="block">
+                <span className="text-sm font-medium text-hyundai-gray-700 mb-2 block">소유주 이름</span>
+                <Input
+                  placeholder="차량등록증에 기재된 이름"
+                  value={ownerName}
+                  onChange={(e) => {
+                    setOwnerName(e.target.value);
+                    setVehicleCheckError(null);
+                  }}
+                  className="text-base"
+                  fullWidth
+                />
+                <p className="text-xs text-hyundai-gray-400 mt-1.5">
+                  차량등록증에 기재된 소유주명을 입력해주세요
+                </p>
+              </label>
+              {vehicleCheckError && (
+                <p className="text-xs text-red-500 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {vehicleCheckError}
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={handleConfirmOwner}
+                disabled={!ownerName.trim()}
+                className="w-full py-3.5 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 disabled:opacity-50 disabled:pointer-events-none"
+              >
+                확인
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 확정된 상태 */}
+      {vehicleStep === 'confirmed' && vehicleInfo && (
+        <div className="space-y-3">
+          <div className="p-4 bg-green-50 rounded-2xl">
+            <div className="flex items-start gap-2">
+              <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shrink-0 mt-0.5">
+                <Check className="w-3 h-3 text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="text-base font-medium text-hyundai-gray-900">
+                  {vehicleInfo.manufacturer} {vehicleInfo.model}
+                  {vehicleInfo.variant ? ` ${vehicleInfo.variant}` : ''}
+                </p>
+                <p className="text-sm text-hyundai-gray-500 mt-0.5">
+                  {vehicleNumber} · {vehicleInfo.year}년식 · {vehicleInfo.fuelType}
+                  {estimateMileage > 0 ? ` · ${estimateMileage.toLocaleString()}km` : ''}
+                </p>
+                {ownerName && (
+                  <p className="text-sm text-green-600 mt-1">소유주: {ownerName}</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setVehicleStep('input');
+              setVehicleInfo(null);
+              setOwnerName('');
+            }}
+            className="text-sm text-hyundai-gray-500 underline"
+          >
+            다른 차량으로 변경
+          </button>
+        </div>
+      )}
+
+      {/* 다음 버튼 */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-hyundai-gray-100 px-5 py-4 pb-[calc(env(safe-area-inset-bottom)+16px)]">
+        <button
+          type="button"
+          onClick={() => setWizardStep(4)}
+          disabled={vehicleStep !== 'confirmed'}
+          className="w-full py-4 rounded-2xl bg-hyundai-gray-900 text-white text-base font-semibold active:bg-hyundai-gray-800 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+        >
+          다음
+        </button>
+      </div>
+    </div>
+  );
+
+  // Step 4: 견적 목록 + 검증하기
+  const renderStep4 = () => (
+    <div className="px-5 pb-36">
+      {/* 질문 헤더 */}
+      <div className="pt-8 pb-6">
+        <h1 className="text-[26px] font-bold text-hyundai-gray-900 leading-tight">
+          견적 내역을<br />
+          확인해주세요
+        </h1>
+        <p className="text-sm text-hyundai-gray-400 mt-3">
+          인식된 정비 항목과 금액이 맞는지 확인해주세요
+        </p>
+      </div>
+
+      {/* 요약 정보 */}
+      <div className="p-4 bg-hyundai-gray-50 rounded-2xl mb-4">
+        <div className="flex items-center justify-between text-sm mb-2">
+          <span className="text-hyundai-gray-500">방문일</span>
+          <span className="font-medium text-hyundai-gray-900">{formatDate(requestDate)}</span>
+        </div>
+        <div className="flex items-center justify-between text-sm mb-2">
+          <span className="text-hyundai-gray-500">정비소</span>
+          <span className="font-medium text-hyundai-gray-900">{shopName}</span>
+        </div>
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-hyundai-gray-500">차량</span>
+          <span className="font-medium text-hyundai-gray-900">
+            {vehicleInfo?.manufacturer} {vehicleInfo?.model}
+          </span>
+        </div>
+      </div>
+
+      {/* 정비 항목 리스트 */}
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-base font-bold text-hyundai-gray-900">정비 항목</h3>
+          <span className="text-sm text-hyundai-gray-400">{items.length}건</span>
+        </div>
+        <Card variant="default" padding="none">
+          {items.map((item, index) => (
+            <React.Fragment key={item.id}>
+              {index > 0 && <div className="mx-4 border-b border-hyundai-gray-100" />}
+              <button
+                type="button"
+                onClick={() => {
+                  setEditItemIndex(index);
+                  setEditItemForm({
+                    name: item.name,
+                    partCost: item.partCost,
+                    laborCost: item.laborCost,
+                  });
+                  openSheet('item');
+                }}
+                className="w-full px-4 py-4 active:bg-hyundai-gray-50 transition-colors text-left"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-sm font-medium text-hyundai-gray-900">{item.name}</p>
+                  <p className="text-sm font-bold text-hyundai-gray-900 shrink-0 ml-3">
+                    {formatPrice(item.totalCost)}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-hyundai-gray-400">
+                  <span>부품 {formatPrice(item.partCost)}</span>
+                  <span className="text-hyundai-gray-200">|</span>
+                  <span>공임 {formatPrice(item.laborCost)}</span>
+                </div>
+              </button>
+            </React.Fragment>
+          ))}
+        </Card>
+      </div>
+
+      {/* 하단 고정 바 */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-hyundai-gray-100">
+        <div className="max-w-lg mx-auto px-5 py-4 pb-[calc(env(safe-area-inset-bottom)+16px)]">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm text-hyundai-gray-400">총 금액</span>
+            <div className="text-right">
+              <span className="text-xl font-bold text-hyundai-gray-900">
+                {formatPrice(totalAmount)}
+              </span>
+              <span className="text-xs text-hyundai-gray-400 ml-1">
+                {vatIncluded ? '(VAT 포함)' : '(VAT 미포함)'}
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={handleVerify}
+            disabled={isSubmitting}
+            className="w-full py-4 rounded-2xl bg-hyundai-gray-900 text-white text-base font-semibold active:bg-hyundai-gray-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
+                검증 중...
+              </>
+            ) : (
+              '견적 검증하기'
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // iOS 스타일 스크롤 데이트 피커
+  const renderDatePicker = () => {
+    const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
+    const months = Array.from({ length: 12 }, (_, i) => i + 1);
+    const daysInCurrentMonth = getDaysInMonth(tempYear, tempMonth);
+    const days = Array.from({ length: daysInCurrentMonth }, (_, i) => i + 1);
+
+    return (
+      <BottomSheet
+        isOpen={showDatePicker}
+        onClose={() => setShowDatePicker(false)}
+        title="날짜 선택"
+      >
+        <div className="flex gap-2 h-48 mb-6 relative">
+          {/* 선택 영역 하이라이트 */}
+          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-12 bg-hyundai-gray-100 rounded-xl pointer-events-none" />
+
+          {/* 년 */}
+          <div ref={yearScrollRef} className="flex-1 overflow-y-auto snap-y snap-mandatory scrollbar-hide relative">
+            <div className="h-[72px]" /> {/* 상단 패딩 (중앙 정렬용) */}
+            {years.map((year) => (
+              <button
+                key={year}
+                type="button"
+                onClick={() => setTempYear(year)}
+                className={`w-full h-12 flex items-center justify-center snap-center transition-colors ${
+                  tempYear === year
+                    ? 'text-hyundai-gray-900 font-bold text-lg'
+                    : 'text-hyundai-gray-400 text-base'
+                }`}
+              >
+                {year}년
+              </button>
+            ))}
+            <div className="h-[72px]" /> {/* 하단 패딩 (중앙 정렬용) */}
+          </div>
+          {/* 월 */}
+          <div ref={monthScrollRef} className="flex-1 overflow-y-auto snap-y snap-mandatory scrollbar-hide relative">
+            <div className="h-[72px]" />
+            {months.map((month) => (
+              <button
+                key={month}
+                type="button"
+                onClick={() => setTempMonth(month)}
+                className={`w-full h-12 flex items-center justify-center snap-center transition-colors ${
+                  tempMonth === month
+                    ? 'text-hyundai-gray-900 font-bold text-lg'
+                    : 'text-hyundai-gray-400 text-base'
+                }`}
+              >
+                {month}월
+              </button>
+            ))}
+            <div className="h-[72px]" />
+          </div>
+          {/* 일 */}
+          <div ref={dayScrollRef} className="flex-1 overflow-y-auto snap-y snap-mandatory scrollbar-hide relative">
+            <div className="h-[72px]" />
+            {days.map((day) => {
+              const isValidDate = isDateValid(tempYear, tempMonth, day);
+              return (
+                <button
+                  key={day}
+                  type="button"
+                  onClick={() => isValidDate && setTempDay(day)}
+                  disabled={!isValidDate}
+                  className={`w-full h-12 flex items-center justify-center snap-center transition-colors ${
+                    tempDay === day
+                      ? 'text-hyundai-gray-900 font-bold text-lg'
+                      : isValidDate
+                      ? 'text-hyundai-gray-400 text-base'
+                      : 'text-hyundai-gray-200 text-base'
+                  }`}
+                >
+                  {day}일
+                </button>
+              );
+            })}
+            <div className="h-[72px]" />
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={confirmDate}
+          className="w-full py-3.5 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 transition-colors"
+        >
+          선택 완료
+        </button>
+      </BottomSheet>
+    );
+  };
+
+  return (
+    <>
+      <main className="min-h-screen bg-white">
+        {/* 뒤로가기 헤더 (Step 1 제외) */}
+        {wizardStep > 1 && (
+          <div className="flex items-center px-4 pt-[env(safe-area-inset-top,0px)]">
+            <button
+              type="button"
+              onClick={() => setWizardStep((prev) => (prev > 1 ? (prev - 1) as WizardStep : prev))}
+              className="h-14 flex items-center text-hyundai-gray-700"
+              aria-label="뒤로가기"
+            >
+              <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
+            </button>
+            {/* 스텝 인디케이터 */}
+            <div className="flex-1 flex justify-center gap-1.5">
+              {[2, 3, 4].map((step) => (
+                <div
+                  key={step}
+                  className={`h-1 rounded-full transition-all ${
+                    wizardStep >= step ? 'w-8 bg-hyundai-gray-900' : 'w-1 bg-hyundai-gray-200'
+                  }`}
+                />
+              ))}
+            </div>
+            <div className="w-5" /> {/* 좌우 대칭용 */}
+          </div>
+        )}
+
+        <Container>
+          {wizardStep === 1 && renderStep1()}
+          {wizardStep === 2 && renderStep2()}
+          {wizardStep === 3 && renderStep3()}
+          {wizardStep === 4 && renderStep4()}
+        </Container>
       </main>
+
+      {/* 데이트 피커 */}
+      {renderDatePicker()}
 
       {/* 수정 바텀시트 */}
       <BottomSheet
@@ -679,61 +1059,11 @@ const ReviewPage: React.FC = () => {
         title={
           editSheetMode === 'vehicle' ? '차량 정보'
             : editSheetMode === 'shop' ? '정비소 검색'
-            : editSheetMode === 'date' ? '의뢰일자'
             : editSheetMode === 'vat' ? '부가세'
             : editSheetMode === 'item' ? '항목 수정'
             : undefined
         }
       >
-        {editSheetMode === 'vehicle' && (
-          <div className="space-y-4">
-            <p className="text-xs text-hyundai-gray-400">
-              차량등록번호(번호판)를 입력한 뒤 불러오기를 누르면 제조사·차종 등이 자동으로 채워져요.
-            </p>
-            <Input
-              label="차량번호"
-              placeholder="예: 12가3456"
-              value={vehicleNumber}
-              onChange={(e) => setVehicleNumber(e.target.value.trim())}
-              fullWidth
-            />
-            <button
-              type="button"
-              onClick={() => handleFetchVehicleByNumber(vehicleNumber)}
-              disabled={vehicleLoading || !vehicleNumber.trim()}
-              className="w-full py-2.5 rounded-xl bg-hyundai-gray-100 text-hyundai-gray-800 text-sm font-medium active:bg-hyundai-gray-200 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
-            >
-              {vehicleLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
-                  조회 중...
-                </>
-              ) : (
-                '차량 정보 불러오기'
-              )}
-            </button>
-            <Input
-              type="number"
-              label="주행거리 (km)"
-              placeholder="예: 45000"
-              value={estimateMileage > 0 ? String(estimateMileage) : ''}
-              onChange={(e) => {
-                const v = Number(e.target.value) || 0;
-                setEstimateMileage(v);
-                if (vehicleInfo) setVehicleInfo((prev) => (prev ? { ...prev, mileage: v } : null));
-              }}
-              fullWidth
-            />
-            <button
-              type="button"
-              onClick={closeSheet}
-              className="w-full py-3 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 transition-colors"
-            >
-              완료
-            </button>
-          </div>
-        )}
-
         {editSheetMode === 'shop' && (
           <div className="space-y-3">
             <p className="text-xs text-hyundai-gray-500">
@@ -775,60 +1105,6 @@ const ReviewPage: React.FC = () => {
                   </button>
                 ))}
             </div>
-          </div>
-        )}
-
-        {editSheetMode === 'date' && (
-          <div className="space-y-4">
-            <Input
-              type="date"
-              label="의뢰일자"
-              value={requestDate}
-              onChange={(e) => setRequestDate(e.target.value)}
-              max={new Date().toISOString().slice(0, 10)}
-              fullWidth
-            />
-            <button
-              onClick={closeSheet}
-              className="w-full py-3 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 transition-colors"
-            >
-              완료
-            </button>
-          </div>
-        )}
-
-        {editSheetMode === 'vat' && (
-          <div className="space-y-4">
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={vatIncluded}
-                onChange={(e) => setVatIncluded(e.target.checked)}
-                className="w-5 h-5 rounded border-hyundai-gray-300 accent-hyundai-gray-900"
-              />
-              <span className="text-sm text-hyundai-gray-900">VAT 포함</span>
-            </label>
-            {vatIncluded && (
-              <Input
-                type="number"
-                label="VAT 금액 (원)"
-                placeholder={`자동: ${formatPrice(computedVatAmount)}`}
-                value={vatAmount > 0 ? String(vatAmount) : ''}
-                onChange={(e) => setVatAmount(Number(e.target.value) || 0)}
-                fullWidth
-              />
-            )}
-            <button
-              onClick={() => {
-                if (vatIncluded && vatAmount === 0) {
-                  setVatAmount(computedVatAmount);
-                }
-                closeSheet();
-              }}
-              className="w-full py-3 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 transition-colors"
-            >
-              완료
-            </button>
           </div>
         )}
 

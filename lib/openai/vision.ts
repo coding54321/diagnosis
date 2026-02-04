@@ -10,6 +10,7 @@ export interface OCRResult {
   success: boolean;
   data?: {
     shopName?: string;
+    shopAddress?: string; // 정비소 주소 (정비소 검색용)
     date?: string;
     registrationNumber?: string; // 차량번호
     vehicleModel?: string; // 차종 (예: "아반떼(AVANTE)")
@@ -284,12 +285,13 @@ const ESTIMATE_TEXT_SYSTEM_PROMPT = `당신은 한국 자동차 정비 견적서
 ## 추출할 정보
 
 1. **shopName**: 정비소/업체 이름 (대표자 이름 제외)
-2. **date**: 정비 완료일 또는 출고일 (YYYY-MM-DD)
-3. **registrationNumber**: 차량번호 (예: 12가3456)
-4. **vehicleModel**: 차종 (예: 아반떼, K3, 소나타)
-5. **mileage**: 주행거리 (숫자만, 콤마 제거)
+2. **shopAddress**: 정비소 주소 (도로명주소 또는 지번주소, 전체 주소 그대로)
+3. **date**: 정비 완료일 또는 출고일 (YYYY-MM-DD)
+4. **registrationNumber**: 차량번호 (예: 12가3456)
+5. **vehicleModel**: 차종 (예: 아반떼, K3, 소나타)
+6. **mileage**: 주행거리 (숫자만, 콤마 제거)
 
-6. **items**: 정비 항목 배열 (각 항목마다 반드시 두 개의 이름 포함)
+7. **items**: 정비 항목 배열 (각 항목마다 반드시 두 개의 이름 포함)
    - **name**: 견적서에 적힌 그대로의 작업/부품명 (사용자에게 그대로 보여줄 원문)
    - **normalizedName**: 블루핸즈 표준 정비표에 맞는 작업명 (가격 비교용). 예: "엔진오일/필터/에어크리너", "프론트 디스크 브레이크 패드 키드(양쪽)", "엔진 오일/휠터"
    - partCost: 부품비 (없으면 0)
@@ -310,6 +312,7 @@ const ESTIMATE_TEXT_SYSTEM_PROMPT = `당신은 한국 자동차 정비 견적서
   "isEstimate": true,
   "confidence": 0.9,
   "shopName": "정비소명",
+  "shopAddress": "정비소 주소",
   "date": "YYYY-MM-DD",
   "registrationNumber": "차량번호",
   "vehicleModel": "차종",
@@ -368,6 +371,7 @@ export async function analyzeEstimateFromText(ocrText: string): Promise<OCRResul
       success: true,
       data: {
         shopName: parsed.shopName,
+        shopAddress: parsed.shopAddress || undefined,
         date: parsed.date || undefined,
         registrationNumber: parsed.registrationNumber || undefined,
         vehicleModel: parsed.vehicleModel || undefined,
@@ -448,12 +452,13 @@ export async function analyzeEstimateImage(
 ## 추출할 정보
 
 1. **shopName**: 정비소/업체 이름 (대표자 이름 제외)
-2. **date**: 정비 완료일 또는 출고일 (YYYY-MM-DD)
-3. **registrationNumber**: 차량번호 (예: 12가3456)
-4. **vehicleModel**: 차종 (예: 아반떼, K3, 소나타)
-5. **mileage**: 주행거리 (숫자만, 콤마 제거)
+2. **shopAddress**: 정비소 주소 (도로명주소 또는 지번주소, 전체 주소 그대로)
+3. **date**: 정비 완료일 또는 출고일 (YYYY-MM-DD)
+4. **registrationNumber**: 차량번호 (예: 12가3456)
+5. **vehicleModel**: 차종 (예: 아반떼, K3, 소나타)
+6. **mileage**: 주행거리 (숫자만, 콤마 제거)
 
-6. **items**: 정비 항목 배열 (각 항목마다 두 개의 이름 포함)
+7. **items**: 정비 항목 배열 (각 항목마다 두 개의 이름 포함)
    - name: 견적서에 적힌 그대로의 작업/부품명 (사용자 표시용)
    - normalizedName: 블루핸즈 표준 정비표에 맞는 작업명 (가격 비교용). 예: "엔진오일/필터/에어크리너", "프론트 디스크 브레이크 패드 키드(양쪽)"
    - partCost: 부품비 (없으면 0)
@@ -461,8 +466,8 @@ export async function analyzeEstimateImage(
    - totalCost: partCost + laborCost
    - category: 제동/냉각/전기/엔진/변속기/기타
 
-7. **totalAmount**: 최종 합계 금액 (VAT 포함)
-8. **vatAmount**: 부가세 금액
+8. **totalAmount**: 최종 합계 금액 (VAT 포함)
+9. **vatAmount**: 부가세 금액
 
 ## 카테고리 분류
 - 제동: 브레이크, 패드, 디스크
@@ -485,6 +490,7 @@ export async function analyzeEstimateImage(
   "isEstimate": true,
   "confidence": 0.9,
   "shopName": "정비소명",
+  "shopAddress": "정비소 주소",
   "date": "YYYY-MM-DD",
   "registrationNumber": "차량번호",
   "vehicleModel": "차종",
@@ -505,7 +511,7 @@ export async function analyzeEstimateImage(
               text: `이 자동차 정비 견적서/명세서 이미지를 분석해주세요.
 
 이미지에서 다음 정보를 추출해주세요:
-- 정비소명, 날짜, 차량번호, 차종, 주행거리
+- 정비소명, 정비소 주소(도로명 또는 지번), 날짜, 차량번호, 차종, 주행거리
 - 각 정비 항목의 이름, 부품비, 공임비
 - 총 금액과 부가세
 
@@ -596,6 +602,7 @@ JSON 형식으로만 응답해주세요.`,
       success: true,
       data: {
         shopName: parsed.shopName,
+        shopAddress: parsed.shopAddress || undefined,
         date: parsed.date || undefined,
         registrationNumber: parsed.registrationNumber || undefined,
         vehicleModel: parsed.vehicleModel || undefined,
