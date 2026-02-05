@@ -651,20 +651,6 @@ const ReviewPage: React.FC = () => {
       {/* 차량 확인 플로우 */}
       {(savedVehicleDismissed || !savedVehicle) && vehicleStep !== 'confirmed' && (
         <div className="space-y-4">
-          {/* OCR에서 인식된 정보 */}
-          {(ocrVehicleModel || ocrMileage || vehicleNumber) && vehicleStep === 'input' && (
-            <div className="p-4 bg-blue-50 rounded-2xl">
-              <p className="text-xs text-blue-600 mb-1">견적서에서 인식됨</p>
-              <div className="text-sm text-blue-900">
-                {vehicleNumber && <span className="font-medium">{vehicleNumber}</span>}
-                {vehicleNumber && ocrVehicleModel && <span> · </span>}
-                {ocrVehicleModel && <span>{ocrVehicleModel}</span>}
-                {(vehicleNumber || ocrVehicleModel) && ocrMileage && <span> · </span>}
-                {ocrMileage && <span>{ocrMileage.toLocaleString()}km</span>}
-              </div>
-            </div>
-          )}
-
           {/* Step 3-1: 차량번호 입력 */}
           {vehicleStep === 'input' && (
             <div className="space-y-3">
