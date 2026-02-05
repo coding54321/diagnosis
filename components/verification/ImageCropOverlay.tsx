@@ -110,12 +110,13 @@ export default function ImageCropOverlay({ imageSrc, onApply, onCancel }: ImageC
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col bg-black">
-      {/* 상단 바 */}
-      <div className="shrink-0 flex items-center justify-between px-4 h-14">
+      {/* 상단 바 — PWA 노치 구간 회피, 터치 타겟 44px 이상 */}
+      <div className="shrink-0 flex items-center justify-between px-4 h-14 pt-[env(safe-area-inset-top,0px)]">
         <button
           type="button"
           onClick={onCancel}
-          className="w-10 h-10 flex items-center justify-center rounded-full text-white active:bg-white/10 transition-colors"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-white active:bg-white/10 transition-colors -ml-1"
+          aria-label="취소"
         >
           <X className="w-5 h-5" strokeWidth={1.5} />
         </button>
@@ -124,7 +125,8 @@ export default function ImageCropOverlay({ imageSrc, onApply, onCancel }: ImageC
           type="button"
           onClick={handleApply}
           disabled={!completedCrop || !imgLoaded}
-          className="w-10 h-10 flex items-center justify-center rounded-full text-white active:bg-white/10 transition-colors disabled:opacity-30"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-white active:bg-white/10 transition-colors disabled:opacity-30 -mr-1"
+          aria-label="적용"
         >
           <Check className="w-5 h-5" strokeWidth={1.5} />
         </button>

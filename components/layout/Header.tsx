@@ -27,6 +27,7 @@ const Header = React.forwardRef<HTMLElement, HeaderProps>(
         ref={ref}
         className={cn(
           'sticky top-0 z-50',
+          'pt-[env(safe-area-inset-top,0px)]',
           'bg-white border-b border-hyundai-gray-200',
           'min-h-[56px] flex items-center justify-between gap-3',
           'px-4',

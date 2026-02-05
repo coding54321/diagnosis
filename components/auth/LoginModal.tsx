@@ -56,9 +56,10 @@ const LoginModal: React.FC<LoginModalProps> = ({
           <h2 className="text-h2 text-hyundai-gray-900">로그인 필요</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-hyundai-gray-100 rounded-lg transition-colors"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-hyundai-gray-600 hover:bg-hyundai-gray-100 active:bg-hyundai-gray-100 transition-colors -mr-2"
+            aria-label="닫기"
           >
-            <X className="w-5 h-5 text-hyundai-gray-600" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 

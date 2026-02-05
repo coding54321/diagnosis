@@ -398,8 +398,8 @@ const ManualInputPage: React.FC = () => {
           </div>
         </Container>
 
-        {/* 하단 고정 바 */}
-        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-hyundai-gray-100">
+        {/* 하단 고정 바 — PWA safe area */}
+        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-hyundai-gray-100 pb-[env(safe-area-inset-bottom,0px)]">
           <div className="max-w-lg mx-auto px-5 py-4">
             {items.length > 0 && (
               <div className="space-y-1.5 mb-3">

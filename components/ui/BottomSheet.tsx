@@ -63,7 +63,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center rounded-full text-hyundai-gray-400 active:bg-hyundai-gray-100 transition-colors"
+              className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-full text-hyundai-gray-400 active:bg-hyundai-gray-100 transition-colors -mr-2"
               aria-label="닫기"
             >
               <X className="w-5 h-5" strokeWidth={1.5} />
@@ -71,8 +71,10 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
           </div>
         )}
 
-        {/* 콘텐츠 */}
-        <div className="overflow-y-auto flex-1 min-h-0 px-5 pb-8">{children}</div>
+        {/* 콘텐츠 — PWA 홈 인디케이터 구간 회피 */}
+        <div className="overflow-y-auto flex-1 min-h-0 px-5 pb-[max(2rem,env(safe-area-inset-bottom))]">
+          {children}
+        </div>
       </div>
     </div>
   );
