@@ -2,9 +2,8 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Camera, Image, PenTool, RotateCcw, X, Crop, ChevronRight, Zap, ZapOff, Loader2, FileText } from 'lucide-react';
+import { Camera, Image, PenTool, RotateCcw, X, Crop, ChevronRight, Zap, ZapOff, FileText } from 'lucide-react';
 import ImageCropOverlay from '@/components/verification/ImageCropOverlay';
-import { analyzeEstimateImage } from '@/lib/openai/vision';
 import { compressImage, analyzeImageQuality, ImageQualityResult } from '@/lib/utils/image';
 
 const CameraPage: React.FC = () => {
@@ -20,11 +19,6 @@ const CameraPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [flashOn, setFlashOn] = useState(false);
   const [flashSupported, setFlashSupported] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [ocrError, setOcrError] = useState<{
-    type: 'NOT_ESTIMATE' | 'POOR_QUALITY' | 'ERROR';
-    message: string;
-  } | null>(null);
   const [qualityWarning, setQualityWarning] = useState<{
     issues: ImageQualityResult['issues'];
     sharpness: number;
@@ -184,96 +178,12 @@ const CameraPage: React.FC = () => {
     startCamera();
   };
 
-  const runOcrAnalysis = async () => {
-    console.log('[DEBUG] handleUsePhoto 호출됨');
-    console.log('[DEBUG] capturedImage 존재 여부:', !!capturedImage);
-    console.log('[DEBUG] capturedImage 길이:', capturedImage?.length || 0);
-
-    if (!capturedImage) {
-      console.log('[DEBUG] capturedImage가 없어서 종료');
-      return;
-    }
-
-    console.log('[DEBUG] isAnalyzing 상태를 true로 설정');
-    setIsAnalyzing(true);
-    setOcrError(null);
-
-    try {
-      console.log('[DEBUG] analyzeEstimateImage API 호출 시작...');
-      const startTime = Date.now();
-
-      // OpenAI Vision API 호출
-      const ocrResult = await analyzeEstimateImage(capturedImage);
-
-      const endTime = Date.now();
-      console.log('[DEBUG] API 응답 시간:', endTime - startTime, 'ms');
-      console.log('[DEBUG] OCR 결과:', JSON.stringify(ocrResult, null, 2));
-
-      // 에러 케이스 처리
-      if (!ocrResult.success) {
-        console.log('[DEBUG] OCR 실패 - status:', ocrResult.status, 'error:', ocrResult.error);
-
-        if (ocrResult.status === 'NOT_ESTIMATE') {
-          setOcrError({
-            type: 'NOT_ESTIMATE',
-            message: '견적서가 아닌 것으로 보입니다. 정비소에서 받은 견적서를 촬영해 주세요.',
-          });
-          setIsAnalyzing(false);
-          return;
-        }
-
-        if (ocrResult.status === 'POOR_QUALITY') {
-          setOcrError({
-            type: 'POOR_QUALITY',
-            message: '이미지 품질이 낮아 인식이 어려울 수 있습니다.',
-          });
-          setIsAnalyzing(false);
-          return;
-        }
-
-        // 기타 오류
-        setOcrError({
-          type: 'ERROR',
-          message: ocrResult.error || '이미지 분석 중 오류가 발생했습니다.',
-        });
-        setIsAnalyzing(false);
-        return;
-      }
-
-      console.log('[DEBUG] OCR 성공 - sessionStorage에 저장 시작');
-
-      // OCR 결과를 sessionStorage에 저장
-      sessionStorage.setItem('capturedEstimateImage', capturedImage);
-      sessionStorage.setItem('ocrResult', JSON.stringify(ocrResult));
-
-      console.log('[DEBUG] sessionStorage 저장 완료, review 페이지로 이동');
-
-      // Review 페이지로 이동
-      router.push('/verify/review');
-    } catch (error) {
-      console.error('[DEBUG] OCR 처리 오류 (catch):', error);
-      console.error('[DEBUG] 오류 타입:', typeof error);
-      console.error('[DEBUG] 오류 메시지:', error instanceof Error ? error.message : String(error));
-      console.error('[DEBUG] 오류 스택:', error instanceof Error ? error.stack : '스택 없음');
-
-      setOcrError({
-        type: 'ERROR',
-        message: '이미지 분석 중 오류가 발생했습니다. 직접 입력으로 진행해주세요.',
-      });
-    } finally {
-      console.log('[DEBUG] finally 블록 - isAnalyzing을 false로 설정');
-      setIsAnalyzing(false);
-    }
-  };
-
   const handleUsePhoto = async () => {
     if (!capturedImage) return;
 
-    // 1단계: 로컬 품질 체크 (API 호출 전에)
+    // 1단계: 로컬 품질 체크 (선택)
     try {
       const quality = await analyzeImageQuality(capturedImage);
-
-      // 품질 이슈가 있으면 사용자에게 먼저 물어본다
       if (quality.issues.length > 0) {
         setQualityWarning({
           issues: quality.issues,
@@ -283,12 +193,13 @@ const CameraPage: React.FC = () => {
         return;
       }
     } catch (e) {
-      // 로컬 품질 분석 실패 시에는 그냥 서버 분석으로 진행
-      console.warn('[DEBUG] 로컬 이미지 품질 분석 실패, 서버 분석으로 진행:', e);
+      console.warn('[DEBUG] 로컬 이미지 품질 분석 실패, 진행:', e);
     }
 
-    // 2단계: 서버 측 OCR 분석
-    await runOcrAnalysis();
+    // 2단계: 이미지만 저장하고 review로 이동 → review 1단계에서 OCR 실행 및 로딩 표시
+    sessionStorage.setItem('capturedEstimateImage', capturedImage);
+    sessionStorage.setItem('pendingOcr', '1');
+    router.push('/verify/review');
   };
 
   const handleBack = () => {
@@ -463,86 +374,6 @@ const CameraPage: React.FC = () => {
           )}
         </div>
 
-        {/* OCR 에러 케이스 처리 - 뷰파인더 외부에서 전체 화면 오버레이 */}
-        {ocrError && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black/80 z-50">
-            <div className="bg-white rounded-2xl p-6 mx-4 max-w-sm">
-              <p className="text-sm text-hyundai-gray-900 mb-4">
-                {ocrError.message}
-              </p>
-              <div className="flex flex-col gap-2">
-                {ocrError.type === 'NOT_ESTIMATE' && (
-                  <>
-                    <button
-                      onClick={() => {
-                        setOcrError(null);
-                        router.push('/verify/manual');
-                      }}
-                      className="w-full py-2.5 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 transition-colors"
-                    >
-                      직접 입력하기
-                    </button>
-                    <button
-                      onClick={() => {
-                        setOcrError(null);
-                        retakePhoto();
-                      }}
-                      className="w-full py-2.5 rounded-xl border border-hyundai-gray-200 text-hyundai-gray-700 text-sm font-medium active:bg-hyundai-gray-50 transition-colors"
-                    >
-                      다시 촬영하기
-                    </button>
-                  </>
-                )}
-                {ocrError.type === 'POOR_QUALITY' && (
-                  <>
-                    <button
-                      onClick={() => {
-                        setOcrError(null);
-                        retakePhoto();
-                      }}
-                      className="w-full py-2.5 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 transition-colors"
-                    >
-                      다시 촬영하기
-                    </button>
-                    <button
-                      onClick={async () => {
-                        setOcrError(null);
-                        // 그래도 진행: OCR 결과 없이 Review로 이동
-                        sessionStorage.setItem('capturedEstimateImage', capturedImage || '');
-                        router.push('/verify/review');
-                      }}
-                      className="w-full py-2.5 rounded-xl border border-hyundai-gray-200 text-hyundai-gray-700 text-sm font-medium active:bg-hyundai-gray-50 transition-colors"
-                    >
-                      그래도 진행
-                    </button>
-                  </>
-                )}
-                {ocrError.type === 'ERROR' && (
-                  <>
-                    <button
-                      onClick={() => {
-                        setOcrError(null);
-                        router.push('/verify/manual');
-                      }}
-                      className="w-full py-2.5 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 transition-colors"
-                    >
-                      직접 입력하기
-                    </button>
-                    <button
-                      onClick={() => {
-                        setOcrError(null);
-                      }}
-                      className="w-full py-2.5 rounded-xl border border-hyundai-gray-200 text-hyundai-gray-700 text-sm font-medium active:bg-hyundai-gray-50 transition-colors"
-                    >
-                      취소
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* 로컬 품질 경고 오버레이 */}
         {qualityWarning && (
           <div className="fixed inset-0 flex items-center justify-center bg-black/80 z-50">
@@ -567,18 +398,6 @@ const CameraPage: React.FC = () => {
                   다시 촬영하기
                 </button>
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* OCR 분석 중 - 전체 화면 오버레이 */}
-        {isAnalyzing && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black/80 z-50">
-            <div className="text-white text-center">
-              <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-white/10 flex items-center justify-center animate-pulse">
-                <Loader2 className="w-6 h-6 text-white animate-spin" strokeWidth={1.5} />
-              </div>
-              <p className="text-sm text-white/70">이미지 분석 중...</p>
             </div>
           </div>
         )}
@@ -618,20 +437,10 @@ const CameraPage: React.FC = () => {
                 </button>
                 <button
                   onClick={handleUsePhoto}
-                  disabled={isAnalyzing}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl bg-hyundai-gray-900 text-sm font-medium text-white active:bg-hyundai-gray-800 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                  className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl bg-hyundai-gray-900 text-sm font-medium text-white active:bg-hyundai-gray-800 transition-colors"
                 >
-                  {isAnalyzing ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
-                      분석 중...
-                    </>
-                  ) : (
-                    <>
-                      분석하기
-                      <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
-                    </>
-                  )}
+                  견적서 이미지 분석하기
+                  <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
                 </button>
               </div>
             </>

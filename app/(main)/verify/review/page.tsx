@@ -8,6 +8,7 @@ import { Card, BottomSheet, Input } from '@/components/ui';
 import { formatPrice } from '@/lib/utils';
 import { createEstimate, saveVehicle, uploadEstimateImageAction, createVerificationResult, fetchVehicleByRegistrationNumber, fetchVehicle } from '@/lib/supabase/actions';
 import { VerificationEngine } from '@/lib/verification/engine';
+import { analyzeEstimateImage } from '@/lib/openai/vision';
 import type { EstimateItem } from '@/types';
 import type { OCRResult } from '@/lib/openai/vision';
 
@@ -37,6 +38,13 @@ const ReviewPage: React.FC = () => {
 
   // 위자드 스텝 (1: 성공, 2: 정비정보, 3: 차량정보, 4: 견적목록)
   const [wizardStep, setWizardStep] = useState<WizardStep>(1);
+
+  // Step 1에서 이미지 OCR 실행 중 (카메라에서 이미지만 저장 후 온 경우)
+  const [isOcrLoading, setIsOcrLoading] = useState(false);
+  const [ocrError, setOcrError] = useState<{
+    type: 'NOT_ESTIMATE' | 'POOR_QUALITY' | 'ERROR';
+    message: string;
+  } | null>(null);
 
   // 추가 필드
   const [requestDate, setRequestDate] = useState<string>(() => {
@@ -129,15 +137,80 @@ const ReviewPage: React.FC = () => {
     if (isDateValidForPicker(tempYear, tempMonth, day)) setTempDay(day);
   }, [tempYear, tempMonth, getDaysInMonthForPicker, isDateValidForPicker]);
 
-  // Step 1 자동 전환
+  // OCR 결과를 state에 반영 (mount 시 + Step 1에서 OCR 완료 시 공통)
+  const applyOcrResultToState = useCallback((ocrResult: OCRResult) => {
+    if (!ocrResult.success || !ocrResult.data) return;
+    const data = ocrResult.data;
+    const ocrShopName = data.shopName?.trim() || '';
+    const ocrShopAddress = data.shopAddress?.trim() || '';
+    if (ocrShopAddress || ocrShopName) {
+      setShopLookupLoading(true);
+      const params = new URLSearchParams();
+      if (ocrShopName) params.set('q', ocrShopName);
+      if (ocrShopAddress) params.set('address', ocrShopAddress);
+      fetch(`/api/shops?${params.toString()}`)
+        .then((res) => res.json())
+        .then((apiData: { shops?: (BluehandsShop & { score?: number })[]; matchedBy?: string }) => {
+          if (apiData.shops && apiData.shops.length >= 1) {
+            setShopName(apiData.shops[0].업체명);
+          }
+        })
+        .catch(() => {})
+        .finally(() => setShopLookupLoading(false));
+    }
+    if (data.date) {
+      const today = new Date();
+      const todayYmd = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      const dateToSet = data.date > todayYmd ? todayYmd : data.date;
+      setRequestDate(dateToSet);
+      const [y, m, d] = dateToSet.split('-').map(Number);
+      setTempYear(y);
+      setTempMonth(m);
+      setTempDay(d);
+    }
+    if (data.items && data.items.length > 0) {
+      setItems(
+        data.items.map((item, index) => ({
+          id: `ocr-item-${index}`,
+          name: item.name,
+          normalizedName: item.normalizedName,
+          partCost: item.partCost || 0,
+          laborCost: item.laborCost || 0,
+          totalCost: item.totalCost || (item.partCost || 0) + (item.laborCost || 0),
+          category: item.category || '',
+        }))
+      );
+    }
+    if (data.registrationNumber) setVehicleNumber(data.registrationNumber);
+    if (data.vehicleModel) setOcrVehicleModel(data.vehicleModel);
+    if (data.mileage != null) {
+      setOcrMileage(data.mileage);
+      setEstimateMileage(data.mileage);
+    }
+    if (data.vatIncluded !== undefined) setVatIncluded(data.vatIncluded);
+    if (data.vatAmount != null) setVatAmount(data.vatAmount);
+    if (data.registrationNumber) {
+      const num = data.registrationNumber.replace(/\s|-/g, '').trim();
+      fetchVehicleByRegistrationNumber(num).then((res) => {
+        if (res.success && res.data) {
+          setVehicleInfo(res.data);
+          if (data.mileage != null) setEstimateMileage(data.mileage);
+          else if (res.data.mileage > 0) setEstimateMileage(res.data.mileage);
+          setSavedVehicleDismissed(true);
+        }
+      }).catch(() => {});
+    }
+  }, []);
+
+  // Step 1 자동 전환 (OCR 대기 중이 아닐 때만 — paste 등 이미 결과가 있는 경우)
   useEffect(() => {
-    if (wizardStep === 1) {
+    if (wizardStep === 1 && !isOcrLoading) {
       const timer = setTimeout(() => {
         setWizardStep(2);
       }, 2500);
       return () => clearTimeout(timer);
     }
-  }, [wizardStep]);
+  }, [wizardStep, isOcrLoading]);
 
   // 데이트 피커 열릴 때 선택된 값으로 스크롤
   useEffect(() => {
@@ -181,116 +254,54 @@ const ReviewPage: React.FC = () => {
   useEffect(() => {
     const image = sessionStorage.getItem('capturedEstimateImage');
     const ocrResultJson = sessionStorage.getItem('ocrResult');
+    const pendingOcr = sessionStorage.getItem('pendingOcr');
 
     if (image) setCapturedImage(image);
 
-    // OCR 결과가 있으면 초기 상태 설정
+    // 카메라에서 이미지만 저장하고 온 경우: Step 1에서 OCR 실행 후 로딩 한 화면으로 표시
+    if (image && pendingOcr) {
+      sessionStorage.removeItem('pendingOcr');
+      setIsOcrLoading(true);
+      setOcrError(null);
+      analyzeEstimateImage(image)
+        .then((ocrResult) => {
+          if (!ocrResult.success) {
+            if (ocrResult.status === 'NOT_ESTIMATE') {
+              setOcrError({
+                type: 'NOT_ESTIMATE',
+                message: '견적서가 아닌 것으로 보입니다. 정비소에서 받은 견적서를 촬영해 주세요.',
+              });
+            } else if (ocrResult.status === 'POOR_QUALITY') {
+              setOcrError({
+                type: 'POOR_QUALITY',
+                message: '이미지 품질이 낮아 인식이 어려울 수 있습니다.',
+              });
+            } else {
+              setOcrError({
+                type: 'ERROR',
+                message: ocrResult.error || '이미지 분석 중 오류가 발생했습니다.',
+              });
+            }
+            return;
+          }
+          sessionStorage.setItem('ocrResult', JSON.stringify(ocrResult));
+          applyOcrResultToState(ocrResult);
+          setWizardStep(2);
+        })
+        .catch(() => {
+          setOcrError({
+            type: 'ERROR',
+            message: '이미지 분석 중 오류가 발생했습니다. 직접 입력으로 진행해주세요.',
+          });
+        })
+        .finally(() => setIsOcrLoading(false));
+    }
+
+    // OCR 결과가 이미 있으면 초기 상태 설정 (paste 등)
     if (ocrResultJson) {
       try {
         const ocrResult: OCRResult = JSON.parse(ocrResultJson);
-
-        if (ocrResult.success && ocrResult.data) {
-          // 정비소명: 주소 우선 검색 후 정비소명으로 검색, 없으면 빈 칸
-          const ocrShopName = ocrResult.data.shopName?.trim() || '';
-          const ocrShopAddress = ocrResult.data.shopAddress?.trim() || '';
-
-          if (ocrShopAddress || ocrShopName) {
-            setShopLookupLoading(true);
-            // 주소가 있으면 주소를 파라미터로 전달, 정비소명도 함께 전달
-            const params = new URLSearchParams();
-            if (ocrShopName) params.set('q', ocrShopName);
-            if (ocrShopAddress) params.set('address', ocrShopAddress);
-
-            fetch(`/api/shops?${params.toString()}`)
-              .then((res) => res.json())
-              .then((data: { shops?: (BluehandsShop & { score?: number })[]; matchedBy?: string }) => {
-                if (data.shops && data.shops.length >= 1) {
-                  // 검색 결과가 있으면 첫 번째 결과 사용
-                  setShopName(data.shops[0].업체명);
-                  console.log('[shop-match] 매칭 방식:', data.matchedBy, '결과:', data.shops[0].업체명);
-                }
-                // 검색 결과가 없으면 빈 칸 유지 (사용자가 직접 검색)
-              })
-              .catch(() => {})
-              .finally(() => setShopLookupLoading(false));
-          }
-
-          // 의뢰일자 (오늘 포함 이전만 허용 — 미래일 경우 오늘로)
-          if (ocrResult.data.date) {
-            const today = new Date();
-            const todayYmd = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-            const dateToSet = ocrResult.data.date > todayYmd ? todayYmd : ocrResult.data.date;
-            setRequestDate(dateToSet);
-            // 데이트 피커 초기값 설정
-            const [y, m, d] = dateToSet.split('-').map(Number);
-            setTempYear(y);
-            setTempMonth(m);
-            setTempDay(d);
-          }
-
-          // 정비 항목
-          if (ocrResult.data.items && ocrResult.data.items.length > 0) {
-            setItems(
-              ocrResult.data.items.map((item, index) => ({
-                id: `ocr-item-${index}`,
-                name: item.name,
-                normalizedName: item.normalizedName,
-                partCost: item.partCost || 0,
-                laborCost: item.laborCost || 0,
-                totalCost: item.totalCost || (item.partCost || 0) + (item.laborCost || 0),
-                category: item.category || '',
-              }))
-            );
-          }
-
-          // 차량번호
-          if (ocrResult.data.registrationNumber) {
-            setVehicleNumber(ocrResult.data.registrationNumber);
-          }
-
-          // OCR에서 추출한 차종
-          if (ocrResult.data.vehicleModel) {
-            setOcrVehicleModel(ocrResult.data.vehicleModel);
-          }
-
-          // OCR에서 추출한 주행거리
-          if (ocrResult.data.mileage) {
-            setOcrMileage(ocrResult.data.mileage);
-            setEstimateMileage(ocrResult.data.mileage);
-          }
-
-          // VAT 정보
-          if (ocrResult.data.vatIncluded !== undefined) {
-            setVatIncluded(ocrResult.data.vatIncluded);
-          }
-          if (ocrResult.data.vatAmount) {
-            setVatAmount(ocrResult.data.vatAmount);
-          }
-
-          // 부분 인식 안내 (토스트 또는 배지로 표시 가능)
-          if (ocrResult.status === 'PARTIAL') {
-            console.log('일부 항목만 인식되었습니다. 확인 후 수정해주세요.');
-          }
-
-          // OCR에서 차량번호가 있으면 자동으로 차량 정보 조회
-          if (ocrResult.data.registrationNumber) {
-            const num = ocrResult.data.registrationNumber.replace(/\s|-/g, '').trim();
-            fetchVehicleByRegistrationNumber(num).then((res) => {
-              if (res.success && res.data) {
-                setVehicleInfo(res.data);
-                // OCR 주행거리가 있으면 우선 사용, 없으면 조회된 주행거리 사용
-                if (ocrResult.data?.mileage) {
-                  setEstimateMileage(ocrResult.data.mileage);
-                } else if (res.data.mileage > 0) {
-                  setEstimateMileage(res.data.mileage);
-                }
-                setSavedVehicleDismissed(true); // 저장된 차량 선택 UI 숨기기
-              }
-            }).catch(() => {
-              // 조회 실패 시 무시 (사용자가 직접 입력 가능)
-            });
-          }
-        }
+        applyOcrResultToState(ocrResult);
       } catch (error) {
         console.error('OCR 결과 파싱 오류:', error);
       }
@@ -315,7 +326,7 @@ const ReviewPage: React.FC = () => {
       }
     };
     loadSavedVehicle();
-  }, []);
+  }, [applyOcrResultToState]);
 
   // 정비소 검색
   const searchShops = useCallback(async (q: string) => {
@@ -543,25 +554,73 @@ const ReviewPage: React.FC = () => {
 
   // ========== 위자드 스텝별 렌더링 ==========
 
-  // Step 1: 성공 화면
-  const renderStep1 = () => (
-    <div className="flex flex-col items-center justify-center min-h-[70vh] px-6">
-      <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-6 animate-in zoom-in duration-300">
-        <CheckCircle2 className="w-10 h-10 text-green-500" strokeWidth={1.5} />
+  // Step 1: 성공 화면 (OCR 로딩 중이면 여기서 로딩, 완료 시 2단계로 / 에러 시 안내)
+  const renderStep1 = () => {
+    if (ocrError) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-[70vh] px-6">
+          <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mb-6">
+            <AlertCircle className="w-10 h-10 text-red-500" strokeWidth={1.5} />
+          </div>
+          <h1 className="text-xl font-bold text-hyundai-gray-900 text-center mb-2">
+            인식에 실패했어요
+          </h1>
+          <p className="text-sm text-hyundai-gray-500 text-center mb-6">
+            {ocrError.message}
+          </p>
+          <div className="flex flex-col gap-2.5 w-full max-w-xs">
+            <button
+              type="button"
+              onClick={() => {
+                sessionStorage.removeItem('capturedEstimateImage');
+                setOcrError(null);
+                router.push('/verify/camera');
+              }}
+              className="w-full py-3 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 transition-colors"
+            >
+              다시 촬영하기
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                sessionStorage.removeItem('capturedEstimateImage');
+                sessionStorage.removeItem('pendingOcr');
+                setOcrError(null);
+                router.push('/verify/manual');
+              }}
+              className="w-full py-3 rounded-xl border border-hyundai-gray-200 text-hyundai-gray-700 text-sm font-medium active:bg-hyundai-gray-50 transition-colors"
+            >
+              직접 입력하기
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[70vh] px-6">
+        <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-6 animate-in zoom-in duration-300">
+          <CheckCircle2 className="w-10 h-10 text-green-500" strokeWidth={1.5} />
+        </div>
+        <h1 className="text-2xl font-bold text-hyundai-gray-900 text-center mb-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          견적서가 입력되었어요
+        </h1>
+        <p className="text-base text-hyundai-gray-500 text-center leading-relaxed animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
+          정확한 견적 검증을 위해<br />
+          몇 가지 정보를 확인할게요
+        </p>
+        <div className="mt-8 flex items-center gap-2 text-sm text-hyundai-gray-400 animate-in fade-in duration-700 delay-500">
+          {isOcrLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              잠시만 기다려주세요...
+            </>
+          ) : (
+            <>잠시만 기다려주세요...</>
+          )}
+        </div>
       </div>
-      <h1 className="text-2xl font-bold text-hyundai-gray-900 text-center mb-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        견적서가 입력되었어요
-      </h1>
-      <p className="text-base text-hyundai-gray-500 text-center leading-relaxed animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
-        정확한 견적 검증을 위해<br />
-        몇 가지 정보를 확인할게요
-      </p>
-      <div className="mt-8 flex items-center gap-2 text-sm text-hyundai-gray-400 animate-in fade-in duration-700 delay-500">
-        <Loader2 className="w-4 h-4 animate-spin" />
-        잠시만 기다려주세요...
-      </div>
-    </div>
-  );
+    );
+  };
 
   // Step 2: 정비 정보 (날짜 + 정비소)
   const renderStep2 = () => (
@@ -1055,7 +1114,13 @@ const ReviewPage: React.FC = () => {
           <div className="flex items-center px-4 pt-[env(safe-area-inset-top,0px)]">
             <button
               type="button"
-              onClick={() => setWizardStep((prev) => (prev > 1 ? (prev - 1) as WizardStep : prev))}
+              onClick={() => {
+                if (wizardStep === 2) {
+                  router.push('/verify/camera');
+                } else {
+                  setWizardStep((prev) => (prev > 1 ? (prev - 1) as WizardStep : prev));
+                }
+              }}
               className="h-14 flex items-center text-hyundai-gray-700"
               aria-label="뒤로가기"
             >
