@@ -92,6 +92,43 @@ const ReviewPage: React.FC = () => {
   const monthScrollRef = useRef<HTMLDivElement>(null);
   const dayScrollRef = useRef<HTMLDivElement>(null);
 
+  const DATE_PICKER_ITEM_HEIGHT = 48;
+
+  // 날짜 유효성 검사 (오늘 이전만) — 스크롤 동기화에서 사용
+  const isDateValidForPicker = useCallback((y: number, m: number, d: number) => {
+    const today = new Date();
+    const selected = new Date(y, m - 1, d);
+    return selected <= today;
+  }, []);
+  const getDaysInMonthForPicker = useCallback((year: number, month: number) => {
+    return new Date(year, month, 0).getDate();
+  }, []);
+
+  // 스크롤 시 중앙에 온 항목을 자동 선택
+  const syncYearFromScroll = useCallback(() => {
+    const el = yearScrollRef.current;
+    if (!el) return;
+    const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
+    const index = Math.round(el.scrollTop / DATE_PICKER_ITEM_HEIGHT);
+    const clamped = Math.max(0, Math.min(index, years.length - 1));
+    setTempYear(years[clamped]);
+  }, []);
+  const syncMonthFromScroll = useCallback(() => {
+    const el = monthScrollRef.current;
+    if (!el) return;
+    const index = Math.round(el.scrollTop / DATE_PICKER_ITEM_HEIGHT);
+    const month = Math.max(1, Math.min(index + 1, 12));
+    setTempMonth(month);
+  }, []);
+  const syncDayFromScroll = useCallback(() => {
+    const el = dayScrollRef.current;
+    if (!el) return;
+    const daysInMonth = getDaysInMonthForPicker(tempYear, tempMonth);
+    const index = Math.round(el.scrollTop / DATE_PICKER_ITEM_HEIGHT);
+    const day = Math.max(1, Math.min(index + 1, daysInMonth));
+    if (isDateValidForPicker(tempYear, tempMonth, day)) setTempDay(day);
+  }, [tempYear, tempMonth, getDaysInMonthForPicker, isDateValidForPicker]);
+
   // Step 1 자동 전환
   useEffect(() => {
     if (wizardStep === 1) {
@@ -924,7 +961,11 @@ const ReviewPage: React.FC = () => {
           <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-12 bg-hyundai-gray-100 rounded-xl pointer-events-none" />
 
           {/* 년 */}
-          <div ref={yearScrollRef} className="flex-1 overflow-y-auto snap-y snap-mandatory scrollbar-hide relative">
+          <div
+            ref={yearScrollRef}
+            onScroll={syncYearFromScroll}
+            className="flex-1 overflow-y-auto snap-y snap-mandatory scrollbar-hide relative"
+          >
             <div className="h-[72px]" /> {/* 상단 패딩 (중앙 정렬용) */}
             {years.map((year) => (
               <button
@@ -943,7 +984,11 @@ const ReviewPage: React.FC = () => {
             <div className="h-[72px]" /> {/* 하단 패딩 (중앙 정렬용) */}
           </div>
           {/* 월 */}
-          <div ref={monthScrollRef} className="flex-1 overflow-y-auto snap-y snap-mandatory scrollbar-hide relative">
+          <div
+            ref={monthScrollRef}
+            onScroll={syncMonthFromScroll}
+            className="flex-1 overflow-y-auto snap-y snap-mandatory scrollbar-hide relative"
+          >
             <div className="h-[72px]" />
             {months.map((month) => (
               <button
@@ -962,7 +1007,11 @@ const ReviewPage: React.FC = () => {
             <div className="h-[72px]" />
           </div>
           {/* 일 */}
-          <div ref={dayScrollRef} className="flex-1 overflow-y-auto snap-y snap-mandatory scrollbar-hide relative">
+          <div
+            ref={dayScrollRef}
+            onScroll={syncDayFromScroll}
+            className="flex-1 overflow-y-auto snap-y snap-mandatory scrollbar-hide relative"
+          >
             <div className="h-[72px]" />
             {days.map((day) => {
               const isValidDate = isDateValid(tempYear, tempMonth, day);
