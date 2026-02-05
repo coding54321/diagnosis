@@ -4,7 +4,7 @@ import { Container } from '@/components/layout';
 import UserMenu from '@/components/auth/UserMenu';
 import { fetchVehicle, fetchRecentHistory } from '@/lib/supabase/actions';
 import { getCurrentUser } from '@/lib/supabase/auth-server';
-import { Camera, FileText, ChevronRight, CheckCircle2, AlertCircle, XCircle } from 'lucide-react';
+import { Camera, ChevronRight, CheckCircle2, AlertCircle, XCircle } from 'lucide-react';
 import { Card, Badge } from '@/components/ui';
 import { formatPrice } from '@/lib/utils';
 import type { Vehicle, VerificationHistory } from '@/types';
@@ -86,15 +86,6 @@ export default async function HomePage() {
               </div>
             </Link>
 
-            {/* 보조 액션 */}
-            <Link
-              href="/verify/manual"
-              className="flex items-center justify-center gap-1 py-3 text-xs text-hyundai-gray-400 font-medium"
-            >
-              <FileText className="w-3.5 h-3.5" strokeWidth={1.5} />
-              또는 직접 입력하기
-            </Link>
-
             {/* 내 차량 미니 요약 (등록된 경우만) */}
             {vehicle && (
               <Link href="/vehicle" className="block mt-2">
@@ -165,7 +156,7 @@ export default async function HomePage() {
                 바로 확인하세요
               </h1>
               <p className="text-sm text-hyundai-gray-400 mt-2">
-                정비소에서 받은 견적서를 시장 평균가와 비교해드려요
+                실제 정비 데이터로 견적을 검증·비교해드려요
               </p>
             </div>
 
@@ -182,15 +173,6 @@ export default async function HomePage() {
                 <div className="absolute -right-4 -bottom-4 w-32 h-32 rounded-full bg-white/[0.04]" />
                 <div className="absolute -right-8 -top-8 w-24 h-24 rounded-full bg-white/[0.03]" />
               </div>
-            </Link>
-
-            {/* 보조 액션 */}
-            <Link
-              href="/verify/manual"
-              className="flex items-center justify-center gap-1 py-3 text-xs text-hyundai-gray-400 font-medium"
-            >
-              <FileText className="w-3.5 h-3.5" strokeWidth={1.5} />
-              또는 직접 입력하기
             </Link>
 
             {/* 이렇게 검증해드려요 */}
@@ -213,7 +195,7 @@ export default async function HomePage() {
 
 function HowItWorksSection() {
   const steps = [
-    { num: '1', label: '견적서 촬영', desc: '사진 또는 직접 입력' },
+    { num: '1', label: '견적서 촬영', desc: '사진 촬영' },
     { num: '2', label: '시세 분석', desc: '시장 평균가 비교' },
     { num: '3', label: '결과 확인', desc: '항목별 적정성 판단' },
   ];

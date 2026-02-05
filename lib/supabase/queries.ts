@@ -51,18 +51,18 @@ export async function getVehicle(userId: string): Promise<Vehicle | null> {
 
 /**
  * 차량 정보 저장/업데이트
+ * 실패 시 { data: null, error: 메시지 } 반환 (RLS 정책·제약 등 원인 전달용)
  */
 export async function upsertVehicle(
   userId: string,
   vehicle: Omit<VehicleInsert, 'user_id' | 'id'>
-): Promise<Vehicle | null> {
+): Promise<{ data: Vehicle | null; error: string | null }> {
   const supabase = await createServerClient();
 
-  // 기존 차량 확인
-  const existing = await getVehicle(userId);
+  // 기존 차량 확인 (익명은 user_id=null이라 getVehicle('anonymous')는 항상 null)
+  const existing = await getVehicle(userId === 'anonymous' ? '' : userId);
 
   if (existing) {
-    // 업데이트
     const { data, error } = await supabase
       .from('vehicles')
       .update({
@@ -75,28 +75,26 @@ export async function upsertVehicle(
 
     if (error) {
       console.error('Error updating vehicle:', error);
-      return null;
+      return { data: null, error: error.message };
     }
-
-    return data;
-  } else {
-    // 새로 생성 (익명 사용자는 user_id를 null로 저장)
-    const { data, error } = await supabase
-      .from('vehicles')
-      .insert({
-        ...vehicle,
-        user_id: userId === 'anonymous' ? null : userId,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating vehicle:', error);
-      return null;
-    }
-
-    return data;
+    return { data, error: null };
   }
+
+  // 새로 생성 (익명 사용자는 user_id를 null로 저장)
+  const { data, error } = await supabase
+    .from('vehicles')
+    .insert({
+      ...vehicle,
+      user_id: userId === 'anonymous' ? null : userId,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating vehicle:', error);
+    return { data: null, error: error.message };
+  }
+  return { data, error: null };
 }
 
 /** 목업: 차량등록번호로 조회 시 반환할 Vehicle 형태 */

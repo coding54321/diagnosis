@@ -72,7 +72,7 @@ export async function saveVehicle(vehicle: {
     const user = await getCurrentUser();
     // 비로그인 사용자는 익명으로 저장 (user_id = null)
     const userId = user?.id || null;
-    const saved = await upsertVehicle(userId || 'anonymous', {
+    const { data: saved, error: upsertError } = await upsertVehicle(userId || 'anonymous', {
       manufacturer: vehicle.manufacturer,
       model: vehicle.model,
       variant: vehicle.variant || null,
@@ -80,6 +80,13 @@ export async function saveVehicle(vehicle: {
       mileage: vehicle.mileage,
       fuel_type: vehicle.fuelType,
     });
+    if (upsertError || !saved) {
+      console.error('saveVehicle: upsertVehicle failed', upsertError);
+      return {
+        success: false,
+        error: upsertError || '차량 정보를 저장하는데 실패했습니다. 로그인 후 다시 시도해 주세요.',
+      };
+    }
     return { success: true, data: saved };
   } catch (error) {
     console.error('Error in saveVehicle:', error);

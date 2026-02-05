@@ -439,7 +439,7 @@ const CameraPage: React.FC = () => {
                   onClick={handleUsePhoto}
                   className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl bg-hyundai-gray-900 text-sm font-medium text-white active:bg-hyundai-gray-800 transition-colors"
                 >
-                  견적서 이미지 분석하기
+                  분석하기
                   <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
                 </button>
               </div>
