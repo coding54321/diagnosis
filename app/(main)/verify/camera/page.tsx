@@ -164,6 +164,16 @@ const CameraPage: React.FC = () => {
           quality: 0.7,
         });
         setCapturedImage(compressedImage);
+
+        // 촬영 직후 품질 검증
+        const quality = await analyzeImageQuality(compressedImage);
+        if (quality.issues.length > 0) {
+          setQualityWarning({
+            issues: quality.issues,
+            sharpness: quality.sharpness,
+            brightness: quality.brightness,
+          });
+        }
       } catch (err) {
         console.error('이미지 압축 실패:', err);
         // 압축 실패 시 원본 사용
