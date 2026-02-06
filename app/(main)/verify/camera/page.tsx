@@ -250,6 +250,16 @@ const CameraPage: React.FC = () => {
         quality: 0.7,
       });
       setCapturedImage(compressedImage);
+
+      // 앨범 선택 직후 품질 검증
+      const quality = await analyzeImageQuality(compressedImage);
+      if (quality.issues.length > 0) {
+        setQualityWarning({
+          issues: quality.issues,
+          sharpness: quality.sharpness,
+          brightness: quality.brightness,
+        });
+      }
     } catch (err) {
       console.error('이미지 처리 실패:', err);
       setAlbumError('이미지를 처리하는 중 오류가 발생했습니다.');
