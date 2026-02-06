@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { CheckCircle2, AlertCircle, XCircle, ChevronDown, ChevronUp, Loader2, ArrowLeft } from 'lucide-react';
+import { CheckCircle2, AlertCircle, ChevronDown, ChevronUp, Loader2, ArrowLeft } from 'lucide-react';
 import { Container } from '@/components/layout';
 import { Card } from '@/components/ui';
 import PriceChart from '@/components/verification/PriceChart';
@@ -11,6 +11,7 @@ import { fetchVerificationResult } from '@/lib/supabase/actions';
 import { mockVerificationResult } from '@/lib/mockData';
 import type { VerificationResult, ItemVerification } from '@/types';
 
+// 2단계 상태: 적정 / 확인필요
 const statusConfig = {
   appropriate: {
     label: '적정',
@@ -19,16 +20,10 @@ const statusConfig = {
     bg: 'bg-green-50',
   },
   review_needed: {
-    label: '확인 필요',
+    label: '확인필요',
     Icon: AlertCircle,
     color: 'text-amber-500',
     bg: 'bg-amber-50',
-  },
-  recheck_recommended: {
-    label: '재검토 권장',
-    Icon: XCircle,
-    color: 'text-red-500',
-    bg: 'bg-red-50',
   },
 };
 

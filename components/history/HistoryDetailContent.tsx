@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { CheckCircle2, AlertCircle, XCircle, Share2 } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Share2 } from 'lucide-react';
 import { Header, Container } from '@/components/layout';
 import { Card, Badge } from '@/components/ui';
 import VerificationSummary from '@/components/verification/VerificationSummary';
@@ -17,6 +17,7 @@ interface HistoryDetailContentProps {
   history: VerificationHistory;
 }
 
+// 2단계 상태: 적정 / 확인필요
 const statusConfig = {
   appropriate: {
     label: '적정',
@@ -24,14 +25,9 @@ const statusConfig = {
     Icon: CheckCircle2,
   },
   review_needed: {
-    label: '확인 필요',
+    label: '확인필요',
     variant: 'warning' as const,
     Icon: AlertCircle,
-  },
-  recheck_recommended: {
-    label: '재검토 권장',
-    variant: 'error' as const,
-    Icon: XCircle,
   },
 };
 
@@ -47,7 +43,6 @@ export default function HistoryDetailContent({ history }: HistoryDetailContentPr
     return {
       appropriate: items.filter((item) => item.status === 'appropriate').length,
       reviewNeeded: items.filter((item) => item.status === 'review_needed').length,
-      recheckRecommended: items.filter((item) => item.status === 'recheck_recommended').length,
     };
   }, [verificationResult.items]);
 
@@ -122,7 +117,6 @@ export default function HistoryDetailContent({ history }: HistoryDetailContentPr
 
             <VerificationSummary
               totalAmount={history.totalAmount}
-              status={history.status}
               itemCounts={itemCounts}
             />
 

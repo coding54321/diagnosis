@@ -13,7 +13,7 @@ const QuestionGuidePage: React.FC = () => {
 
   // 확인이 필요한 항목들 (목업)
   const reviewNeededItems = mockVerificationResult.items.filter(
-    (item) => item.status === 'review_needed' || item.status === 'recheck_recommended'
+    (item) => item.status === 'review_needed'
   );
 
   // 질문 템플릿 (항목별)

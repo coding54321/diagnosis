@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { CheckCircle2, AlertCircle, XCircle, ChevronRight, MapPin } from 'lucide-react';
+import { CheckCircle2, AlertCircle, ChevronRight, MapPin } from 'lucide-react';
 import { Container } from '@/components/layout';
 import { Card, Badge } from '@/components/ui';
 import { fetchVehicle, fetchRecentHistory } from '@/lib/supabase/actions';
@@ -8,6 +8,7 @@ import { getCurrentUser } from '@/lib/supabase/auth-server';
 import { formatPrice } from '@/lib/utils';
 import type { Vehicle, VerificationHistory } from '@/types';
 
+// 2단계 상태: 적정 / 확인필요
 const statusConfig = {
   appropriate: {
     label: '적정',
@@ -15,14 +16,9 @@ const statusConfig = {
     Icon: CheckCircle2,
   },
   review_needed: {
-    label: '확인 필요',
+    label: '확인필요',
     variant: 'warning' as const,
     Icon: AlertCircle,
-  },
-  recheck_recommended: {
-    label: '재검토',
-    variant: 'error' as const,
-    Icon: XCircle,
   },
 };
 

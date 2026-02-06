@@ -340,11 +340,11 @@ export async function saveVerificationResult(
   estimateId: string,
   result: {
     totalAmount: number;
-    status: 'appropriate' | 'review_needed' | 'recheck_recommended';
+    status: 'appropriate' | 'review_needed';
     confidence: number;
     items: Array<{
       estimateItemId: string;
-      status: 'appropriate' | 'review_needed' | 'recheck_recommended';
+      status: 'appropriate' | 'review_needed';
       userPrice: number;
       averagePrice: number;
       minPrice: number;
@@ -419,6 +419,13 @@ export async function getVerificationResult(
 ): Promise<{
   result: VerificationResult;
   items: Array<ItemVerification & { estimateItem: EstimateItem }>;
+  estimate?: {
+    vehicle?: {
+      model: string;
+      variant?: string;
+      mileage: number;
+    };
+  };
 } | null> {
   const supabase = await createServerClient();
 
@@ -446,11 +453,32 @@ export async function getVerificationResult(
     return null;
   }
 
+  // 견적서와 연결된 차량 정보 가져오기
+  const { data: estimateData } = await supabase
+    .from('estimates')
+    .select(`
+      vehicle_id,
+      vehicles (
+        model,
+        variant,
+        mileage
+      )
+    `)
+    .eq('id', estimateId)
+    .single();
+
   return {
     result: resultData,
     items: (itemsData || []).map((item: any) => ({
       ...item,
       estimateItem: item.estimate_items,
     })),
+    estimate: estimateData ? {
+      vehicle: estimateData.vehicles ? {
+        model: (estimateData.vehicles as any).model,
+        variant: (estimateData.vehicles as any).variant,
+        mileage: (estimateData.vehicles as any).mileage,
+      } : undefined,
+    } : undefined,
   };
 }

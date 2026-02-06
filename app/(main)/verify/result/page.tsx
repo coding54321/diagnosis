@@ -7,7 +7,7 @@ import { Container } from '@/components/layout';
 import { Card } from '@/components/ui';
 import VerificationSummary from '@/components/verification/VerificationSummary';
 import EstimateCard from '@/components/verification/EstimateCard';
-import { mockVerificationResult } from '@/lib/mockData';
+import { mockVerificationResult, mockVehicle } from '@/lib/mockData';
 import { createVerificationResult, fetchVerificationResult } from '@/lib/supabase/actions';
 import { copyLink, formatVerificationResultForShare, shareNative } from '@/lib/share';
 import { toast } from 'sonner';
@@ -23,6 +23,11 @@ const VerificationResultPage: React.FC = () => {
   const [result, setResult] = useState<VerificationResult | null>(null);
   const [itemNames, setItemNames] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [vehicleConditions, setVehicleConditions] = useState<{
+    model?: string;
+    variant?: string;
+    mileage?: number;
+  }>({});
 
   useEffect(() => {
     const loadVerificationResult = async () => {
@@ -73,11 +78,48 @@ const VerificationResultPage: React.FC = () => {
             items,
             confidence: dbResult.result.confidence || 0,
           });
+
+          // 차량 정보 설정 (estimate → vehicle 관계에서 가져옴)
+          if (dbResult.estimate?.vehicle) {
+            const v = dbResult.estimate.vehicle;
+            setVehicleConditions({
+              model: v.model,
+              variant: v.variant,
+              mileage: v.mileage,
+            });
+          } else {
+            // vehicle 정보가 없으면 sessionStorage에서 가져오기 시도
+            const savedVehicle = sessionStorage.getItem('selectedVehicle');
+            if (savedVehicle) {
+              try {
+                const v = JSON.parse(savedVehicle);
+                setVehicleConditions({
+                  model: v.model,
+                  variant: v.variant,
+                  mileage: v.mileage,
+                });
+              } catch (e) {
+                console.warn('차량 정보 파싱 실패:', e);
+              }
+            }
+          }
         } else {
           setResult(mockVerificationResult);
+          // Mock 데이터 사용 시 mockVehicle 정보 설정
+          setVehicleConditions({
+            model: mockVehicle.model,
+            variant: mockVehicle.variant,
+            mileage: mockVehicle.mileage,
+          });
         }
       } else {
         setResult(mockVerificationResult);
+        // Mock 데이터 사용 시 mockVehicle 정보 설정
+        setVehicleConditions({
+          model: mockVehicle.model,
+          variant: mockVehicle.variant,
+          mileage: mockVehicle.mileage,
+        });
       }
       setIsLoading(false);
     };
@@ -108,13 +150,12 @@ const VerificationResultPage: React.FC = () => {
   const itemCounts = {
     appropriate: result.items.filter((item) => item.status === 'appropriate').length,
     reviewNeeded: result.items.filter((item) => item.status === 'review_needed').length,
-    recheckRecommended: result.items.filter((item) => item.status === 'recheck_recommended').length,
   };
 
-  // 우선순위: 재검토 → 확인필요 → 적정 순으로 정렬
+  // 우선순위: 확인필요 → 적정 순으로 정렬
   const sortedItems = [...result.items].sort((a, b) => {
-    const order = { recheck_recommended: 0, review_needed: 1, appropriate: 2 };
-    return order[a.status] - order[b.status];
+    const order: Record<string, number> = { review_needed: 0, appropriate: 1 };
+    return (order[a.status] ?? 1) - (order[b.status] ?? 1);
   });
 
   const handleShare = async () => {
@@ -204,8 +245,8 @@ const VerificationResultPage: React.FC = () => {
             {/* 검증 결과 요약 */}
             <VerificationSummary
               totalAmount={result.totalAmount}
-              status={result.status}
               itemCounts={itemCounts}
+              vehicleConditions={vehicleConditions}
             />
 
             {/* 항목별 검증 결과 — 단일 카드 + 디바이더 */}

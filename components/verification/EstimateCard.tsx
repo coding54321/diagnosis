@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { CheckCircle2, AlertCircle, XCircle, ChevronRight } from 'lucide-react';
+import { CheckCircle2, AlertCircle } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import type { VerificationStatus } from '@/types';
 
@@ -17,6 +17,7 @@ export interface EstimateCardProps {
   userPrice: number;
 }
 
+// 2단계 상태: 적정 / 확인필요
 const statusConfig = {
   appropriate: {
     label: '적정',
@@ -25,16 +26,10 @@ const statusConfig = {
     textColor: 'text-green-600',
   },
   review_needed: {
-    label: '확인 필요',
+    label: '확인필요',
     Icon: AlertCircle,
     dotColor: 'bg-amber-500',
     textColor: 'text-amber-500',
-  },
-  recheck_recommended: {
-    label: '재검토',
-    Icon: XCircle,
-    dotColor: 'bg-red-500',
-    textColor: 'text-red-500',
   },
 };
 

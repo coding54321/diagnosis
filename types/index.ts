@@ -33,8 +33,8 @@ export interface Vehicle {
   fuelType: string; // 연료 타입
 }
 
-// 검증 결과 관련 타입
-export type VerificationStatus = 'appropriate' | 'review_needed' | 'recheck_recommended';
+// 검증 결과 관련 타입 (2단계: 적정 / 확인필요)
+export type VerificationStatus = 'appropriate' | 'review_needed';
 
 export interface PriceRange {
   min: number;

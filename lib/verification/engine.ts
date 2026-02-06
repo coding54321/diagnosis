@@ -5,7 +5,8 @@
 
 import type { EstimateItem } from '@/types';
 
-export type VerificationStatus = 'appropriate' | 'review_needed' | 'recheck_recommended';
+// 2단계 검증 상태: 적정 / 확인필요
+export type VerificationStatus = 'appropriate' | 'review_needed';
 
 export interface VerificationResult {
   status: VerificationStatus;
@@ -98,24 +99,14 @@ export class VerificationEngine {
       }))
     );
 
-    // 전체 상태 결정 (가장 심각한 상태를 선택)
+    // 전체 상태 결정 (확인필요 항목이 하나라도 있으면 review_needed)
     let overallStatus: VerificationStatus = 'appropriate';
-    let hasReviewNeeded = false;
-    let hasRecheckRecommended = false;
 
     itemResults.forEach((result) => {
-      if (result.status === 'recheck_recommended') {
-        hasRecheckRecommended = true;
-      } else if (result.status === 'review_needed') {
-        hasReviewNeeded = true;
+      if (result.status === 'review_needed') {
+        overallStatus = 'review_needed';
       }
     });
-
-    if (hasRecheckRecommended) {
-      overallStatus = 'recheck_recommended';
-    } else if (hasReviewNeeded) {
-      overallStatus = 'review_needed';
-    }
 
     // 전체 신뢰도 계산 (항목별 신뢰도의 평균)
     const avgConfidence =
@@ -208,7 +199,7 @@ export class VerificationEngine {
   }
 
   /**
-   * 가격 비교를 통한 상태 결정
+   * 가격 비교를 통한 상태 결정 (2단계: 적정/확인필요)
    */
   static determineStatus(
     userPrice: number,
@@ -217,18 +208,13 @@ export class VerificationEngine {
   ): VerificationStatus {
     const deviation = (userPrice - averagePrice) / averagePrice;
 
-    // 평균 대비 30% 이상 높으면 재검토 권장
-    if (deviation > 0.3) {
-      return 'recheck_recommended';
-    }
-
     // 평균 대비 15% 이상 높으면 확인 필요
     if (deviation > 0.15) {
       return 'review_needed';
     }
 
     // 범위를 벗어나면 확인 필요
-    if (userPrice > priceRange.max || userPrice < priceRange.min) {
+    if (userPrice > priceRange.max) {
       return 'review_needed';
     }
 

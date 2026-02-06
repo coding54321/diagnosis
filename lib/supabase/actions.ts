@@ -196,11 +196,11 @@ export async function uploadEstimateImageAction(
 export async function createVerificationResult(data: {
   estimateId: string;
   totalAmount: number;
-  status: 'appropriate' | 'review_needed' | 'recheck_recommended';
+  status: 'appropriate' | 'review_needed';
   confidence: number;
   items: Array<{
     estimateItemId: string;
-    status: 'appropriate' | 'review_needed' | 'recheck_recommended';
+    status: 'appropriate' | 'review_needed';
     userPrice: number;
     averagePrice: number;
     minPrice: number;

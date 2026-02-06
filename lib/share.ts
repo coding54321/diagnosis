@@ -90,25 +90,17 @@ export async function copyLink(url?: string): Promise<boolean> {
 }
 
 /**
- * 검증 결과를 공유용 텍스트로 변환
+ * 검증 결과를 공유용 텍스트로 변환 (2단계: 적정/확인필요)
  */
 export function formatVerificationResultForShare(
   totalAmount: number,
   status: string,
-  itemCounts: { appropriate: number; reviewNeeded: number; recheckRecommended: number }
+  itemCounts: { appropriate: number; reviewNeeded: number }
 ): ShareData {
-  const statusText = {
-    appropriate: '적정',
-    review_needed: '확인 필요',
-    recheck_recommended: '재검토 권장',
-  }[status] || '검증 완료';
-
   const summary = [
     `총 견적 금액: ${totalAmount.toLocaleString()}원`,
-    `검증 결과: ${statusText}`,
     `- 적정: ${itemCounts.appropriate}건`,
-    `- 확인 필요: ${itemCounts.reviewNeeded}건`,
-    `- 재검토 권장: ${itemCounts.recheckRecommended}건`,
+    `- 확인필요: ${itemCounts.reviewNeeded}건`,
   ].join('\n');
 
   return {
