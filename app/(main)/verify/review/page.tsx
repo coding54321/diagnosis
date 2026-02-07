@@ -126,10 +126,20 @@ const ReviewPage: React.FC = () => {
   const syncMonthFromScroll = useCallback(() => {
     const el = monthScrollRef.current;
     if (!el) return;
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth() + 1;
     const index = Math.round(el.scrollTop / DATE_PICKER_ITEM_HEIGHT);
-    const month = Math.max(1, Math.min(index + 1, 12));
+    let month = Math.max(1, Math.min(index + 1, 12));
+    if (tempYear === currentYear && month > currentMonth) {
+      month = currentMonth;
+      setTempMonth(month);
+      const PADDING_TOP = 72;
+      el.scrollTo({ top: PADDING_TOP + (month - 1) * DATE_PICKER_ITEM_HEIGHT - 72, behavior: 'smooth' });
+      return;
+    }
     setTempMonth(month);
-  }, []);
+  }, [tempYear]);
   const syncDayFromScroll = useCallback(() => {
     const el = dayScrollRef.current;
     if (!el) return;
@@ -593,11 +603,21 @@ const ReviewPage: React.FC = () => {
     return new Date(year, month, 0).getDate();
   };
 
-  // 데이트 피커에서 날짜 선택 확정
+  // 데이트 피커에서 날짜 선택 확정 (오늘 이후는 저장하지 않음)
   const confirmDate = () => {
     const daysInMonth = getDaysInMonth(tempYear, tempMonth);
     const day = Math.min(tempDay, daysInMonth);
-    const dateStr = `${tempYear}-${String(tempMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    let y = tempYear;
+    let m = tempMonth;
+    let d = day;
+    const today = new Date();
+    const selected = new Date(y, m - 1, d);
+    if (selected > today) {
+      y = today.getFullYear();
+      m = today.getMonth() + 1;
+      d = today.getDate();
+    }
+    const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
     setRequestDate(dateStr);
     setShowDatePicker(false);
   };
@@ -1133,29 +1153,43 @@ const ReviewPage: React.FC = () => {
             ))}
             <div className="h-[72px]" /> {/* 하단 패딩 (중앙 정렬용) */}
           </div>
-          {/* 월 */}
-          <div
-            ref={monthScrollRef}
-            onScroll={syncMonthFromScroll}
-            className="flex-1 overflow-y-auto snap-y snap-mandatory scrollbar-hide relative"
-          >
-            <div className="h-[72px]" />
-            {months.map((month) => (
-              <button
-                key={month}
-                type="button"
-                onClick={() => setTempMonth(month)}
-                className={`w-full h-12 flex items-center justify-center snap-center transition-colors ${
-                  tempMonth === month
-                    ? 'text-hyundai-gray-900 font-bold text-lg'
-                    : 'text-hyundai-gray-400 text-base'
-                }`}
+          {/* 월 — 올해 선택 시 현재 월까지만 선택 가능 */}
+          {(() => {
+            const today = new Date();
+            const currentYear = today.getFullYear();
+            const currentMonth = today.getMonth() + 1;
+            const isMonthDisabled = tempYear === currentYear ? (month: number) => month > currentMonth : () => false;
+            return (
+              <div
+                ref={monthScrollRef}
+                onScroll={syncMonthFromScroll}
+                className="flex-1 overflow-y-auto snap-y snap-mandatory scrollbar-hide relative"
               >
-                {month}월
-              </button>
-            ))}
-            <div className="h-[72px]" />
-          </div>
+                <div className="h-[72px]" />
+                {months.map((month) => {
+                  const disabled = isMonthDisabled(month);
+                  return (
+                    <button
+                      key={month}
+                      type="button"
+                      onClick={() => !disabled && setTempMonth(month)}
+                      disabled={disabled}
+                      className={`w-full h-12 flex items-center justify-center snap-center transition-colors ${
+                        tempMonth === month
+                          ? 'text-hyundai-gray-900 font-bold text-lg'
+                          : disabled
+                          ? 'text-hyundai-gray-200 text-base cursor-not-allowed'
+                          : 'text-hyundai-gray-400 text-base'
+                      }`}
+                    >
+                      {month}월
+                    </button>
+                  );
+                })}
+                <div className="h-[72px]" />
+              </div>
+            );
+          })()}
           {/* 일 */}
           <div
             ref={dayScrollRef}
