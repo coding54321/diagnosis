@@ -6,6 +6,7 @@ import { fetchVehicle, fetchRecentHistory } from '@/lib/supabase/actions';
 import { getCurrentUser } from '@/lib/supabase/auth-server';
 import { Camera, ChevronRight, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Card, Badge } from '@/components/ui';
+import DirectInputButton from '@/components/verification/DirectInputButton';
 import { formatPrice } from '@/lib/utils';
 import type { Vehicle, VerificationHistory } from '@/types';
 
@@ -85,6 +86,7 @@ export default async function HomePage() {
                 <div className="absolute -right-8 -top-8 w-24 h-24 rounded-full bg-white/[0.03]" />
               </div>
             </Link>
+            <DirectInputButton />
 
             {/* 내 차량 미니 요약 (등록된 경우만) */}
             {vehicle && (
@@ -174,11 +176,7 @@ export default async function HomePage() {
                 <div className="absolute -right-8 -top-8 w-24 h-24 rounded-full bg-white/[0.03]" />
               </div>
             </Link>
-
-            {/* 이렇게 검증해드려요 */}
-            <div className="mt-4">
-              <HowItWorksSection />
-            </div>
+            <DirectInputButton />
 
             {/* 로그인 유도 */}
             <div className="mt-3">
@@ -192,36 +190,6 @@ export default async function HomePage() {
 }
 
 /* ===== 서브 컴포넌트 ===== */
-
-function HowItWorksSection() {
-  const steps = [
-    { num: '1', label: '견적서 촬영', desc: '사진 촬영' },
-    { num: '2', label: '시세 분석', desc: '시장 평균가 비교' },
-    { num: '3', label: '결과 확인', desc: '항목별 적정성 판단' },
-  ];
-
-  return (
-    <div>
-      <p className="text-sm font-bold text-hyundai-gray-900 px-1 mb-2">이렇게 검증해드려요</p>
-      <Card variant="default" padding="none">
-        {steps.map((step, i) => (
-          <React.Fragment key={step.label}>
-            {i > 0 && <div className="mx-5 border-b border-hyundai-gray-100" />}
-            <div className="flex items-center gap-3.5 px-5 py-3.5">
-              <div className="w-7 h-7 rounded-full bg-hyundai-gray-50 flex items-center justify-center shrink-0">
-                <span className="text-xs font-bold text-hyundai-gray-500">{step.num}</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-hyundai-gray-900">{step.label}</p>
-                <p className="text-xs text-hyundai-gray-400">{step.desc}</p>
-              </div>
-            </div>
-          </React.Fragment>
-        ))}
-      </Card>
-    </div>
-  );
-}
 
 function LoginPrompt() {
   return (

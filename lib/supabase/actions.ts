@@ -12,6 +12,7 @@ import {
   verifyVehicleOwner,
   getRecentVerificationHistory,
   getVerificationHistoryById,
+  deleteVerificationResultById,
   saveEstimate,
   updateEstimateImageUrl,
   saveVerificationResult,
@@ -145,6 +146,23 @@ export async function fetchHistoryById(id: string) {
   } catch (error) {
     console.error('Error in fetchHistoryById:', error);
     return { success: false, data: null };
+  }
+}
+
+/**
+ * 검증 내역 삭제 (본인 소유만)
+ */
+export async function deleteVerificationHistory(verificationResultId: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.id) {
+      return { success: false, error: '로그인이 필요해요.' };
+    }
+    const deleted = await deleteVerificationResultById(user.id, verificationResultId);
+    return deleted ? { success: true } : { success: false, error: '삭제할 수 없거나 이미 삭제된 내역이에요.' };
+  } catch (error) {
+    console.error('Error in deleteVerificationHistory:', error);
+    return { success: false, error: '삭제 중 오류가 발생했어요.' };
   }
 }
 

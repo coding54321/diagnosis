@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CheckCircle2, AlertCircle, Share2 } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Share2, Trash2 } from 'lucide-react';
+import { deleteVerificationHistory } from '@/lib/supabase/actions';
+import { toast } from 'sonner';
 import { Header, Container } from '@/components/layout';
 import { Card, Badge } from '@/components/ui';
 import VerificationSummary from '@/components/verification/VerificationSummary';
@@ -10,7 +12,6 @@ import PriceChart from '@/components/verification/PriceChart';
 import { formatDate, formatPrice } from '@/lib/utils';
 import { mockEstimate, mockVerificationResult } from '@/lib/mockData';
 import { copyLink, formatVerificationResultForShare, shareNative } from '@/lib/share';
-import { toast } from 'sonner';
 import type { VerificationHistory } from '@/types';
 
 interface HistoryDetailContentProps {
@@ -33,9 +34,27 @@ const statusConfig = {
 
 export default function HistoryDetailContent({ history }: HistoryDetailContentProps) {
   const router = useRouter();
+  const [isDeleting, setIsDeleting] = useState(false);
   const config = statusConfig[history.status];
   const StatusIcon = config.Icon;
   const verificationResult = mockVerificationResult; // TODO: history.estimateId로 실제 검증 결과 조회
+
+  const handleDelete = async () => {
+    if (!confirm('이 검증 내역을 삭제할까요? 삭제 후에는 복구할 수 없어요.')) return;
+    setIsDeleting(true);
+    try {
+      const res = await deleteVerificationHistory(history.id);
+      if (res.success) {
+        toast.success('삭제했어요');
+        router.push('/history');
+        router.refresh();
+      } else {
+        toast.error(res.error ?? '삭제에 실패했어요');
+      }
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // 현재는 목업 검증 결과 기준으로 항목 개수 계산
   const itemCounts = useMemo(() => {
@@ -172,6 +191,19 @@ export default function HistoryDetailContent({ history }: HistoryDetailContentPr
                   );
                 })}
               </div>
+            </div>
+
+            {/* 삭제 */}
+            <div className="pt-4">
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="flex items-center justify-center gap-2 w-full py-3 text-sm text-hyundai-gray-500 hover:text-red-500 active:bg-hyundai-gray-100 rounded-xl transition-colors disabled:opacity-50"
+              >
+                <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+                검증 내역 삭제
+              </button>
             </div>
           </div>
         </Container>

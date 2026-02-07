@@ -498,7 +498,8 @@ const CameraPage: React.FC = () => {
                   <button
                     onClick={() => {
                       stopCamera();
-                      router.push('/verify/manual');
+                      if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('directInput', 'true');
+                      router.push('/verify/review');
                     }}
                     className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl border border-hyundai-gray-200 text-sm font-medium text-hyundai-gray-700 active:bg-hyundai-gray-50 transition-colors"
                   >

@@ -257,6 +257,35 @@ const ReviewPage: React.FC = () => {
     const image = sessionStorage.getItem('capturedEstimateImage');
     const ocrResultJson = sessionStorage.getItem('ocrResult');
     const pendingOcr = sessionStorage.getItem('pendingOcr');
+    const directInput = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('directInput') : null;
+
+    // 직접 입력: 이미지 없이 견적 날짜/방문정비소(Step 2)부터 시작
+    if (directInput && !image) {
+      sessionStorage.removeItem('directInput');
+      setItems([]);
+      setWizardStep(2);
+      setCapturedImage(null);
+      setOcrError(null);
+      const loadSavedVehicle = async () => {
+        try {
+          const res = await fetchVehicle();
+          if (res.success && res.data) {
+            setSavedVehicle({
+              manufacturer: res.data.manufacturer,
+              model: res.data.model,
+              variant: res.data.variant || null,
+              year: res.data.year,
+              mileage: res.data.mileage,
+              fuelType: res.data.fuel_type,
+            });
+          }
+        } catch {
+          // 무시
+        }
+      };
+      loadSavedVehicle();
+      return;
+    }
 
     if (image) setCapturedImage(image);
 
@@ -299,7 +328,7 @@ const ReviewPage: React.FC = () => {
         .finally(() => setIsOcrLoading(false));
     }
 
-    // OCR 결과가 이미 있으면 초기 상태 설정 (paste 등)
+    // OCR 결과가 이미 있으면 초기 상태 설정 (다른 경로에서 저장된 ocrResult)
     if (ocrResultJson) {
       try {
         const ocrResult: OCRResult = JSON.parse(ocrResultJson);
@@ -606,8 +635,10 @@ const ReviewPage: React.FC = () => {
               onClick={() => {
                 sessionStorage.removeItem('capturedEstimateImage');
                 sessionStorage.removeItem('pendingOcr');
+                sessionStorage.removeItem('ocrResult');
                 setOcrError(null);
-                router.push('/verify/manual');
+                if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('directInput', 'true');
+                router.push('/verify/review');
               }}
               className="w-full py-3 rounded-xl border border-hyundai-gray-200 text-hyundai-gray-700 text-sm font-medium active:bg-hyundai-gray-50 transition-colors"
             >
@@ -964,36 +995,68 @@ const ReviewPage: React.FC = () => {
           <span className="text-sm text-hyundai-gray-400">{items.length}건</span>
         </div>
         <Card variant="default" padding="none">
-          {items.map((item, index) => (
-            <React.Fragment key={item.id}>
-              {index > 0 && <div className="mx-4 border-b border-hyundai-gray-100" />}
+          {items.length === 0 ? (
+            <div className="px-4 py-8 text-center">
+              <p className="text-sm text-hyundai-gray-500 mb-4">등록된 정비 항목이 없어요</p>
               <button
                 type="button"
                 onClick={() => {
-                  setEditItemIndex(index);
-                  setEditItemForm({
-                    name: item.name,
-                    partCost: item.partCost,
-                    laborCost: item.laborCost,
-                  });
+                  setEditItemIndex(null);
+                  setEditItemForm({ name: '', partCost: 0, laborCost: 0 });
                   openSheet('item');
                 }}
-                className="w-full px-4 py-4 active:bg-hyundai-gray-50 transition-colors text-left"
+                className="py-3 px-5 rounded-xl border border-hyundai-gray-200 text-sm font-medium text-hyundai-gray-700 active:bg-hyundai-gray-50 transition-colors"
               >
-                <div className="flex items-center justify-between mb-1">
-                  <p className="text-sm font-medium text-hyundai-gray-900">{item.name}</p>
-                  <p className="text-sm font-bold text-hyundai-gray-900 shrink-0 ml-3">
-                    {formatPrice(item.totalCost)}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-hyundai-gray-400">
-                  <span>부품 {formatPrice(item.partCost)}</span>
-                  <span className="text-hyundai-gray-200">|</span>
-                  <span>공임 {formatPrice(item.laborCost)}</span>
-                </div>
+                항목 추가
               </button>
-            </React.Fragment>
-          ))}
+            </div>
+          ) : (
+            <>
+              {items.map((item, index) => (
+                <React.Fragment key={item.id}>
+                  {index > 0 && <div className="mx-4 border-b border-hyundai-gray-100" />}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditItemIndex(index);
+                      setEditItemForm({
+                        name: item.name,
+                        partCost: item.partCost,
+                        laborCost: item.laborCost,
+                      });
+                      openSheet('item');
+                    }}
+                    className="w-full px-4 py-4 active:bg-hyundai-gray-50 transition-colors text-left"
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-sm font-medium text-hyundai-gray-900">{item.name}</p>
+                      <p className="text-sm font-bold text-hyundai-gray-900 shrink-0 ml-3">
+                        {formatPrice(item.totalCost)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-hyundai-gray-400">
+                      <span>부품 {formatPrice(item.partCost)}</span>
+                      <span className="text-hyundai-gray-200">|</span>
+                      <span>공임 {formatPrice(item.laborCost)}</span>
+                    </div>
+                  </button>
+                </React.Fragment>
+              ))}
+              <div className="mx-4 border-t border-hyundai-gray-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditItemIndex(null);
+                    setEditItemForm({ name: '', partCost: 0, laborCost: 0 });
+                    openSheet('item');
+                  }}
+                  className="w-full py-3 text-sm text-hyundai-gray-500 active:bg-hyundai-gray-50 transition-colors"
+                >
+                  + 항목 추가
+                </button>
+              </div>
+            </>
+          )}
         </Card>
       </div>
 
@@ -1013,7 +1076,7 @@ const ReviewPage: React.FC = () => {
           </div>
           <button
             onClick={handleVerify}
-            disabled={isSubmitting}
+            disabled={isSubmitting || items.length === 0}
             className="w-full py-4 rounded-2xl bg-hyundai-gray-900 text-white text-base font-semibold active:bg-hyundai-gray-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {isSubmitting ? (
@@ -1188,7 +1251,7 @@ const ReviewPage: React.FC = () => {
           editSheetMode === 'vehicle' ? '차량 정보'
             : editSheetMode === 'shop' ? '정비소 검색'
             : editSheetMode === 'vat' ? '부가세'
-            : editSheetMode === 'item' ? '항목 수정'
+            : editSheetMode === 'item' ? (editItemIndex !== null ? '항목 수정' : '항목 추가')
             : undefined
         }
       >
@@ -1236,7 +1299,7 @@ const ReviewPage: React.FC = () => {
           </div>
         )}
 
-        {editSheetMode === 'item' && editItemIndex !== null && (
+        {editSheetMode === 'item' && (
           <div className="space-y-4">
             <Input
               label="항목명"
@@ -1273,22 +1336,37 @@ const ReviewPage: React.FC = () => {
             </div>
             <button
               onClick={() => {
-                const item = items[editItemIndex];
-                if (!item) return;
                 const totalCost = editItemForm.partCost + editItemForm.laborCost;
-                setItems((prev) =>
-                  prev.map((it, i) =>
-                    i === editItemIndex
-                      ? {
-                          ...it,
-                          name: editItemForm.name || it.name,
-                          partCost: editItemForm.partCost,
-                          laborCost: editItemForm.laborCost,
-                          totalCost,
-                        }
-                      : it
-                  )
-                );
+                if (editItemIndex !== null) {
+                  const item = items[editItemIndex];
+                  if (!item) return;
+                  setItems((prev) =>
+                    prev.map((it, i) =>
+                      i === editItemIndex
+                        ? {
+                            ...it,
+                            name: editItemForm.name || it.name,
+                            partCost: editItemForm.partCost,
+                            laborCost: editItemForm.laborCost,
+                            totalCost,
+                          }
+                        : it
+                    )
+                  );
+                } else {
+                  setItems((prev) => [
+                    ...prev,
+                    {
+                      id: `manual-${Date.now()}`,
+                      name: editItemForm.name || '정비 항목',
+                      normalizedName: '',
+                      partCost: editItemForm.partCost,
+                      laborCost: editItemForm.laborCost,
+                      totalCost,
+                      category: '',
+                    },
+                  ]);
+                }
                 closeSheet();
               }}
               className="w-full py-3 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 transition-colors"

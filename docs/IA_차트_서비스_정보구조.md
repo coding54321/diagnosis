@@ -80,7 +80,6 @@
 | | | `/verify/camera` | 견적서 촬영. 앨범 선택·직접 입력 분기 |
 | | | `/verify/album` | 앨범에서 이미지 선택 후 review로 전달 |
 | | | `/verify/manual` | 견적 직접 입력 (항목·금액 등) → 완료 시 result 직행 |
-| | | `/verify/paste` | 텍스트 붙여넣기 (플로우에서 진입 제거됨, URL 직접 접근만 가능) |
 | | | `/verify/review` | 위자드: 1)입력완료 2)날짜·정비소 3)차량 4)견적목록 확인 → 검증 실행 |
 | | | `/verify/result` | 검증 결과 요약. 공유·저장·내 차 등록 유도 |
 | | | `/verify/result/[itemId]` | 항목별 상세 (가격 범위 등) |

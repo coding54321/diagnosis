@@ -290,6 +290,35 @@ export async function getVerificationHistoryById(
 }
 
 /**
+ * 검증 내역 삭제 (본인 소유만)
+ * verification_history 뷰의 id = verification_results.id
+ */
+export async function deleteVerificationResultById(
+  userId: string,
+  verificationResultId: string
+): Promise<boolean> {
+  if (!userId || !verificationResultId) {
+    return false;
+  }
+
+  const supabase = await createServerClient();
+
+  // item_verifications 먼저 삭제 (FK 제약)
+  await supabase
+    .from('item_verifications')
+    .delete()
+    .eq('verification_result_id', verificationResultId);
+
+  const { error } = await supabase
+    .from('verification_results')
+    .delete()
+    .eq('id', verificationResultId)
+    .eq('user_id', userId);
+
+  return !error;
+}
+
+/**
  * 견적서 저장
  */
 export async function saveEstimate(
