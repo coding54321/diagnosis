@@ -202,15 +202,15 @@ const ReviewPage: React.FC = () => {
     }
   }, []);
 
-  // Step 1 자동 전환 (OCR 대기 중이 아닐 때만 — paste 등 이미 결과가 있는 경우)
+  // Step 1 자동 전환 (OCR 성공 시에만 — 인식 실패 시에는 사용자가 '다시 촬영' 또는 '직접 입력'을 선택할 때까지 대기)
   useEffect(() => {
-    if (wizardStep === 1 && !isOcrLoading) {
+    if (wizardStep === 1 && !isOcrLoading && !ocrError) {
       const timer = setTimeout(() => {
         setWizardStep(2);
       }, 2500);
       return () => clearTimeout(timer);
     }
-  }, [wizardStep, isOcrLoading]);
+  }, [wizardStep, isOcrLoading, ocrError]);
 
   // 데이트 피커 열릴 때 선택된 값으로 스크롤
   useEffect(() => {
