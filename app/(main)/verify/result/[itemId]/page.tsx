@@ -49,10 +49,16 @@ const ItemDetailPage: React.FC = () => {
             const id = item.estimate_item_id || item.estimateItem?.id || '';
             const name = item.estimateItem?.name || item.estimate_items?.name || '';
             if (id && name) nameMap[id] = name;
+            const userPrice = item.user_price ?? 0;
+            const partUser = item.part_cost_user ?? 0;
+            const laborUser = item.labor_cost_user ?? 0;
+            let costType: 'part' | 'labor' | 'combined' = 'combined';
+            if (partUser > 0 && laborUser === 0) costType = 'part';
+            else if (partUser === 0 && laborUser > 0) costType = 'labor';
             return {
               itemId: id,
               status: item.status,
-              userPrice: item.user_price,
+              userPrice,
               averagePrice: item.average_price,
               priceRange: {
                 min: item.min_price,
@@ -61,18 +67,45 @@ const ItemDetailPage: React.FC = () => {
               },
               sampleCount: item.sample_count || 0,
               breakdown: {
-                partCost: { user: item.part_cost_user, average: item.part_cost_average },
-                laborCost: { user: item.labor_cost_user, average: item.labor_cost_average },
+                partCost: {
+                  user: partUser,
+                  average: item.part_cost_average,
+                  partPriceSource:
+                    item.part_price_source === 'wpc' || item.part_price_source === 'market'
+                      ? item.part_price_source
+                      : undefined,
+                },
+                laborCost: { user: laborUser, average: item.labor_cost_average },
               },
+              costType,
+              isFreeRepair: userPrice === 0,
+              ...(userPrice === 0 && {
+                guide: {
+                  partVerdict: 'no_data' as const,
+                  laborVerdict: 'no_data' as const,
+                  partMessage: '무상수리 항목으로 견적 비교 대상이 아닙니다.',
+                },
+              }),
             };
           });
           setItemNames(nameMap);
+          const totalPartCost = items.reduce((s, i) => s + (i.breakdown.partCost.user ?? 0), 0);
+          const totalLaborCost = items.reduce((s, i) => s + (i.breakdown.laborCost.user ?? 0), 0);
+          const comparableItems = items.filter((i) => !i.isFreeRepair);
+          const totalPartCostAverage = comparableItems.reduce((s, i) => s + (i.breakdown.partCost.average ?? 0), 0);
+          const totalLaborCostAverage = comparableItems.reduce((s, i) => s + (i.breakdown.laborCost.average ?? 0), 0);
+          const shopType = (dbResult.estimate?.shop_type as VerificationResult['shopType']) ?? 'other';
           setResult({
             estimateId,
             totalAmount: dbResult.result.total_amount,
             status: dbResult.result.status as VerificationResult['status'],
             items,
             confidence: dbResult.result.confidence || 0,
+            shopType,
+            totalPartCost,
+            totalLaborCost,
+            totalPartCostAverage,
+            totalLaborCostAverage,
           });
         } else {
           setResult(mockVerificationResult);
@@ -147,9 +180,12 @@ const ItemDetailPage: React.FC = () => {
   const StatusIcon = config.Icon;
   const partUser = item.breakdown.partCost.user;
   const partAvg = item.breakdown.partCost.average;
+  const partPriceSource = item.breakdown.partCost.partPriceSource;
   const laborUser = item.breakdown.laborCost.user;
   const laborAvg = item.breakdown.laborCost.average;
-  const diffPercent = item.averagePrice > 0
+  const isFreeRepair = item.isFreeRepair ?? item.userPrice === 0;
+  const partRefLabel = partPriceSource === 'wpc' ? 'WPC 순정가' : '시장 평균';
+  const diffPercent = !isFreeRepair && item.averagePrice > 0
     ? Math.round(((item.userPrice - item.averagePrice) / item.averagePrice) * 100)
     : 0;
 
@@ -185,22 +221,30 @@ const ItemDetailPage: React.FC = () => {
               <p className="text-3xl font-bold text-hyundai-gray-900 tracking-tight">
                 {formatPrice(item.userPrice)}
               </p>
-              <p className="text-xs text-hyundai-gray-400 mt-1.5">
-                시장 평균 {formatPrice(item.averagePrice)}
-                {diffPercent !== 0 && (
-                  <span className={`ml-1.5 ${diffPercent > 0 ? 'text-red-400' : 'text-green-500'}`}>
-                    ({diffPercent > 0 ? '+' : ''}{diffPercent}%)
-                  </span>
-                )}
-              </p>
+              {isFreeRepair ? (
+                <p className="text-xs text-hyundai-gray-500 mt-1.5">
+                  무상수리 항목으로 견적 비교 대상이 아닙니다.
+                </p>
+              ) : (
+                <p className="text-xs text-hyundai-gray-400 mt-1.5">
+                  {partPriceSource === 'wpc' ? 'WPC 순정가' : '시장 평균'} {formatPrice(item.averagePrice)}
+                  {diffPercent !== 0 && (
+                    <span className={`ml-1.5 ${diffPercent > 0 ? 'text-red-400' : 'text-green-500'}`}>
+                      ({diffPercent > 0 ? '+' : ''}{diffPercent}%)
+                    </span>
+                  )}
+                </p>
+              )}
             </div>
 
-            {/* 가격 분포 차트 */}
-            <PriceChart
-              userPrice={item.userPrice}
-              priceRange={item.priceRange}
-              sampleCount={item.sampleCount}
-            />
+            {/* 가격 분포 차트 — 무상수리면 비표시 */}
+            {!isFreeRepair && (
+              <PriceChart
+                userPrice={item.userPrice}
+                priceRange={item.priceRange}
+                sampleCount={item.sampleCount}
+              />
+            )}
 
             {/* 비용 분해 — row+divider 패턴 */}
             <div>
@@ -216,7 +260,7 @@ const ItemDetailPage: React.FC = () => {
                   </div>
                   {partAvg > 0 && (
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-hyundai-gray-400">시장 평균</span>
+                      <span className="text-xs text-hyundai-gray-400">{partRefLabel}</span>
                       <span className="text-xs text-hyundai-gray-400">
                         {formatPrice(partAvg)}
                         {partUser > partAvg && (

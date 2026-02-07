@@ -21,6 +21,7 @@ export const mockEstimate: Estimate = {
   id: 'estimate-1',
   vehicleId: 'vehicle-1',
   shopName: '블루핸즈 강남점',
+  shopType: 'bluehands',
   items: [
     {
       id: 'item-1',
@@ -48,7 +49,12 @@ export const mockVerificationResult: VerificationResult = {
   estimateId: 'estimate-1',
   totalAmount: 203500,
   status: 'appropriate',
-  confidence: 85, // 표본 수 기반 신뢰도
+  shopType: 'bluehands',
+  confidence: 85,
+  totalPartCost: 120000,
+  totalLaborCost: 65000,
+  totalPartCostAverage: 115000,
+  totalLaborCostAverage: 64000,
   items: [
     {
       itemId: 'item-1',
@@ -61,15 +67,23 @@ export const mockVerificationResult: VerificationResult = {
         median: 155000,
       },
       sampleCount: 50,
+      costType: 'combined',
       breakdown: {
         partCost: {
           user: 120000,
           average: 115000,
+          referencePrice: 115000,
         },
         laborCost: {
           user: 40000,
           average: 40000,
         },
+      },
+      guide: {
+        partVerdict: 'at_reference',
+        laborVerdict: 'at_expected',
+        partMessage: '순정 부품 가격과 일치합니다.',
+        laborMessage: '표준 작업시간 기준 적정 수준입니다.',
       },
     },
     {
@@ -83,6 +97,7 @@ export const mockVerificationResult: VerificationResult = {
         median: 24000,
       },
       sampleCount: 45,
+      costType: 'labor',
       breakdown: {
         partCost: {
           user: 0,
@@ -92,6 +107,11 @@ export const mockVerificationResult: VerificationResult = {
           user: 25000,
           average: 24000,
         },
+      },
+      guide: {
+        partVerdict: 'no_data',
+        laborVerdict: 'at_expected',
+        laborMessage: '표준 작업시간 기준 적정 수준입니다.',
       },
     },
   ],

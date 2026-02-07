@@ -9,6 +9,7 @@ import {
   getVehicle,
   upsertVehicle,
   getVehicleLookupByRegistrationNumber,
+  verifyVehicleOwner,
   getRecentVerificationHistory,
   getVerificationHistoryById,
   saveEstimate,
@@ -38,6 +39,27 @@ export async function fetchVehicleByRegistrationNumber(registrationNumber: strin
   } catch (error) {
     console.error('Error in fetchVehicleByRegistrationNumber:', error);
     return { success: false, error: '차량 정보 조회에 실패했습니다.', data: null };
+  }
+}
+
+/**
+ * 차량 검증 2단계: 소유주명 일치 여부 검증 (DB 기준)
+ * 차량번호로 조회된 차량의 소유주와 사용자 입력 소유주명 비교
+ */
+export async function verifyVehicleOwnerAction(registrationNumber: string, ownerName: string) {
+  try {
+    const normalizedNum = registrationNumber.replace(/\s|-/g, '').trim();
+    if (!normalizedNum || !ownerName.trim()) {
+      return { success: false, error: '차량번호와 소유주명을 입력해 주세요.' };
+    }
+    const result = await verifyVehicleOwner(normalizedNum, ownerName);
+    if (result.valid) {
+      return { success: true };
+    }
+    return { success: false, error: result.error ?? '소유주 정보가 일치하지 않아요.' };
+  } catch (error) {
+    console.error('Error in verifyVehicleOwnerAction:', error);
+    return { success: false, error: '소유주 검증 중 오류가 발생했습니다.' };
   }
 }
 
@@ -211,6 +233,7 @@ export async function createVerificationResult(data: {
     partCostAverage: number;
     laborCostUser: number;
     laborCostAverage: number;
+    partPriceSource?: 'wpc' | 'market' | null;
   }>;
 }) {
   try {

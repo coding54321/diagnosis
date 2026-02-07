@@ -1,9 +1,27 @@
 /**
  * 검증 엔진
  * 견적 항목의 적정성을 판단하는 로직
+ *
+ * 검증 전략:
+ * 1. 부품비: WPC 순정 기준가 대비 비교 (정비소 유형별 판정 기준 다름)
+ * 2. 공임비: FRT(표준정비시간) 기반 기대 공임 산출 후 비교
+ * 3. 가이드: 정비소유형 × 판정결과 매트릭스에서 맞춤 문구 생성
  */
 
-import type { EstimateItem } from '@/types';
+import type {
+  EstimateItem,
+  ShopType,
+  CostType,
+  PartVerdict,
+  LaborVerdict,
+  VerificationGuide,
+  CostBreakdown,
+  PriceRange,
+} from '@/types';
+import { lookupWpcPrice, findVehicleCode } from '@/lib/data/wpc-reference-parts';
+import { lookupFrt } from '@/lib/data/frt-standards';
+import { generateGuide } from './guide-messages';
+import { isOfficialShop } from './shop-classifier';
 
 // 2단계 검증 상태: 적정 / 확인필요
 export type VerificationStatus = 'appropriate' | 'review_needed';
@@ -12,66 +30,216 @@ export interface VerificationResult {
   status: VerificationStatus;
   userPrice: number;
   averagePrice: number;
-  priceRange: {
-    min: number;
-    max: number;
-    median: number;
-  };
+  priceRange: PriceRange;
   sampleCount: number;
   confidence: number;
-  breakdown: {
-    partCost: {
-      user: number;
-      average: number;
-    };
-    laborCost: {
-      user: number;
-      average: number;
-    };
-  };
+  breakdown: CostBreakdown;
+  costType: CostType;
+  guide?: VerificationGuide;
+  /** 0원 무상수리 항목: 견적 비교 대상 아님 */
+  isFreeRepair?: boolean;
+}
+
+/** 공임 산출용 기본 시간당 요율 (정비소 유형 미분류 시 기본값) */
+const DEFAULT_HOURLY_RATE = 80000; // 원/시간
+
+/**
+ * 비용 유형 판별
+ */
+function determineCostType(item: EstimateItem): CostType {
+  if (item.partCost > 0 && item.laborCost === 0) return 'part';
+  if (item.partCost === 0 && item.laborCost > 0) return 'labor';
+  return 'combined';
+}
+
+/**
+ * 부품비 판정
+ */
+function verifyPartCost(
+  userPartCost: number,
+  referencePrice: number | null,
+  shopType: ShopType
+): { verdict: PartVerdict; diffPercent: number } {
+  if (!referencePrice || referencePrice <= 0 || userPartCost <= 0) {
+    return { verdict: 'no_data', diffPercent: 0 };
+  }
+
+  const diff = userPartCost - referencePrice;
+  const diffPercent = Math.round((diff / referencePrice) * 100);
+
+  // 블루핸즈/오토큐: ±10% 이내 적정
+  // 일반/공임나라: ±15% 이내 적정 (유통비 감안)
+  const threshold = isOfficialShop(shopType) ? 10 : 15;
+
+  if (diffPercent > threshold) {
+    return { verdict: 'above_reference', diffPercent };
+  }
+  if (diffPercent < -threshold) {
+    return { verdict: 'below_reference', diffPercent };
+  }
+  return { verdict: 'at_reference', diffPercent };
+}
+
+/**
+ * 공임비 판정
+ */
+function verifyLaborCost(
+  userLaborCost: number,
+  frtHours: number | null
+): { verdict: LaborVerdict; diffPercent: number; expectedLabor: number; frtHours: number | null } {
+  if (!frtHours || frtHours <= 0 || userLaborCost <= 0) {
+    return { verdict: 'no_data', diffPercent: 0, expectedLabor: 0, frtHours: null };
+  }
+
+  const expectedLabor = Math.round(frtHours * DEFAULT_HOURLY_RATE);
+  const diff = userLaborCost - expectedLabor;
+  const diffPercent = Math.round((diff / expectedLabor) * 100);
+
+  // ±15% 이내 적정
+  if (diffPercent > 15) {
+    return { verdict: 'above_expected', diffPercent, expectedLabor, frtHours };
+  }
+  if (diffPercent < -15) {
+    return { verdict: 'below_expected', diffPercent, expectedLabor, frtHours };
+  }
+  return { verdict: 'at_expected', diffPercent, expectedLabor, frtHours };
 }
 
 /**
  * 검증 엔진 클래스
- * TODO: 실제 데이터베이스에서 유사 사례를 조회하여 통계 계산
  */
 export class VerificationEngine {
   /**
    * 견적 항목 검증
-   * 현재는 목업 데이터 기반으로 검증
-   * TODO: 데이터베이스에서 유사 차량/항목의 가격 데이터를 조회하여 통계 계산
    */
   static async verifyItem(
     item: EstimateItem,
     vehicleInfo: {
       manufacturer: string;
       model: string;
+      variant?: string;
       year: number;
       mileage: number;
-    }
+    },
+    shopType: ShopType = 'other'
   ): Promise<VerificationResult> {
-    // TODO: 실제 데이터베이스 쿼리로 대체
-    // 가격 비교는 정규화된 항목명(normalizedName) 우선 사용
+    // 0원 = 무상수리: 견적 비교 대상 아님
+    const isFreeRepair = item.totalCost === 0;
+    if (isFreeRepair) {
+      return {
+        status: 'appropriate',
+        userPrice: 0,
+        averagePrice: 0,
+        priceRange: { min: 0, max: 0, median: 0 },
+        sampleCount: 0,
+        confidence: 0,
+        breakdown: {
+          partCost: { user: 0, average: 0 },
+          laborCost: { user: 0, average: 0 },
+        },
+        costType: 'combined',
+        guide: {
+          partVerdict: 'no_data',
+          laborVerdict: 'no_data',
+          partMessage: '무상수리 항목으로 견적 비교 대상이 아닙니다.',
+        },
+        isFreeRepair: true,
+      };
+    }
+
     const lookupName = item.normalizedName?.trim() || item.name;
-    const mockData = this.getMockVerificationData(lookupName);
+    const costType = determineCostType(item);
+
+    // 차종 코드 조회
+    const vehicleCode = findVehicleCode(
+      vehicleInfo.manufacturer,
+      vehicleInfo.model,
+      vehicleInfo.variant
+    );
+
+    // ── 부품비 검증 (WPC) ──
+    let referencePrice: number | null = null;
+    let partResult = { verdict: 'no_data' as PartVerdict, diffPercent: 0 };
+
+    if (vehicleCode && item.partCost > 0) {
+      const wpcPart = lookupWpcPrice(lookupName, vehicleCode);
+      if (wpcPart) {
+        referencePrice = wpcPart.referencePrice;
+        partResult = verifyPartCost(item.partCost, referencePrice, shopType);
+      }
+    }
+
+    // ── 공임비 검증 (FRT) ──
+    let laborResult = { verdict: 'no_data' as LaborVerdict, diffPercent: 0, expectedLabor: 0, frtHours: null as number | null };
+
+    if (vehicleCode && item.laborCost > 0) {
+      const frtHours = lookupFrt(lookupName, vehicleCode);
+      laborResult = verifyLaborCost(item.laborCost, frtHours);
+    }
+
+    // ── 종합 상태 결정 ──
+    let status: VerificationStatus = 'appropriate';
+
+    if (costType === 'part') {
+      // 부품 전용: 부품 판정만
+      if (partResult.verdict === 'above_reference') status = 'review_needed';
+    } else if (costType === 'labor') {
+      // 공임 전용: 공임 판정만
+      if (laborResult.verdict === 'above_expected') status = 'review_needed';
+    } else {
+      // 복합: 둘 중 하나라도 주의면 확인필요
+      if (partResult.verdict === 'above_reference' || laborResult.verdict === 'above_expected') {
+        status = 'review_needed';
+      }
+    }
+
+    // ── 가격 범위 산출 ──
+    // WPC/FRT 기반으로 합리적인 범위 생성
+    const avgPrice = this.calculateAveragePrice(item, referencePrice, laborResult.expectedLabor);
+    const priceRange = this.calculatePriceRange(avgPrice, item.totalCost);
+
+    // ── 가이드 문구 생성 ──
+    const guide = generateGuide(
+      shopType,
+      partResult.verdict,
+      laborResult.verdict,
+      item.name,
+      partResult.diffPercent,
+      laborResult.diffPercent,
+      laborResult.frtHours ?? undefined
+    );
+
+    // ── 신뢰도 산출 ──
+    const confidence = this.calculateConfidence(
+      referencePrice !== null,
+      laborResult.frtHours !== null,
+      vehicleCode !== null
+    );
 
     return {
-      status: mockData.status,
+      status,
       userPrice: item.totalCost,
-      averagePrice: mockData.averagePrice,
-      priceRange: mockData.priceRange,
-      sampleCount: mockData.sampleCount,
-      confidence: mockData.confidence,
+      averagePrice: avgPrice,
+      priceRange,
+      sampleCount: referencePrice ? 50 : 20, // WPC 데이터 있으면 높은 표본
+      confidence,
       breakdown: {
         partCost: {
           user: item.partCost,
-          average: mockData.breakdown.partCost.average,
+          average: referencePrice ?? item.partCost,
+          referencePrice: referencePrice ?? undefined,
+          partPriceSource:
+            referencePrice != null && isOfficialShop(shopType) ? 'wpc' : undefined,
         },
         laborCost: {
           user: item.laborCost,
-          average: mockData.breakdown.laborCost.average,
+          average: laborResult.expectedLabor || item.laborCost,
+          expectedLabor: laborResult.expectedLabor || undefined,
+          frtHours: laborResult.frtHours ?? undefined,
         },
       },
+      costType,
+      guide,
     };
   }
 
@@ -84,122 +252,113 @@ export class VerificationEngine {
     vehicleInfo: {
       manufacturer: string;
       model: string;
+      variant?: string;
       year: number;
       mileage: number;
-    }
+    },
+    shopType: ShopType = 'other'
   ): Promise<{
     status: VerificationStatus;
     confidence: number;
+    shopType: ShopType;
     items: Array<VerificationResult & { itemId: string }>;
+    totalPartCost: number;
+    totalLaborCost: number;
+    totalPartCostAverage: number;
+    totalLaborCostAverage: number;
   }> {
     const itemResults = await Promise.all(
       items.map(async (item) => ({
         itemId: item.id,
-        ...(await this.verifyItem(item, vehicleInfo)),
+        ...(await this.verifyItem(item, vehicleInfo, shopType)),
       }))
     );
 
-    // 전체 상태 결정 (확인필요 항목이 하나라도 있으면 review_needed)
-    let overallStatus: VerificationStatus = 'appropriate';
+    // 비교 대상: 비용이 0원이 아닌 항목만 (무상수리 제외)
+    const comparableResults = itemResults.filter((r) => !r.isFreeRepair);
+    const comparableCount = comparableResults.length;
 
-    itemResults.forEach((result) => {
+    // 전체 상태 결정: 무상수리 제외한 유료 항목만 반영
+    let overallStatus: VerificationStatus = 'appropriate';
+    comparableResults.forEach((result) => {
       if (result.status === 'review_needed') {
         overallStatus = 'review_needed';
       }
     });
 
-    // 전체 신뢰도 계산 (항목별 신뢰도의 평균)
+    // 전체 신뢰도: 비교 대상 항목만 평균
     const avgConfidence =
-      itemResults.reduce((sum, r) => sum + r.confidence, 0) / itemResults.length;
+      comparableCount > 0
+        ? comparableResults.reduce((sum, r) => sum + r.confidence, 0) / comparableCount
+        : 0;
+
+    // 총 부품비/공임비 집계 (전체 견적 금액은 그대로)
+    const totalPartCost = items.reduce((sum, i) => sum + i.partCost, 0);
+    const totalLaborCost = items.reduce((sum, i) => sum + i.laborCost, 0);
+    // 참고 평균은 유료 항목만 합산 (무상수리 제외하여 견적 비교)
+    const totalPartCostAverage = comparableResults.reduce(
+      (sum, r) => sum + r.breakdown.partCost.average, 0
+    );
+    const totalLaborCostAverage = comparableResults.reduce(
+      (sum, r) => sum + r.breakdown.laborCost.average, 0
+    );
 
     return {
       status: overallStatus,
       confidence: Math.round(avgConfidence),
+      shopType,
       items: itemResults,
+      totalPartCost,
+      totalLaborCost,
+      totalPartCostAverage,
+      totalLaborCostAverage,
     };
   }
 
   /**
-   * 목업 검증 데이터 (임시)
-   * TODO: 실제 데이터베이스 쿼리로 대체
+   * 평균 가격 산출
    */
-  private static getMockVerificationData(itemName: string): {
-    status: VerificationStatus;
-    averagePrice: number;
-    priceRange: { min: number; max: number; median: number };
-    sampleCount: number;
-    confidence: number;
-    breakdown: {
-      partCost: { average: number };
-      laborCost: { average: number };
-    };
-  } {
-    // 항목명에 따른 목업 데이터
-    const mockDataMap: Record<string, any> = {
-      '브레이크 패드 교체 (전륜)': {
-        status: 'appropriate' as VerificationStatus,
-        averagePrice: 155000,
-        priceRange: { min: 130000, max: 180000, median: 155000 },
-        sampleCount: 50,
-        confidence: 85,
-        breakdown: {
-          partCost: { average: 115000 },
-          laborCost: { average: 40000 },
-        },
-      },
-      '브레이크 디스크 연마 (전륜)': {
-        status: 'appropriate' as VerificationStatus,
-        averagePrice: 24000,
-        priceRange: { min: 20000, max: 30000, median: 24000 },
-        sampleCount: 45,
-        confidence: 80,
-        breakdown: {
-          partCost: { average: 0 },
-          laborCost: { average: 24000 },
-        },
-      },
-      '엔진오일 교환': {
-        status: 'appropriate' as VerificationStatus,
-        averagePrice: 95000,
-        priceRange: { min: 80000, max: 120000, median: 95000 },
-        sampleCount: 100,
-        confidence: 90,
-        breakdown: {
-          partCost: { average: 55000 },
-          laborCost: { average: 40000 },
-        },
-      },
-      '인젝터 클리닝': {
-        status: 'review_needed' as VerificationStatus,
-        averagePrice: 150000,
-        priceRange: { min: 120000, max: 180000, median: 150000 },
-        sampleCount: 30,
-        confidence: 75,
-        breakdown: {
-          partCost: { average: 0 },
-          laborCost: { average: 150000 },
-        },
-      },
-    };
-
-    // 기본값 (매칭되는 항목이 없는 경우)
-    return (
-      mockDataMap[itemName] || {
-        status: 'appropriate' as VerificationStatus,
-        averagePrice: 100000,
-        priceRange: { min: 80000, max: 120000, median: 100000 },
-        sampleCount: 20,
-        confidence: 70,
-        breakdown: {
-          partCost: { average: 60000 },
-          laborCost: { average: 40000 },
-        },
-      }
-    );
+  private static calculateAveragePrice(
+    item: EstimateItem,
+    referencePrice: number | null,
+    expectedLabor: number
+  ): number {
+    const partAvg = referencePrice ?? item.partCost;
+    const laborAvg = expectedLabor > 0 ? expectedLabor : item.laborCost;
+    return partAvg + laborAvg;
   }
 
   /**
-   * 가격 비교를 통한 상태 결정 (2단계: 적정/확인필요)
+   * 가격 범위 산출
+   */
+  private static calculatePriceRange(averagePrice: number, userPrice: number): PriceRange {
+    const spread = averagePrice * 0.25; // ±25% 범위
+    return {
+      min: Math.max(0, Math.round(averagePrice - spread)),
+      max: Math.round(averagePrice + spread),
+      median: averagePrice,
+    };
+  }
+
+  /**
+   * 신뢰도 산출
+   */
+  private static calculateConfidence(
+    hasWpcData: boolean,
+    hasFrtData: boolean,
+    hasVehicleCode: boolean
+  ): number {
+    let confidence = 50; // 기본
+
+    if (hasVehicleCode) confidence += 15;
+    if (hasWpcData) confidence += 20;
+    if (hasFrtData) confidence += 15;
+
+    return Math.min(100, confidence);
+  }
+
+  /**
+   * 가격 비교를 통한 상태 결정 (하위 호환)
    */
   static determineStatus(
     userPrice: number,
@@ -208,12 +367,10 @@ export class VerificationEngine {
   ): VerificationStatus {
     const deviation = (userPrice - averagePrice) / averagePrice;
 
-    // 평균 대비 15% 이상 높으면 확인 필요
     if (deviation > 0.15) {
       return 'review_needed';
     }
 
-    // 범위를 벗어나면 확인 필요
     if (userPrice > priceRange.max) {
       return 'review_needed';
     }

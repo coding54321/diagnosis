@@ -7,3 +7,4 @@ export { default as RecentHistory } from './RecentHistory';
 export { default as PriceChart } from './PriceChart';
 export { default as VerificationSummary } from './VerificationSummary';
 export { default as EstimateCard } from './EstimateCard';
+export { default as MileageEditModal } from './MileageEditModal';

@@ -6,8 +6,9 @@ import { ChevronRight, Loader2, X, ArrowLeft, Check, AlertCircle, CheckCircle2 }
 import { Container } from '@/components/layout';
 import { Card, BottomSheet, Input } from '@/components/ui';
 import { formatPrice } from '@/lib/utils';
-import { createEstimate, saveVehicle, uploadEstimateImageAction, createVerificationResult, fetchVehicleByRegistrationNumber, fetchVehicle } from '@/lib/supabase/actions';
+import { createEstimate, saveVehicle, uploadEstimateImageAction, createVerificationResult, fetchVehicleByRegistrationNumber, verifyVehicleOwnerAction, fetchVehicle } from '@/lib/supabase/actions';
 import { VerificationEngine } from '@/lib/verification/engine';
+import { classifyShopType } from '@/lib/verification/shop-classifier';
 import { analyzeEstimateImage } from '@/lib/openai/vision';
 import type { EstimateItem } from '@/types';
 import type { OCRResult } from '@/lib/openai/vision';
@@ -88,6 +89,7 @@ const ReviewPage: React.FC = () => {
   const [vehicleStep, setVehicleStep] = useState<VehicleVerificationStep>('input');
   const [ownerName, setOwnerName] = useState<string>('');
   const [vehicleCheckError, setVehicleCheckError] = useState<string | null>(null);
+  const [ownerVerifying, setOwnerVerifying] = useState(false);
 
   // 데이트 피커 (iOS 스타일 스크롤)
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -402,15 +404,24 @@ const ReviewPage: React.FC = () => {
     }
   };
 
-  /** 소유주 확인 */
-  const handleConfirmOwner = () => {
+  /** 소유주 확인: DB에 등록된 소유주명과 사용자 입력값 일치 여부 검증 */
+  const handleConfirmOwner = async () => {
     if (!ownerName.trim()) {
       setVehicleCheckError('소유주 이름을 입력해 주세요.');
       return;
     }
-    // TODO: 실제 API 연동 시 소유주 확인 로직 추가
-    setVehicleStep('confirmed');
     setVehicleCheckError(null);
+    setOwnerVerifying(true);
+    try {
+      const res = await verifyVehicleOwnerAction(vehicleNumber.replace(/\s|-/g, '').trim(), ownerName.trim());
+      if (res.success) {
+        setVehicleStep('confirmed');
+      } else {
+        setVehicleCheckError(res.error ?? '소유주 정보가 일치하지 않아요.');
+      }
+    } finally {
+      setOwnerVerifying(false);
+    }
   };
 
   const handleVerify = async () => {
@@ -476,6 +487,7 @@ const ReviewPage: React.FC = () => {
       const vehicleInfoForVerification = {
         manufacturer: vehicleInfo.manufacturer,
         model: vehicleInfo.model,
+        variant: vehicleInfo.variant ?? undefined,
         year: vehicleInfo.year,
         mileage,
       };
@@ -490,10 +502,12 @@ const ReviewPage: React.FC = () => {
         category: item.category || '',
       }));
 
+      const shopType = classifyShopType(estimate.shopName);
       const verificationResult = await VerificationEngine.verifyEstimate(
         estimateItemsForVerification,
         estimate.totalAmount,
-        vehicleInfoForVerification
+        vehicleInfoForVerification,
+        shopType
       );
 
       const saveVerificationResult = await createVerificationResult({
@@ -514,6 +528,7 @@ const ReviewPage: React.FC = () => {
           partCostAverage: item.breakdown.partCost.average,
           laborCostUser: item.breakdown.laborCost.user,
           laborCostAverage: item.breakdown.laborCost.average,
+          partPriceSource: item.breakdown.partCost.partPriceSource ?? null,
         })),
       });
 
@@ -522,6 +537,12 @@ const ReviewPage: React.FC = () => {
       }
 
       sessionStorage.setItem('currentEstimateId', savedEstimateId);
+      if (vehicleNumber.trim()) {
+        sessionStorage.setItem('currentVehicleRegistration', vehicleNumber.replace(/\s|-/g, '').trim());
+      }
+      if (estimate.shopName?.trim()) {
+        sessionStorage.setItem('currentShopName', estimate.shopName.trim());
+      }
       router.push('/verify/result');
     } catch (error) {
       console.error('Error in handleVerify:', error);
@@ -835,10 +856,17 @@ const ReviewPage: React.FC = () => {
               <button
                 type="button"
                 onClick={handleConfirmOwner}
-                disabled={!ownerName.trim()}
+                disabled={!ownerName.trim() || ownerVerifying}
                 className="w-full py-3.5 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 disabled:opacity-50 disabled:pointer-events-none"
               >
-                확인
+                {ownerVerifying ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin inline-block mr-2 align-middle" />
+                    확인 중...
+                  </>
+                ) : (
+                  '확인'
+                )}
               </button>
             </div>
           )}

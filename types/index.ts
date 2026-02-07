@@ -2,6 +2,18 @@
  * TypeScript 타입 정의
  */
 
+// 정비소 유형 (DB shop_type과 동일: 블루핸즈, 오토큐, 공임나라, 스피드메이트, 기타)
+export type ShopType = 'bluehands' | 'autoq' | 'gongimnara' | 'speedmate' | 'other';
+
+// 비용 유형 (부품/공임/복합)
+export type CostType = 'part' | 'labor' | 'combined';
+
+// 부품 판정 상세 (WPC 기반)
+export type PartVerdict = 'above_reference' | 'at_reference' | 'below_reference' | 'no_data';
+
+// 공임 판정 상세 (FRT 기반)
+export type LaborVerdict = 'above_expected' | 'at_expected' | 'below_expected' | 'no_data';
+
 // 견적서 관련 타입
 export interface EstimateItem {
   id: string;
@@ -17,6 +29,7 @@ export interface Estimate {
   id: string;
   vehicleId: string;
   shopName: string;
+  shopType: ShopType; // 정비소 유형
   items: EstimateItem[];
   totalAmount: number; // 총 견적 금액 (부가세 포함)
   createdAt: Date;
@@ -42,15 +55,32 @@ export interface PriceRange {
   median: number;
 }
 
+/** 부품 기준가 출처: wpc=WPC 순정가, market=시장/참고 평균 */
+export type PartPriceSource = 'wpc' | 'market';
+
 export interface CostBreakdown {
   partCost: {
     user: number;
     average: number;
+    referencePrice?: number; // WPC 순정 기준가 (있는 경우)
+    /** 블루핸즈/오토큐에서 WPC 매칭 시 'wpc' */
+    partPriceSource?: PartPriceSource | null;
   };
   laborCost: {
     user: number;
     average: number;
+    expectedLabor?: number; // FRT 기반 기대 공임 (있는 경우)
+    frtHours?: number; // 표준정비시간 (시간)
   };
+}
+
+// 가이드 문구 정보
+export interface VerificationGuide {
+  partVerdict: PartVerdict;
+  laborVerdict: LaborVerdict;
+  partMessage?: string; // 부품 관련 가이드 문구
+  laborMessage?: string; // 공임 관련 가이드 문구
+  askMechanicTip?: string; // "정비사에게 이렇게 물어보세요" 문구
 }
 
 export interface ItemVerification {
@@ -61,14 +91,24 @@ export interface ItemVerification {
   priceRange: PriceRange;
   sampleCount: number; // 비교 표본 수
   breakdown: CostBreakdown;
+  costType: CostType; // 부품/공임/복합
+  guide?: VerificationGuide; // 가이드 정보
+  /** 0원 무상수리 항목이면 true. 견적 비교 대상에서 제외 */
+  isFreeRepair?: boolean;
 }
 
 export interface VerificationResult {
   estimateId: string;
   totalAmount: number;
   status: VerificationStatus;
+  shopType: ShopType; // 정비소 유형
   items: ItemVerification[];
   confidence: number; // 데이터 신뢰도 (0-100)
+  // 총액 부품/공임 분리 요약
+  totalPartCost: number;
+  totalLaborCost: number;
+  totalPartCostAverage: number;
+  totalLaborCostAverage: number;
 }
 
 // 검증 내역

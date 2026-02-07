@@ -1,11 +1,20 @@
 import React from 'react';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
+import type { ShopType } from '@/types';
+import { getShopTypeLabel } from '@/lib/verification/shop-classifier';
 
 export interface VehicleConditions {
   model?: string;       // 차종 (예: "투싼")
   variant?: string;     // 옵션/트림 (예: "NX4 가솔린")
   mileage?: number;     // 주행거리 (예: 45000)
+}
+
+export interface CostSummary {
+  totalPartCost: number;
+  totalLaborCost: number;
+  totalPartCostAverage: number;
+  totalLaborCostAverage: number;
 }
 
 export interface VerificationSummaryProps {
@@ -15,12 +24,15 @@ export interface VerificationSummaryProps {
     reviewNeeded: number;
   };
   vehicleConditions?: VehicleConditions;
+  shopType?: ShopType;
+  costSummary?: CostSummary;
 }
 
 const VerificationSummary: React.FC<VerificationSummaryProps> = ({
   totalAmount,
   itemCounts,
   vehicleConditions,
+  shopType,
 }) => {
   const totalItems = itemCounts.appropriate + itemCounts.reviewNeeded;
 
@@ -33,47 +45,42 @@ const VerificationSummary: React.FC<VerificationSummaryProps> = ({
     conditions.push(vehicleConditions.variant);
   }
   if (vehicleConditions?.mileage) {
-    const mileageText = vehicleConditions.mileage >= 10000
-      ? `${(vehicleConditions.mileage / 10000).toFixed(1)}만km`
-      : `${vehicleConditions.mileage.toLocaleString()}km`;
-    conditions.push(mileageText);
+    conditions.push(`${vehicleConditions.mileage.toLocaleString('ko-KR')}km`);
   }
 
   return (
-    <div className="text-center">
-      {/* 검증 조건 문구 */}
+    <div className="bg-white rounded-2xl border border-hyundai-gray-100 px-5 py-5">
+      {/* 검증 조건 · 정비소 */}
       {conditions.length > 0 && (
-        <p className="text-sm text-hyundai-gray-500 mb-5 leading-relaxed">
+        <p className="text-xs text-hyundai-gray-500 mb-3">
           {conditions.map((cond, idx) => (
             <React.Fragment key={cond}>
-              <span className="text-hyundai-gray-900 font-medium underline underline-offset-2 decoration-hyundai-gray-300">
-                {cond}
-              </span>
+              <span className="text-hyundai-gray-700 font-medium">{cond}</span>
               {idx < conditions.length - 1 && ', '}
             </React.Fragment>
           ))}
-          {' '}조건의 실제 견적 데이터로 검증했어요.
+          {shopType && <span className="ml-1">· {getShopTypeLabel(shopType)}</span>}
         </p>
       )}
 
-      {/* 총 금액 */}
-      <p className="text-3xl font-bold text-hyundai-gray-900 tracking-tight">
+      {/* 총 금액 · 항목 수 */}
+      <p className="text-2xl font-bold text-hyundai-gray-900 tracking-tight">
         {formatPrice(totalAmount)}
       </p>
-      <p className="text-xs text-hyundai-gray-400 mt-1 mb-5">
+      <p className="text-xs text-hyundai-gray-400 mt-0.5 mb-4">
         총 {totalItems}개 항목
       </p>
 
-      {/* 항목 카운트 바 (2단계: 적정/확인필요) */}
-      <div className="flex gap-1.5 justify-center">
+      {/* 적정 / 확인필요 */}
+      <div className="flex gap-1.5">
         {itemCounts.appropriate > 0 && (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-50 text-[11px] font-medium text-green-600">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-green-50 text-[11px] font-medium text-green-600">
             <CheckCircle2 className="w-3 h-3" />
             적정 {itemCounts.appropriate}
           </span>
         )}
         {itemCounts.reviewNeeded > 0 && (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-[11px] font-medium text-amber-500">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-[11px] font-medium text-amber-600">
             <AlertCircle className="w-3 h-3" />
             확인필요 {itemCounts.reviewNeeded}
           </span>

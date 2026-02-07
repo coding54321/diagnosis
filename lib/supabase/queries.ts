@@ -4,6 +4,7 @@
 
 import { createServerClient } from './server';
 import type { Database } from '@/types/supabase';
+import { classifyShopType } from '@/lib/verification/shop-classifier';
 
 type Vehicle = Database['public']['Tables']['vehicles']['Row'];
 type VehicleInsert = Database['public']['Tables']['vehicles']['Insert'];
@@ -150,6 +151,50 @@ export async function getVehicleLookupByRegistrationNumber(
   };
 }
 
+/** 소유주명 비교용 정규화: trim + 연속 공백 하나로 */
+function normalizeOwnerName(name: string): string {
+  return name.replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * 차량 검증 2단계: DB에 등록된 소유주명과 사용자 입력 소유주명 일치 여부 검증
+ * 1) 차량은 이미 차량번호로 조회되어 존재함이 확인된 상태
+ * 2) 소유주명만 비교 (대소문자 무시, 앞뒤/연속 공백 정규화)
+ */
+export async function verifyVehicleOwner(
+  registrationNumber: string,
+  ownerNameInput: string
+): Promise<{ valid: boolean; error?: string }> {
+  const key = normalizeRegistrationNumber(registrationNumber);
+  const inputNormalized = normalizeOwnerName(ownerNameInput);
+  if (!key || !inputNormalized) {
+    return { valid: false, error: '차량번호와 소유주명을 입력해 주세요.' };
+  }
+
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from('vehicle_lookup_mock')
+    .select('owner_name')
+    .eq('registration_number', key)
+    .maybeSingle();
+
+  if (error) {
+    return { valid: false, error: '검증 중 오류가 발생했습니다.' };
+  }
+  if (!data) {
+    return { valid: false, error: '등록된 차량을 찾을 수 없어요.' };
+  }
+
+  const dbOwnerName = (data as { owner_name: string | null }).owner_name;
+  if (dbOwnerName == null || dbOwnerName === '') {
+    return { valid: false, error: '해당 차량의 소유주 정보가 등록되어 있지 않아요.' };
+  }
+
+  const dbNormalized = normalizeOwnerName(dbOwnerName);
+  const valid = dbNormalized === inputNormalized;
+  return valid ? { valid: true } : { valid: false, error: '소유주 정보가 일치하지 않아요.' };
+}
+
 /**
  * 최근 검증 내역 조회
  * userId가 비어 있으면 [] 반환 (타인 데이터 노출 방지)
@@ -265,13 +310,15 @@ export async function saveEstimate(
 ): Promise<{ estimateId: string; items: EstimateItem[] } | null> {
   const supabase = await createServerClient();
 
-  // 견적서 저장 (익명 사용자는 user_id를 null로 저장)
+  // 견적서 저장 (익명 사용자는 user_id를 null로 저장), 정비소 유형 분류 후 shop_type 저장
+  const shopType = classifyShopType(estimate.shopName);
   const { data: estimateData, error: estimateError } = await supabase
     .from('estimates')
     .insert({
       user_id: userId === 'anonymous' ? null : userId,
       vehicle_id: vehicleId,
       shop_name: estimate.shopName,
+      shop_type: shopType,
       total_amount: estimate.totalAmount,
       image_url: estimate.imageUrl || null,
     })
@@ -355,6 +402,7 @@ export async function saveVerificationResult(
       partCostAverage: number;
       laborCostUser: number;
       laborCostAverage: number;
+      partPriceSource?: 'wpc' | 'market' | null;
     }>;
   }
 ): Promise<{ verificationResultId: string; itemVerifications: ItemVerification[] } | null> {
@@ -393,6 +441,7 @@ export async function saveVerificationResult(
     part_cost_average: item.partCostAverage,
     labor_cost_user: item.laborCostUser,
     labor_cost_average: item.laborCostAverage,
+    part_price_source: item.partPriceSource ?? null,
   }));
 
   const { data: itemVerificationsData, error: itemVerificationsError } = await supabase
@@ -420,10 +469,15 @@ export async function getVerificationResult(
   result: VerificationResult;
   items: Array<ItemVerification & { estimateItem: EstimateItem }>;
   estimate?: {
+    shop_name?: string;
+    shop_type?: string | null;
     vehicle?: {
       model: string;
       variant?: string;
       mileage: number;
+      manufacturer?: string;
+      year?: number;
+      fuel_type?: string;
     };
   };
 } | null> {
@@ -453,20 +507,26 @@ export async function getVerificationResult(
     return null;
   }
 
-  // 견적서와 연결된 차량 정보 가져오기
+  // 견적서와 연결된 차량 정보·정비소명 가져오기 (주행거리 수정·재검증·정비소 유형 분류용)
   const { data: estimateData } = await supabase
     .from('estimates')
     .select(`
       vehicle_id,
+      shop_name,
+      shop_type,
       vehicles (
         model,
         variant,
-        mileage
+        mileage,
+        manufacturer,
+        year,
+        fuel_type
       )
     `)
     .eq('id', estimateId)
     .single();
 
+  const vehicle = estimateData?.vehicles as Record<string, unknown> | null;
   return {
     result: resultData,
     items: (itemsData || []).map((item: any) => ({
@@ -474,10 +534,15 @@ export async function getVerificationResult(
       estimateItem: item.estimate_items,
     })),
     estimate: estimateData ? {
-      vehicle: estimateData.vehicles ? {
-        model: (estimateData.vehicles as any).model,
-        variant: (estimateData.vehicles as any).variant,
-        mileage: (estimateData.vehicles as any).mileage,
+      shop_name: estimateData.shop_name ?? undefined,
+      shop_type: estimateData.shop_type ?? undefined,
+      vehicle: vehicle ? {
+        model: String(vehicle.model ?? ''),
+        variant: vehicle.variant != null ? String(vehicle.variant) : undefined,
+        mileage: Number(vehicle.mileage ?? 0),
+        manufacturer: String(vehicle.manufacturer ?? ''),
+        year: Number(vehicle.year ?? new Date().getFullYear()),
+        fuel_type: String(vehicle.fuel_type ?? ''),
       } : undefined,
     } : undefined,
   };

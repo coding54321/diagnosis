@@ -64,6 +64,7 @@ export type Database = {
           id: string
           image_url: string | null
           shop_name: string
+          shop_type: string | null
           total_amount: number
           updated_at: string | null
           user_id: string | null
@@ -74,6 +75,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           shop_name: string
+          shop_type?: string | null
           total_amount: number
           updated_at?: string | null
           user_id?: string | null
@@ -84,6 +86,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           shop_name?: string
+          shop_type?: string | null
           total_amount?: number
           updated_at?: string | null
           user_id?: string | null
@@ -112,6 +115,7 @@ export type Database = {
           min_price: number
           part_cost_average: number
           part_cost_user: number
+          part_price_source: string | null
           sample_count: number | null
           status: string
           user_price: number
@@ -129,6 +133,7 @@ export type Database = {
           min_price: number
           part_cost_average?: number
           part_cost_user?: number
+          part_price_source?: string | null
           sample_count?: number | null
           status: string
           user_price: number
@@ -146,6 +151,7 @@ export type Database = {
           min_price?: number
           part_cost_average?: number
           part_cost_user?: number
+          part_price_source?: string | null
           sample_count?: number | null
           status?: string
           user_price?: number
@@ -213,6 +219,7 @@ export type Database = {
           phone_number: string | null
           rdnmadr: string | null
           reference_date: string | null
+          shop_type: string | null
           updated_at: string | null
         }
         Insert: {
@@ -228,6 +235,7 @@ export type Database = {
           phone_number?: string | null
           rdnmadr?: string | null
           reference_date?: string | null
+          shop_type?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -243,6 +251,7 @@ export type Database = {
           phone_number?: string | null
           rdnmadr?: string | null
           reference_date?: string | null
+          shop_type?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -332,6 +341,7 @@ export type Database = {
           id: string
           created_at: string | null
           registration_number: string
+          owner_name: string | null
           mileage: number | null
           spec_management_number: string | null
           model_type_name: string | null
@@ -361,6 +371,7 @@ export type Database = {
           id?: string
           created_at?: string | null
           registration_number: string
+          owner_name?: string | null
           mileage?: number | null
           spec_management_number?: string | null
           model_type_name?: string | null
@@ -390,6 +401,7 @@ export type Database = {
           id?: string
           created_at?: string | null
           registration_number?: string
+          owner_name?: string | null
           mileage?: number | null
           spec_management_number?: string | null
           model_type_name?: string | null
