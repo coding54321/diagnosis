@@ -764,8 +764,10 @@ const ReviewPage: React.FC = () => {
               type="button"
               onClick={() => {
                 sessionStorage.removeItem('capturedEstimateImage');
+                sessionStorage.removeItem('pendingOcr');
+                sessionStorage.removeItem('ocrResult');
                 setOcrError(null);
-                router.push('/verify/camera');
+                router.replace('/verify/camera');
               }}
               className="w-full py-3 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 transition-colors"
             >
