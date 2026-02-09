@@ -249,7 +249,7 @@ const CameraPage: React.FC = () => {
 
   const handleBack = () => {
     stopCamera();
-    router.back();
+    router.push('/');
   };
 
   // 앨범에서 바로 선택하기

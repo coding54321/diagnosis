@@ -5,6 +5,7 @@ import { fetchRecentHistory } from '@/lib/supabase/actions';
 import { ChevronRight, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Badge } from '@/components/ui';
 import DirectInputButton from '@/components/verification/DirectInputButton';
+import AlbumPickerCard from '@/components/verification/AlbumPickerCard';
 import { formatPrice } from '@/lib/utils';
 import type { VerificationHistory } from '@/types';
 
@@ -59,15 +60,7 @@ export default async function HomePage() {
                   </p>
               </div>
             </Link>
-            <Link href="/verify/album">
-              <div className="h-[180px] rounded-2xl bg-hyundai-gray-50 p-5 active:bg-hyundai-gray-100 transition-colors flex items-end">
-                  <p className="text-[22px] font-bold leading-[1.2] tracking-tight text-hyundai-gray-700">
-                    앨범에서
-                    <br />
-                    가져오기
-                  </p>
-              </div>
-            </Link>
+            <AlbumPickerCard />
           </div>
 
           {/* 직접입력 */}
