@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Container } from '@/components/layout';
 import { fetchVehicles, fetchRecentHistory } from '@/lib/supabase/actions';
-import { Camera, ChevronRight, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Camera, Image as ImageIcon, ChevronRight, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Card, Badge } from '@/components/ui';
 import DirectInputButton from '@/components/verification/DirectInputButton';
 import { formatPrice } from '@/lib/utils';
@@ -47,41 +47,64 @@ export default async function HomePage() {
     : [];
 
   return (
-    <main className="min-h-[calc(100vh-60px)] bg-white pt-[env(safe-area-inset-top,0px)]">
+    <main className="min-h-[calc(100vh-60px)] bg-hyundai-gray-50 pt-[env(safe-area-inset-top,0px)]">
       <Container>
         <div className="pb-8">
-          {/* 히어로 카피 */}
-          <div className="px-1 pt-8 pb-6">
-            <h1 className="text-[22px] font-bold text-hyundai-gray-900 leading-tight tracking-tight">
-              정비 견적,<br />
-              검증해볼까요?
+          {/* 브랜드 + 히어로 카피 */}
+          <div className="px-1 pt-7">
+            <p className="text-xl font-bold tracking-tight text-hyundai-blue-600">카비</p>
+          </div>
+          <div className="px-1 pb-6 pt-5">
+            <h1 className="text-[34px] font-bold text-hyundai-gray-900 leading-tight tracking-tight">
+              지금 견적서
+              <br />
+              1분만에 검증하기
             </h1>
-            {!vehicle && (
-              <p className="text-sm text-hyundai-gray-400 mt-2">
-                실제 정비 데이터로 견적을 검증·비교해드려요
-              </p>
-            )}
+            <p className="mt-3 text-base font-medium text-hyundai-gray-600">
+              내 차와 동일한 실제 정비 데이터로 비교하기
+            </p>
           </div>
 
-          {/* 히어로 액션 — 견적서 촬영 카드 */}
-          <Link href="/verify/camera">
-            <div className="relative overflow-hidden rounded-2xl bg-hyundai-gray-900 px-6 py-7 active:opacity-90 transition-opacity">
-              <div className="relative z-10">
-                <div className="w-11 h-11 rounded-full bg-white/15 flex items-center justify-center mb-4">
-                  <Camera className="w-5 h-5 text-white" strokeWidth={1.5} />
+          {/* 액션 2열 그리드 */}
+          <div className="grid grid-cols-2 gap-3">
+            <Link href="/verify/camera">
+              <div className="h-[180px] rounded-2xl bg-hyundai-gray-900 p-5 active:opacity-90 transition-opacity">
+                <div className="flex h-full flex-col justify-between">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/15">
+                    <Camera className="h-5 w-5 text-white" strokeWidth={1.5} />
+                  </div>
+                  <p className="text-[28px] font-bold leading-[1.1] tracking-tight text-white">
+                    견적서
+                    <br />
+                    촬영하기
+                  </p>
                 </div>
-                <p className="text-[15px] font-medium text-white mb-1">견적서 촬영하기</p>
-                <p className="text-xs text-white/50">사진 한 장으로 적정 가격을 확인하세요</p>
               </div>
-              <div className="absolute -right-4 -bottom-4 w-32 h-32 rounded-full bg-white/[0.04]" />
-              <div className="absolute -right-8 -top-8 w-24 h-24 rounded-full bg-white/[0.03]" />
-            </div>
-          </Link>
-          <DirectInputButton />
+            </Link>
+            <Link href="/verify/album">
+              <div className="h-[180px] rounded-2xl border border-hyundai-gray-300 bg-white p-5 active:bg-hyundai-gray-50 transition-colors">
+                <div className="flex h-full flex-col justify-between">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-hyundai-gray-100">
+                    <ImageIcon className="h-5 w-5 text-hyundai-gray-600" strokeWidth={1.5} />
+                  </div>
+                  <p className="text-[28px] font-bold leading-[1.1] tracking-tight text-hyundai-gray-700">
+                    앨범에서
+                    <br />
+                    가져오기
+                  </p>
+                </div>
+              </div>
+            </Link>
+          </div>
+
+          {/* 직접입력 */}
+          <div className="mt-3">
+            <DirectInputButton />
+          </div>
 
           {/* 내 차량 미니 요약 (등록된 경우만) */}
           {vehicle && (
-            <Link href="/vehicle" className="block mt-2">
+            <Link href="/vehicle" className="block mt-4">
               <Card variant="default" padding="none">
                 <div className="flex items-center justify-between px-5 py-3.5 active:bg-hyundai-gray-50 transition-colors">
                   <div>
@@ -100,9 +123,9 @@ export default async function HomePage() {
 
           {/* 최근 검증 내역 (최대 2건) */}
           {recentHistory.length > 0 && (
-            <div className="mt-6">
-              <div className="flex items-center justify-between px-1 mb-2">
-                <h3 className="text-sm font-bold text-hyundai-gray-900">최근 검증</h3>
+            <div className="mt-8">
+              <div className="flex items-center justify-between px-1 mb-3">
+                <h3 className="text-lg font-bold text-hyundai-gray-700">최근 검증</h3>
                 <Link href="/vehicle" className="text-xs text-hyundai-gray-400 font-medium flex items-center gap-0.5">
                   전체보기
                   <ChevronRight className="w-3.5 h-3.5" />

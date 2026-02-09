@@ -138,15 +138,15 @@ export default function VehicleEditForm({ initialVehicle, vehicleId, title }: Ve
 
   return (
     <>
-      <Header title={title} showBackButton onBack={() => router.back()} />
+      <Header title={title} showBackButton onBack={() => router.back()} className="border-b-0" />
 
       <main className="min-h-screen bg-hyundai-gray-50 pb-40">
         <Container>
           <div className="px-1 pt-8 pb-6">
-            <h1 className="text-[26px] font-bold text-hyundai-gray-900 leading-tight">
+            <h1 className="text-[22px] font-bold text-hyundai-gray-900 leading-tight">
               {initialVehicle ? '차량 정보를 수정해주세요' : '차량을 등록해주세요'}
             </h1>
-            <p className="text-sm text-hyundai-gray-400 mt-3">
+            <p className="text-sm text-hyundai-gray-400 mt-1.5">
               차량번호와 소유주 확인으로만 등록·수정할 수 있어요
             </p>
           </div>
@@ -171,7 +171,7 @@ export default function VehicleEditForm({ initialVehicle, vehicleId, title }: Ve
                   />
                 </label>
                 {checkError && (
-                  <p className="text-xs text-red-500 flex items-center gap-1">
+                  <p className="text-xs text-semantic-error-main flex items-center gap-1">
                     <AlertCircle className="w-3 h-3 shrink-0" />
                     {checkError}
                   </p>
@@ -180,7 +180,7 @@ export default function VehicleEditForm({ initialVehicle, vehicleId, title }: Ve
                   type="button"
                   onClick={handleCheckVehicle}
                   disabled={!vehicleNumber.trim()}
-                  className="w-full py-3.5 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 disabled:opacity-40 disabled:pointer-events-none"
+                  className="w-full py-3.5 rounded-2xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 disabled:opacity-40 disabled:pointer-events-none"
                 >
                   차량 조회
                 </button>
@@ -190,25 +190,25 @@ export default function VehicleEditForm({ initialVehicle, vehicleId, title }: Ve
             {/* Step 1.5: 조회 중 */}
             {vehicleStep === 'checking' && (
               <div className="flex flex-col items-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-hyundai-gray-400 mb-3" />
-                <p className="text-sm text-hyundai-gray-500">차량 정보를 조회하고 있어요...</p>
+                <Loader2 className="w-8 h-8 animate-spin text-hyundai-gray-300 mb-3" />
+                <p className="text-sm text-hyundai-gray-400">차량 정보를 조회하고 있어요...</p>
               </div>
             )}
 
             {/* Step 2: 소유주 확인 */}
             {vehicleStep === 'owner' && vehicleInfo && (
               <div className="space-y-4">
-                <div className="p-4 bg-green-50 rounded-2xl">
+                <div className="p-4 bg-semantic-success-light rounded-2xl">
                   <div className="flex items-start gap-2">
-                    <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shrink-0 mt-0.5">
+                    <div className="w-5 h-5 rounded-full bg-semantic-success-main flex items-center justify-center shrink-0 mt-0.5">
                       <Check className="w-3 h-3 text-white" />
                     </div>
                     <div>
-                      <p className="text-base font-medium text-hyundai-gray-900">
+                      <p className="text-sm font-medium text-hyundai-gray-900">
                         {vehicleInfo.manufacturer} {vehicleInfo.model}
                         {vehicleInfo.variant ? ` ${vehicleInfo.variant}` : ''}
                       </p>
-                      <p className="text-sm text-hyundai-gray-500 mt-0.5">
+                      <p className="text-xs text-hyundai-gray-500 mt-0.5">
                         {vehicleNumber} · {vehicleInfo.year}년식 · {vehicleInfo.fuelType}
                       </p>
                     </div>
@@ -234,7 +234,7 @@ export default function VehicleEditForm({ initialVehicle, vehicleId, title }: Ve
                   </p>
                 </label>
                 {checkError && (
-                  <p className="text-xs text-red-500 flex items-center gap-1">
+                  <p className="text-xs text-semantic-error-main flex items-center gap-1">
                     <AlertCircle className="w-3 h-3 shrink-0" />
                     {checkError}
                   </p>
@@ -243,7 +243,7 @@ export default function VehicleEditForm({ initialVehicle, vehicleId, title }: Ve
                   type="button"
                   onClick={handleConfirmOwner}
                   disabled={!ownerName.trim() || ownerVerifying}
-                  className="w-full py-3.5 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
+                  className="w-full py-3.5 rounded-2xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
                 >
                   {ownerVerifying ? (
                     <>
@@ -260,21 +260,21 @@ export default function VehicleEditForm({ initialVehicle, vehicleId, title }: Ve
             {/* Step 3: 확정 — 주행거리 입력 + 저장 */}
             {vehicleStep === 'confirmed' && vehicleInfo && (
               <div className="space-y-4">
-                <div className="p-4 bg-green-50 rounded-2xl">
+                <div className="p-4 bg-semantic-success-light rounded-2xl">
                   <div className="flex items-start gap-2">
-                    <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shrink-0 mt-0.5">
+                    <div className="w-5 h-5 rounded-full bg-semantic-success-main flex items-center justify-center shrink-0 mt-0.5">
                       <Check className="w-3 h-3 text-white" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-base font-medium text-hyundai-gray-900">
+                      <p className="text-sm font-medium text-hyundai-gray-900">
                         {vehicleInfo.manufacturer} {vehicleInfo.model}
                         {vehicleInfo.variant ? ` ${vehicleInfo.variant}` : ''}
                       </p>
-                      <p className="text-sm text-hyundai-gray-500 mt-0.5">
+                      <p className="text-xs text-hyundai-gray-500 mt-0.5">
                         {vehicleNumber} · {vehicleInfo.year}년식 · {vehicleInfo.fuelType}
                       </p>
                       {ownerName && (
-                        <p className="text-sm text-green-600 mt-1">소유주: {ownerName}</p>
+                        <p className="text-xs text-semantic-success-dark mt-1">소유주: {ownerName}</p>
                       )}
                     </div>
                   </div>
@@ -318,7 +318,7 @@ export default function VehicleEditForm({ initialVehicle, vehicleId, title }: Ve
                 <button
                   type="button"
                   onClick={resetToInput}
-                  className="text-sm text-hyundai-gray-500 underline"
+                  className="text-sm text-hyundai-gray-400 underline"
                 >
                   다른 차량으로 변경
                 </button>
@@ -329,7 +329,7 @@ export default function VehicleEditForm({ initialVehicle, vehicleId, title }: Ve
 
         {/* 하단 저장 버튼 — 하단 네비(56px) 위에 배치 */}
         <div
-          className="fixed left-0 right-0 z-30 bg-white border-t border-hyundai-gray-100 px-5 py-4"
+          className="fixed left-0 right-0 z-30 bg-white/95 backdrop-blur-sm border-t border-hyundai-gray-100 px-5 py-4"
           style={{ bottom: 'calc(56px + env(safe-area-inset-bottom, 0px))' }}
         >
           <button

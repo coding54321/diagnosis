@@ -6,6 +6,9 @@ import { Camera, Image, PenTool, RotateCcw, X, Crop, ChevronRight, Zap, ZapOff }
 import ImageCropOverlay from '@/components/verification/ImageCropOverlay';
 import { compressImage, analyzeImageQuality, ImageQualityResult } from '@/lib/utils/image';
 
+// 개발 모드(Strict Mode)에서 useEffect가 중복 실행되며 getUserMedia가 중복 호출되는 것을 방지
+let pendingCameraRequest: Promise<MediaStream> | null = null;
+
 const CameraPage: React.FC = () => {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -49,6 +52,16 @@ const CameraPage: React.FC = () => {
       setIsLoading(true);
       setError(null);
 
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setError('이 브라우저에서는 카메라를 사용할 수 없습니다.');
+        return;
+      }
+
+      if (!window.isSecureContext) {
+        setError('카메라는 보안 연결(HTTPS 또는 localhost)에서만 사용할 수 있습니다.');
+        return;
+      }
+
       // 기존 스트림 정리
       if (stream) {
         stream.getTracks().forEach((track) => track.stop());
@@ -67,7 +80,15 @@ const CameraPage: React.FC = () => {
         audio: false,
       };
 
-      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      // 중복 권한 팝업/요청 방지를 위해 동일 시점 요청은 하나로 합침
+      if (!pendingCameraRequest) {
+        pendingCameraRequest = navigator.mediaDevices
+          .getUserMedia(constraints)
+          .finally(() => {
+            pendingCameraRequest = null;
+          });
+      }
+      const mediaStream = await pendingCameraRequest;
       setStream(mediaStream);
 
       const videoTrack = mediaStream.getVideoTracks()[0];
@@ -98,6 +119,20 @@ const CameraPage: React.FC = () => {
       }
     } catch (err) {
       console.error('카메라 접근 오류:', err);
+      if (err instanceof DOMException) {
+        if (err.name === 'NotAllowedError') {
+          setError('카메라 권한이 거부되었습니다. 브라우저 설정에서 카메라 권한을 허용한 뒤 다시 시도해주세요.');
+          return;
+        }
+        if (err.name === 'NotFoundError') {
+          setError('사용 가능한 카메라를 찾을 수 없습니다.');
+          return;
+        }
+        if (err.name === 'NotReadableError') {
+          setError('카메라가 다른 앱에서 사용 중입니다. 다른 앱을 종료한 뒤 다시 시도해주세요.');
+          return;
+        }
+      }
       setError('카메라에 접근할 수 없습니다. 권한을 확인해주세요.');
     } finally {
       setIsLoading(false);
