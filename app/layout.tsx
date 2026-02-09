@@ -6,6 +6,8 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
+  maximumScale: 1,
+  userScalable: 'no',
 };
 
 export const metadata: Metadata = {
