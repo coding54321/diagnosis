@@ -1,14 +1,12 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
 import { compressImage } from '@/lib/utils/image';
 
 export default function AlbumPickerCard() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleClick = () => {
     fileInputRef.current?.click();
@@ -31,19 +29,23 @@ export default function AlbumPickerCard() {
       return;
     }
 
-    setIsProcessing(true);
     try {
       const compressedImage = await compressImage(file, {
         maxWidth: 1280,
         maxHeight: 1280,
         quality: 0.7,
       });
+
+      // 선택한 이미지를 세션에 저장해두고 앨범 페이지로 이동
       sessionStorage.setItem('capturedEstimateImage', compressedImage);
-      sessionStorage.setItem('pendingOcr', '1');
-      router.push('/verify/review');
+      router.push('/verify/album');
     } catch {
       alert('이미지를 처리하는 중 오류가 발생했습니다.');
-      setIsProcessing(false);
+    } finally {
+      // 동일 파일 다시 선택 가능하도록 input 초기화
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -59,21 +61,13 @@ export default function AlbumPickerCard() {
       <button
         type="button"
         onClick={handleClick}
-        disabled={isProcessing}
-        className="h-[180px] w-full rounded-2xl bg-hyundai-gray-50 p-5 active:bg-hyundai-gray-100 transition-colors flex items-end text-left disabled:opacity-70"
+        className="h-[180px] w-full rounded-2xl bg-hyundai-gray-50 p-5 active:bg-hyundai-gray-100 transition-colors flex items-end text-left"
       >
-        {isProcessing ? (
-          <div className="flex items-center gap-2">
-            <Loader2 className="w-4 h-4 animate-spin text-hyundai-gray-400" />
-            <p className="text-sm text-hyundai-gray-400">처리 중...</p>
-          </div>
-        ) : (
-          <p className="text-[22px] font-bold leading-[1.2] tracking-tight text-hyundai-gray-700">
-            앨범에서
-            <br />
-            가져오기
-          </p>
-        )}
+        <p className="text-[22px] font-bold leading-[1.2] tracking-tight text-hyundai-gray-700">
+          앨범에서
+          <br />
+          가져오기
+        </p>
       </button>
     </>
   );

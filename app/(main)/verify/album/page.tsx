@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Image, X, RotateCcw, Crop, ArrowLeft, ChevronRight } from 'lucide-react';
 import { Container } from '@/components/layout';
@@ -13,6 +13,16 @@ const AlbumPage: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showCrop, setShowCrop] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // 홈 카드에서 미리 선택해둔 이미지가 있으면 불러오기
+  useEffect(() => {
+    if (!selectedImage && typeof window !== 'undefined') {
+      const stored = sessionStorage.getItem('capturedEstimateImage');
+      if (stored) {
+        setSelectedImage(stored);
+      }
+    }
+  }, [selectedImage]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -57,6 +67,10 @@ const AlbumPage: React.FC = () => {
   const handleRemoveImage = () => {
     setSelectedImage(null);
     setError(null);
+    // 홈에서 가져온 기존 이미지가 다시 자동으로 로드되지 않도록 세션에서도 제거
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('capturedEstimateImage');
+    }
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -64,8 +78,9 @@ const AlbumPage: React.FC = () => {
 
   const handleUseImage = () => {
     if (selectedImage) {
-      // sessionStorage에 이미지 저장
+      // sessionStorage에 이미지 저장 + OCR 대기 플래그 설정 후 검증 페이지로 이동
       sessionStorage.setItem('capturedEstimateImage', selectedImage);
+      sessionStorage.setItem('pendingOcr', '1');
       router.push('/verify/review');
     }
   };
