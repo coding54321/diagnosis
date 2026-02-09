@@ -1,0 +1,18 @@
+flowchart TB
+  Start([비로그인 상태])
+  Home["홈 /"]
+  Login["/auth/login 로그인"]
+  Signup["/auth/signup 회원가입"]
+  SignupSuccess["회원가입 완료 화면"]
+  BackHome([홈으로])
+
+  Start --> Home
+  Home -->|"로그인 유도 카드 클릭"| Login
+  Login -->|"회원가입 링크"| Signup
+  Signup -->|"이미 계정 있음 링크"| Login
+  Signup -->|"회원가입 제출 성공"| SignupSuccess
+  SignupSuccess -->|"잠시 후 자동"| BackHome
+  Login -->|"로그인 성공"| BackHome
+  Login -->|"뒤로가기"| Home
+  Signup -->|"뒤로가기"| Home
+  Settings["/settings"] -->|"로그인/회원가입 버튼"| Login

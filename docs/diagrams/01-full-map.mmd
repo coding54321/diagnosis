@@ -1,0 +1,40 @@
+flowchart TB
+  subgraph Main["메인 영역 (하단 네비: 홈 | 검증 | 내 차 | 더보기)"]
+    Home["/ 홈"]
+    Camera["/verify/camera\n견적서 촬영"]
+    Album["/verify/album\n앨범에서 선택"]
+    Manual["/verify/manual\n직접 입력"]
+    Review["/verify/review\n견적 확인 위자드"]
+    Result["/verify/result\n검증 결과"]
+    ResultItem["/verify/result/[itemId]\n항목 상세"]
+    ResultGuide["/verify/result/guide\n정비소 질문 가이드"]
+    Vehicle["/vehicle\n내 차"]
+    VehicleEdit["/vehicle/edit\n차량 등록·수정"]
+    History["/history/[id]\n검증 내역 상세"]
+    Settings["/settings\n더보기"]
+  end
+
+  subgraph Auth["인증 (하단 네비 없음)"]
+    Login["/auth/login\n로그인"]
+    Signup["/auth/signup\n회원가입"]
+  end
+
+  Home --> Camera
+  Home --> Review
+  Home --> Vehicle
+  Home --> Login
+  Camera --> Album
+  Camera --> Review
+  Album --> Review
+  Manual --> Result
+  Review --> Result
+  Review --> Camera
+  Review --> Manual
+  Result --> ResultItem
+  Result --> ResultGuide
+  Vehicle --> VehicleEdit
+  Vehicle --> History
+  Settings --> Login
+  Login --> Signup
+  Signup --> Home
+  Login --> Home

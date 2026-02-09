@@ -1,0 +1,120 @@
+<svg width="1080" height="1920" viewBox="0 0 1080 1920" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="120" y1="0" x2="960" y2="1920" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F6F8FB"/>
+      <stop offset="1" stop-color="#EEF2F7"/>
+    </linearGradient>
+    <linearGradient id="hero" x1="130" y1="280" x2="950" y2="560" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0D1728"/>
+      <stop offset="1" stop-color="#1F2B42"/>
+    </linearGradient>
+    <linearGradient id="ghost" x1="130" y1="580" x2="950" y2="760" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#F7FAFF"/>
+    </linearGradient>
+    <filter id="shadow1" x="90" y="240" width="900" height="370" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="16"/>
+      <feGaussianBlur stdDeviation="20"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.05 0 0 0 0 0.10 0 0 0 0 0.20 0 0 0 0.20 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1" result="shape"/>
+    </filter>
+    <filter id="shadow2" x="95" y="575" width="890" height="215" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="10"/>
+      <feGaussianBlur stdDeviation="14"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.10 0 0 0 0 0.16 0 0 0 0 0.28 0 0 0 0.12 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_2"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_2" result="shape"/>
+    </filter>
+    <style>
+      .title { font: 700 50px 'Pretendard', 'Noto Sans KR', sans-serif; fill: #0F172A; letter-spacing: -0.6px; }
+      .body  { font: 500 28px 'Pretendard', 'Noto Sans KR', sans-serif; fill: #475569; letter-spacing: -0.2px; }
+      .small { font: 500 24px 'Pretendard', 'Noto Sans KR', sans-serif; fill: #64748B; letter-spacing: -0.2px; }
+      .cta1  { font: 700 40px 'Pretendard', 'Noto Sans KR', sans-serif; fill: white; letter-spacing: -0.4px; }
+      .cta2  { font: 600 26px 'Pretendard', 'Noto Sans KR', sans-serif; fill: #B8C4DA; letter-spacing: -0.2px; }
+      .btn2h { font: 700 38px 'Pretendard', 'Noto Sans KR', sans-serif; fill: #0F172A; letter-spacing: -0.4px; }
+      .chip  { font: 600 22px 'Pretendard', 'Noto Sans KR', sans-serif; fill: #1E293B; }
+      .sec   { font: 700 30px 'Pretendard', 'Noto Sans KR', sans-serif; fill: #0F172A; }
+      .itemt { font: 600 24px 'Pretendard', 'Noto Sans KR', sans-serif; fill: #0F172A; }
+      .price { font: 700 24px 'Pretendard', 'Noto Sans KR', sans-serif; fill: #0F172A; }
+    </style>
+  </defs>
+
+  <rect width="1080" height="1920" fill="url(#bg)"/>
+
+  <!-- Safe area frame -->
+  <rect x="60" y="30" width="960" height="1860" rx="64" fill="white"/>
+  <rect x="60" y="30" width="960" height="1860" rx="64" stroke="#DCE3EE"/>
+  <rect x="445" y="52" width="190" height="10" rx="5" fill="#CBD5E1"/>
+
+  <!-- Header -->
+  <text x="130" y="170" class="small">정비 견적 검증 서비스</text>
+  <text x="130" y="230" class="title">찍고, 바로 검증하세요</text>
+  <text x="130" y="275" class="body">핵심 액션: 견적서 촬영 또는 직접 입력</text>
+
+  <!-- Primary CTA -->
+  <g filter="url(#shadow1)">
+    <rect x="130" y="300" width="820" height="290" rx="36" fill="url(#hero)"/>
+  </g>
+  <circle cx="210" cy="390" r="40" fill="white" fill-opacity="0.16"/>
+  <rect x="188" y="368" width="44" height="44" rx="12" stroke="white" stroke-width="3"/>
+  <circle cx="210" cy="390" r="11" stroke="white" stroke-width="3"/>
+  <text x="280" y="390" class="cta1">견적서 촬영하기</text>
+  <text x="280" y="438" class="cta2">사진 한 장으로 자동 인식 후 가격 검증</text>
+  <text x="905" y="390" class="cta1" text-anchor="end">→</text>
+
+  <!-- Secondary CTA -->
+  <g filter="url(#shadow2)">
+    <rect x="130" y="620" width="820" height="170" rx="30" fill="url(#ghost)" stroke="#D6E2F3"/>
+  </g>
+  <rect x="176" y="676" width="18" height="18" rx="3" fill="#2E4A7D"/>
+  <rect x="200" y="664" width="18" height="30" rx="3" fill="#2E4A7D"/>
+  <rect x="224" y="652" width="18" height="42" rx="3" fill="#2E4A7D"/>
+  <text x="280" y="690" class="btn2h">직접 입력하기</text>
+  <text x="280" y="730" class="small">차량/항목을 수동으로 입력해서 검증</text>
+  <text x="905" y="690" class="btn2h" text-anchor="end">→</text>
+
+  <!-- Resume card -->
+  <rect x="130" y="825" width="820" height="145" rx="24" fill="#F8FAFD" stroke="#E2E8F0"/>
+  <text x="170" y="875" class="itemt">이전 작업 이어서 하기</text>
+  <text x="170" y="913" class="small">아반떼 CN7 · 2개 항목 입력 완료</text>
+  <rect x="760" y="853" width="150" height="52" rx="16" fill="#0F172A"/>
+  <text x="835" y="887" class="small" text-anchor="middle" fill="white">이어하기</text>
+
+  <!-- Value chips -->
+  <text x="130" y="1028" class="sec">검증 방식</text>
+  <rect x="130" y="1050" width="252" height="62" rx="31" fill="#EEF4FF"/>
+  <text x="256" y="1090" class="chip" text-anchor="middle">적정 / 확인필요</text>
+  <rect x="398" y="1050" width="234" height="62" rx="31" fill="#F0FDF4"/>
+  <text x="515" y="1090" class="chip" text-anchor="middle">부품·공임 분리</text>
+  <rect x="648" y="1050" width="302" height="62" rx="31" fill="#FFF7ED"/>
+  <text x="799" y="1090" class="chip" text-anchor="middle">정비소 유형 반영</text>
+
+  <!-- Recent list -->
+  <text x="130" y="1198" class="sec">최근 검증</text>
+  <rect x="130" y="1220" width="820" height="220" rx="24" fill="white" stroke="#E2E8F0"/>
+
+  <text x="170" y="1285" class="itemt">브레이크 패드 교체 외 1건</text>
+  <text x="170" y="1322" class="small">02.09 · 적정</text>
+  <text x="900" y="1288" class="price" text-anchor="end">₩184,000</text>
+  <line x1="170" y1="1360" x2="910" y2="1360" stroke="#EEF2F7"/>
+
+  <text x="170" y="1412" class="itemt">엔진오일/필터 교환</text>
+  <text x="170" y="1448" class="small">02.07 · 확인필요</text>
+  <text x="900" y="1415" class="price" text-anchor="end">₩129,000</text>
+
+  <!-- Bottom nav -->
+  <rect x="60" y="1760" width="960" height="130" rx="0" fill="white" stroke="#E2E8F0"/>
+  <circle cx="240" cy="1825" r="8" fill="#94A3B8"/>
+  <text x="240" y="1860" class="small" text-anchor="middle">홈</text>
+  <circle cx="430" cy="1825" r="8" fill="#0F172A"/>
+  <text x="430" y="1860" class="small" text-anchor="middle" fill="#0F172A">검증</text>
+  <circle cx="620" cy="1825" r="8" fill="#94A3B8"/>
+  <text x="620" y="1860" class="small" text-anchor="middle">내 차</text>
+  <circle cx="810" cy="1825" r="8" fill="#94A3B8"/>
+  <text x="810" y="1860" class="small" text-anchor="middle">더보기</text>
+</svg>

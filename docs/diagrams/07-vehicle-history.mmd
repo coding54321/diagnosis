@@ -1,0 +1,13 @@
+flowchart TB
+  Vehicle["/vehicle 내 차"]
+  VehicleEdit["/vehicle/edit\n차량 등록·수정"]
+  History["/history/[id]\n검증 내역 상세"]
+
+  Vehicle -->|"수정 / 등록"| VehicleEdit
+  Vehicle -->|"이력 행 탭"| History
+  VehicleEdit -->|"저장 / 뒤로가기"| Vehicle
+  History -->|"뒤로가기"| Vehicle
+
+  Home["홈"] -->|"내 차량 카드"| Vehicle
+  Home -->|"최근 검증 전체보기"| Vehicle
+  Home -->|"최근 검증 행 탭"| History

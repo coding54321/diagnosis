@@ -264,6 +264,8 @@ export type Database = {
           manufacturer: string
           mileage: number
           model: string
+          nickname: string | null
+          registration_number: string | null
           updated_at: string | null
           user_id: string | null
           variant: string | null
@@ -276,6 +278,8 @@ export type Database = {
           manufacturer: string
           mileage?: number
           model: string
+          nickname?: string | null
+          registration_number?: string | null
           updated_at?: string | null
           user_id?: string | null
           variant?: string | null
@@ -288,6 +292,8 @@ export type Database = {
           manufacturer?: string
           mileage?: number
           model?: string
+          nickname?: string | null
+          registration_number?: string | null
           updated_at?: string | null
           user_id?: string | null
           variant?: string | null
@@ -465,7 +471,23 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      get_nearby_national_repair_shops: {
+        Args: {
+          user_lat: number
+          user_lng: number
+          lim?: number
+        }
+        Returns: {
+          id: string
+          inspofc_nm: string | null
+          inspofc_type: string | null
+          rdnmadr: string | null
+          lnmadr: string | null
+          phone_number: string | null
+          latitude: number | null
+          longitude: number | null
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

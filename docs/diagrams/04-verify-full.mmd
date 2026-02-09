@@ -1,0 +1,46 @@
+flowchart TB
+  subgraph Entry["진입"]
+    Home["홈"]
+    NavVerify["탭: 검증"]
+  end
+
+  subgraph Input["입력 경로"]
+    Camera["견적서 촬영\n/verify/camera"]
+    Album["앨범에서 선택\n/verify/album"]
+    Direct["직접 입력\n/verify/manual"]
+  end
+
+  subgraph ReviewWizard["견적 확인 위자드 /verify/review"]
+    S1["Step 1\nOCR 결과"]
+    S2["Step 2\n정비 정보"]
+    S3["Step 3\n차량 정보"]
+    S4["Step 4\n견적 목록"]
+  end
+
+  subgraph Result["결과"]
+    ResultList["검증 결과\n/verify/result"]
+    ItemDetail["항목 상세\n/verify/result/[itemId]"]
+    Guide["질문 가이드\n/verify/result/guide"]
+  end
+
+  Home -->|"견적서 촬영"| Camera
+  Home -->|"직접 입력하기"| Direct
+  NavVerify --> Camera
+  Camera -->|"앨범에서 선택"| Album
+  Camera -->|"직접 입력"| S2
+  Camera -->|"촬영 → 분석하기"| S1
+  Album -->|"사진 선택 → 분석하기"| S1
+  Direct -->|"차량+항목 입력 → 검증하기"| ResultList
+  S1 -->|"OCR 성공"| S2
+  S1 -->|"OCR 실패 → 다시 촬영"| Camera
+  S1 -->|"OCR 실패 → 직접 입력"| S2
+  S2 --> S3
+  S3 --> S4
+  S4 -->|"견적 검증하기"| ResultList
+  S2 -->|"뒤로가기"| Camera
+  S3 -->|"뒤로가기"| S2
+  S4 -->|"뒤로가기"| S3
+  ResultList -->|"항목 탭"| ItemDetail
+  ResultList -->|"정비소에 물어보기"| Guide
+  ItemDetail -->|"뒤로가기"| ResultList
+  Guide -->|"뒤로가기"| ResultList

@@ -26,16 +26,18 @@ type VehicleInfoFromLookup = {
 
 export interface VehicleEditFormProps {
   initialVehicle: Vehicle | null;
+  vehicleId?: string;
   title: string;
 }
 
-export default function VehicleEditForm({ initialVehicle, title }: VehicleEditFormProps) {
+export default function VehicleEditForm({ initialVehicle, vehicleId, title }: VehicleEditFormProps) {
   const router = useRouter();
   const [vehicleStep, setVehicleStep] = useState<VehicleStep>('input');
-  const [vehicleNumber, setVehicleNumber] = useState('');
+  const [vehicleNumber, setVehicleNumber] = useState(initialVehicle?.registration_number ?? '');
   const [vehicleInfo, setVehicleInfo] = useState<VehicleInfoFromLookup | null>(null);
   const [ownerName, setOwnerName] = useState('');
-  const [mileage, setMileage] = useState(0);
+  const [nickname, setNickname] = useState(initialVehicle?.nickname ?? '');
+  const [mileage, setMileage] = useState(initialVehicle?.mileage ?? 0);
   const [checkError, setCheckError] = useState<string | null>(null);
   const [ownerVerifying, setOwnerVerifying] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,7 +54,8 @@ export default function VehicleEditForm({ initialVehicle, title }: VehicleEditFo
       const res = await fetchVehicleByRegistrationNumber(num);
       if (res.success && res.data) {
         setVehicleInfo(res.data);
-        setMileage(res.data.mileage > 0 ? res.data.mileage : 0);
+        const nextMileage = res.data.mileage > 0 ? res.data.mileage : (initialVehicle?.mileage ?? 0);
+        setMileage(nextMileage);
         setVehicleStep('owner');
       } else {
         setCheckError(res.error ?? '등록된 차량을 찾을 수 없어요. 차량번호를 다시 확인해 주세요.');
@@ -96,14 +99,21 @@ export default function VehicleEditForm({ initialVehicle, title }: VehicleEditFo
 
     setIsSubmitting(true);
     try {
-      const result = await saveVehicle({
-        manufacturer: vehicleInfo.manufacturer,
-        model: vehicleInfo.model,
-        variant: vehicleInfo.variant ?? undefined,
-        year: vehicleInfo.year,
-        mileage: finalMileage,
-        fuelType: vehicleInfo.fuelType,
-      });
+      const result = await saveVehicle(
+        {
+          manufacturer: vehicleInfo.manufacturer,
+          model: vehicleInfo.model,
+          variant: vehicleInfo.variant ?? undefined,
+          year: vehicleInfo.year,
+          mileage: finalMileage,
+          fuelType: vehicleInfo.fuelType,
+        },
+        {
+          ...(vehicleId && { vehicleId }),
+          registrationNumber: vehicleNumber.replace(/\s|-/g, '').trim() || undefined,
+          nickname: nickname.trim() || undefined,
+        }
+      );
 
       if (result.success) {
         router.push('/vehicle');
@@ -269,6 +279,22 @@ export default function VehicleEditForm({ initialVehicle, title }: VehicleEditFo
                     </div>
                   </div>
                 </div>
+
+                <label className="block">
+                  <span className="text-sm font-medium text-hyundai-gray-700 mb-2 block">
+                    별칭 (선택)
+                  </span>
+                  <Input
+                    placeholder="예: 우리 엄마 차"
+                    value={nickname}
+                    onChange={(e) => setNickname(e.target.value)}
+                    className="text-base"
+                    fullWidth
+                  />
+                  <p className="text-xs text-hyundai-gray-400 mt-1.5">
+                    목록에서 구분하기 쉬운 이름을 붙여보세요
+                  </p>
+                </label>
 
                 <label className="block">
                   <span className="text-sm font-medium text-hyundai-gray-700 mb-2 block">

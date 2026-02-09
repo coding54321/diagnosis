@@ -7,10 +7,15 @@
 
 import {
   getVehicle,
-  upsertVehicle,
+  getVehicles,
+  getVehicleById,
+  createVehicle,
+  updateVehicle,
+  deleteVehicle as deleteVehicleQuery,
   getVehicleLookupByRegistrationNumber,
   verifyVehicleOwner,
   getRecentVerificationHistory,
+  getRecentVerificationHistoryByVehicleId,
   getVerificationHistoryById,
   deleteVerificationResultById,
   saveEstimate,
@@ -65,13 +70,43 @@ export async function verifyVehicleOwnerAction(registrationNumber: string, owner
 }
 
 /**
- * 차량 정보 조회 (Server Action)
+ * 차량 목록 조회 (Server Action)
  */
+export async function fetchVehicles() {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.id) {
+      return { success: true, data: [] };
+    }
+    const vehicles = await getVehicles(user.id);
+    return { success: true, data: vehicles };
+  } catch (error) {
+    console.error('Error in fetchVehicles:', error);
+    return { success: false, error: '차량 목록을 불러오는데 실패했습니다.', data: [] };
+  }
+}
+
+/**
+ * 차량 단건 조회 (Server Action) — 수정 화면 등
+ */
+export async function fetchVehicleById(vehicleId: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.id) return { success: false, data: null };
+    const vehicle = await getVehicleById(vehicleId, user.id);
+    return { success: !!vehicle, data: vehicle };
+  } catch (error) {
+    console.error('Error in fetchVehicleById:', error);
+    return { success: false, data: null };
+  }
+}
+
+/** 최신 차량 1대 (홈 미리보기 등 호환용) */
 export async function fetchVehicle() {
   try {
     const user = await getCurrentUser();
-    const userId = user?.id || null;
-    const vehicle = await getVehicle(userId || '');
+    if (!user?.id) return { success: true, data: null };
+    const vehicle = await getVehicle(user.id);
     return { success: true, data: vehicle };
   } catch (error) {
     console.error('Error in fetchVehicle:', error);
@@ -80,35 +115,49 @@ export async function fetchVehicle() {
 }
 
 /**
- * 차량 정보 저장 (Server Action)
- * 비로그인 사용자도 차량 정보를 저장할 수 있음 (익명으로 저장)
+ * 차량 저장 (Server Action)
+ * vehicleId 있으면 수정, 없으면 새로 추가. registrationNumber/nickname 선택.
  */
-export async function saveVehicle(vehicle: {
-  manufacturer: string;
-  model: string;
-  variant?: string;
-  year: number;
-  mileage: number;
-  fuelType: string;
-}) {
+export async function saveVehicle(
+  vehicle: {
+    manufacturer: string;
+    model: string;
+    variant?: string;
+    year: number;
+    mileage: number;
+    fuelType: string;
+  },
+  options?: {
+    vehicleId?: string;
+    registrationNumber?: string;
+    nickname?: string;
+  }
+) {
   try {
     const user = await getCurrentUser();
-    // 비로그인 사용자는 익명으로 저장 (user_id = null)
-    const userId = user?.id || null;
-    const { data: saved, error: upsertError } = await upsertVehicle(userId || 'anonymous', {
+    if (!user?.id) {
+      return { success: false, error: '사용자 인증 정보가 없습니다.' };
+    }
+    const payload = {
       manufacturer: vehicle.manufacturer,
       model: vehicle.model,
       variant: vehicle.variant || null,
       year: vehicle.year,
       mileage: vehicle.mileage,
       fuel_type: vehicle.fuelType,
-    });
-    if (upsertError || !saved) {
-      console.error('saveVehicle: upsertVehicle failed', upsertError);
-      return {
-        success: false,
-        error: upsertError || '차량 정보를 저장하는데 실패했습니다. 로그인 후 다시 시도해 주세요.',
-      };
+      ...(options?.registrationNumber != null && { registration_number: options.registrationNumber }),
+      ...(options?.nickname != null && { nickname: options.nickname }),
+    };
+    if (options?.vehicleId) {
+      const { data: saved, error } = await updateVehicle(options.vehicleId, user.id, payload);
+      if (error || !saved) {
+        return { success: false, error: error || '차량 정보를 수정하는데 실패했습니다.' };
+      }
+      return { success: true, data: saved };
+    }
+    const { data: saved, error } = await createVehicle(user.id, payload);
+    if (error || !saved) {
+      return { success: false, error: error || '차량 정보를 저장하는데 실패했습니다.' };
     }
     return { success: true, data: saved };
   } catch (error) {
@@ -118,17 +167,66 @@ export async function saveVehicle(vehicle: {
 }
 
 /**
+ * 차량 삭제 (Server Action)
+ */
+export async function deleteVehicleAction(vehicleId: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.id) return { success: false, error: '사용자 인증 정보가 없습니다.' };
+    const { success, error } = await deleteVehicleQuery(vehicleId, user.id);
+    return success ? { success: true } : { success: false, error: error || '삭제에 실패했어요.' };
+  } catch (error) {
+    console.error('Error in deleteVehicleAction:', error);
+    return { success: false, error: '삭제 중 오류가 발생했어요.' };
+  }
+}
+
+/**
  * 최근 검증 내역 조회 (Server Action)
  */
 export async function fetchRecentHistory(limit: number = 10) {
   try {
     const user = await getCurrentUser();
-    const userId = user?.id || '';
-    const history = await getRecentVerificationHistory(userId, limit);
+    if (!user?.id) {
+      return { success: true, data: [] };
+    }
+    const history = await getRecentVerificationHistory(user.id, limit);
     return { success: true, data: history };
   } catch (error) {
     console.error('Error in fetchRecentHistory:', error);
     return { success: false, error: '검증 내역을 불러오는데 실패했습니다.' };
+  }
+}
+
+/**
+ * 특정 차량의 검증 내역 조회 (Server Action)
+ */
+export async function fetchRecentHistoryByVehicleId(vehicleId: string, limit: number = 100) {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.id) return { success: true, data: [] };
+    const history = await getRecentVerificationHistoryByVehicleId(user.id, vehicleId, limit);
+    return { success: true, data: history };
+  } catch (error) {
+    console.error('Error in fetchRecentHistoryByVehicleId:', error);
+    return { success: false, error: '검증 내역을 불러오는데 실패했습니다.', data: [] };
+  }
+}
+
+/**
+ * 차량 주행거리만 수정 (Server Action)
+ */
+export async function updateVehicleMileageAction(vehicleId: string, mileage: number) {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.id) return { success: false, error: '사용자 인증 정보가 없습니다.' };
+    if (mileage < 0) return { success: false, error: '주행거리는 0 이상이어야 해요.' };
+    const { data, error } = await updateVehicle(vehicleId, user.id, { mileage });
+    if (error || !data) return { success: false, error: error ?? '주행거리 수정에 실패했어요.' };
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error in updateVehicleMileageAction:', error);
+    return { success: false, error: '주행거리 수정 중 오류가 발생했어요.' };
   }
 }
 
@@ -156,7 +254,7 @@ export async function deleteVerificationHistory(verificationResultId: string) {
   try {
     const user = await getCurrentUser();
     if (!user?.id) {
-      return { success: false, error: '로그인이 필요해요.' };
+      return { success: false, error: '사용자 인증 정보가 없습니다.' };
     }
     const deleted = await deleteVerificationResultById(user.id, verificationResultId);
     return deleted ? { success: true } : { success: false, error: '삭제할 수 없거나 이미 삭제된 내역이에요.' };
@@ -183,11 +281,11 @@ export async function createEstimate(data: {
   }>;
 }) {
   try {
-    // 비로그인 사용자도 견적서 생성 가능
     const user = await getCurrentUser();
-    const userId = user?.id || null; // null이면 익명 사용자
-    // null인 경우 'anonymous'로 전달하여 queries에서 null로 변환
-    const result = await saveEstimate(userId ? userId : 'anonymous', data.vehicleId, {
+    if (!user?.id) {
+      return { success: false, error: '사용자 인증 정보가 없습니다.' };
+    }
+    const result = await saveEstimate(user.id, data.vehicleId, {
       shopName: data.shopName,
       totalAmount: data.totalAmount,
       imageUrl: data.imageUrl,
@@ -255,11 +353,11 @@ export async function createVerificationResult(data: {
   }>;
 }) {
   try {
-    // 비로그인 사용자도 검증 결과 생성 가능
     const user = await getCurrentUser();
-    const userId = user?.id || null; // null이면 익명 사용자
-    // null인 경우 'anonymous'로 전달하여 queries에서 null로 변환
-    const result = await saveVerificationResult(userId ? userId : 'anonymous', data.estimateId, {
+    if (!user?.id) {
+      return { success: false, error: '사용자 인증 정보가 없습니다.' };
+    }
+    const result = await saveVerificationResult(user.id, data.estimateId, {
       totalAmount: data.totalAmount,
       status: data.status,
       confidence: data.confidence,

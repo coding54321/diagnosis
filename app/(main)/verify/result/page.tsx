@@ -2,20 +2,19 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Share2, Save, ArrowLeft } from 'lucide-react';
+import { Loader2, Share2, ArrowLeft } from 'lucide-react';
 import { Container } from '@/components/layout';
 import { Card } from '@/components/ui';
 import VerificationSummary from '@/components/verification/VerificationSummary';
 import EstimateCard from '@/components/verification/EstimateCard';
 import MileageEditModal from '@/components/verification/MileageEditModal';
 import { mockVerificationResult, mockVehicle } from '@/lib/mockData';
-import { createVerificationResult, fetchVerificationResult } from '@/lib/supabase/actions';
+import { fetchVerificationResult } from '@/lib/supabase/actions';
 import { VerificationEngine } from '@/lib/verification/engine';
 import { classifyShopType } from '@/lib/verification/shop-classifier';
 import { parseFrtCsv } from '@/lib/data/frt-standards';
 import { copyLink, formatVerificationResultForShare, shareNative } from '@/lib/share';
 import { toast } from 'sonner';
-import { useAuth } from '@/components/auth/AuthProvider';
 import type { VerificationResult, ItemVerification, EstimateItem, ShopType, CostType } from '@/types';
 
 /** 차량 전체 정보 (주행거리 수정·재검증용) */
@@ -40,9 +39,6 @@ function formatRegistrationDisplay(num: string): string {
 
 const VerificationResultPage: React.FC = () => {
   const router = useRouter();
-  const { user: authUser } = useAuth();
-  const isAuthenticated = !!authUser;
-  const [isSaving, setIsSaving] = useState(false);
   const [estimateId, setEstimateId] = useState<string | null>(null);
   const [result, setResult] = useState<VerificationResult | null>(null);
   const [itemNames, setItemNames] = useState<Record<string, string>>({});
@@ -401,53 +397,7 @@ const VerificationResultPage: React.FC = () => {
     }
   };
 
-  const handleSave = async () => {
-    if (!isAuthenticated) {
-      router.push('/auth/login');
-      return;
-    }
-    if (!estimateId) {
-      alert('견적서 정보를 찾을 수 없습니다.');
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      const saveResult = await createVerificationResult({
-        estimateId,
-        totalAmount: result.totalAmount,
-        status: result.status,
-        confidence: result.confidence,
-        items: result.items.map((item) => ({
-          estimateItemId: item.itemId,
-          status: item.status,
-          userPrice: item.userPrice,
-          averagePrice: item.averagePrice,
-          minPrice: item.priceRange.min,
-          maxPrice: item.priceRange.max,
-          medianPrice: item.priceRange.median,
-          sampleCount: item.sampleCount,
-          partCostUser: item.breakdown.partCost.user,
-          partCostAverage: item.breakdown.partCost.average,
-          laborCostUser: item.breakdown.laborCost.user,
-          laborCostAverage: item.breakdown.laborCost.average,
-          partPriceSource: item.breakdown.partCost.partPriceSource ?? null,
-        })),
-      });
-
-      if (saveResult.success) {
-        toast.success('저장되었습니다.');
-        router.push('/vehicle');
-      } else {
-        throw new Error(saveResult.error || '저장 실패');
-      }
-    } catch (error) {
-      console.error('Error saving:', error);
-      toast.error('저장 중 오류가 발생했습니다.');
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  // 검증 결과는 review 단계에서 이미 저장됨 (자동 저장)
 
   // 필터 칩 정의
   const filters: { key: FilterType; label: string; count: number }[] = [
@@ -583,30 +533,13 @@ const VerificationResultPage: React.FC = () => {
         </Container>
 
         <div className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-hyundai-gray-100 pb-[env(safe-area-inset-bottom,0px)]">
-          <div className="max-w-lg mx-auto px-4 py-3 flex gap-2">
+          <div className="max-w-lg mx-auto px-4 py-3">
             <button
               onClick={handleShare}
-              className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg border border-hyundai-gray-200 text-xs font-medium text-hyundai-gray-600 active:bg-hyundai-gray-50"
+              className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-hyundai-gray-900 text-xs font-medium text-white active:bg-hyundai-gray-800"
             >
               <Share2 className="w-3.5 h-3.5" strokeWidth={1.5} />
-              공유
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={!estimateId || isSaving}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-hyundai-gray-900 text-xs font-medium text-white active:bg-hyundai-gray-800 disabled:opacity-50"
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" strokeWidth={1.5} />
-                  저장 중...
-                </>
-              ) : (
-                <>
-                  <Save className="w-3.5 h-3.5" strokeWidth={1.5} />
-                  {isAuthenticated ? '저장' : '로그인 후 저장'}
-                </>
-              )}
+              공유하기
             </button>
           </div>
         </div>

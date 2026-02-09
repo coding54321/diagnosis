@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronRight, Loader2, X, ArrowLeft, Check, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Container } from '@/components/layout';
 import { Card, BottomSheet, Input } from '@/components/ui';
 import { formatPrice } from '@/lib/utils';
-import { createEstimate, saveVehicle, uploadEstimateImageAction, createVerificationResult, fetchVehicleByRegistrationNumber, verifyVehicleOwnerAction, fetchVehicle } from '@/lib/supabase/actions';
+import { createEstimate, saveVehicle, uploadEstimateImageAction, createVerificationResult, fetchVehicleByRegistrationNumber, verifyVehicleOwnerAction, fetchVehicles } from '@/lib/supabase/actions';
 import { VerificationEngine } from '@/lib/verification/engine';
 import { classifyShopType } from '@/lib/verification/shop-classifier';
 import { analyzeEstimateImage } from '@/lib/openai/vision';
@@ -23,6 +23,21 @@ type VehicleInfoFromLookup = {
   fuelType: string;
 };
 import type { BluehandsShop } from '@/lib/data/bluehands-seoul';
+
+/** API 정비소 응답 (위경도·거리 포함 가능) */
+type ShopWithLocation = BluehandsShop & { latitude?: number | null; longitude?: number | null; distanceKm?: number | null };
+
+/** 두 위경도 간 거리(km) - Haversine */
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 type EditSheetMode = 'vehicle' | 'shop' | 'vat' | 'item' | null;
 
@@ -62,9 +77,12 @@ const ReviewPage: React.FC = () => {
   // 정비소 (전국 표준데이터 검색)
   const [shopName, setShopName] = useState('');
   const [shopSearchQuery, setShopSearchQuery] = useState('');
-  const [shopSearchResults, setShopSearchResults] = useState<BluehandsShop[]>([]);
+  const [shopSearchResults, setShopSearchResults] = useState<ShopWithLocation[]>([]);
   const [shopSearching, setShopSearching] = useState(false);
   const [shopLookupLoading, setShopLookupLoading] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [geocodeCache, setGeocodeCache] = useState<Record<string, { lat: number; lng: number }>>({});
+  const geocodeRequestedRef = useRef<Set<string>>(new Set());
 
   // 정비 항목
   const [items, setItems] = useState<EstimateItem[]>([]);
@@ -81,9 +99,11 @@ const ReviewPage: React.FC = () => {
   const [vehicleNumber, setVehicleNumber] = useState<string>('');
   const [vehicleLoading, setVehicleLoading] = useState(false);
 
-  // 저장된 내 차 정보
-  const [savedVehicle, setSavedVehicle] = useState<VehicleInfoFromLookup | null>(null);
+  // 저장된 내 차 목록 (다차량)
+  const [savedVehicles, setSavedVehicles] = useState<Array<{ id: string; manufacturer: string; model: string; variant: string | null; year: number; mileage: number; fuel_type: string }>>([]);
   const [savedVehicleDismissed, setSavedVehicleDismissed] = useState(false);
+  // 검증에 사용할 차량 ID (저장된 차량 중 선택 시 설정, 아니면 saveVehicle 후 반환 id 사용)
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
 
   // 차량 확인 플로우 (차량번호 → 존재확인 → 소유주 → 확정)
   const [vehicleStep, setVehicleStep] = useState<VehicleVerificationStep>('input');
@@ -292,24 +312,17 @@ const ReviewPage: React.FC = () => {
       setWizardStep(2);
       setCapturedImage(null);
       setOcrError(null);
-      const loadSavedVehicle = async () => {
+      const loadSavedVehicles = async () => {
         try {
-          const res = await fetchVehicle();
-          if (res.success && res.data) {
-            setSavedVehicle({
-              manufacturer: res.data.manufacturer,
-              model: res.data.model,
-              variant: res.data.variant || null,
-              year: res.data.year,
-              mileage: res.data.mileage,
-              fuelType: res.data.fuel_type,
-            });
+          const res = await fetchVehicles();
+          if (res.success && res.data && res.data.length > 0) {
+            setSavedVehicles(res.data);
           }
         } catch {
           // 무시
         }
       };
-      loadSavedVehicle();
+      loadSavedVehicles();
       return;
     }
 
@@ -364,32 +377,29 @@ const ReviewPage: React.FC = () => {
       }
     }
 
-    // 저장된 차량 정보 불러오기
-    const loadSavedVehicle = async () => {
+    // 저장된 차량 목록 불러오기
+    const loadSavedVehicles = async () => {
       try {
-        const res = await fetchVehicle();
-        if (res.success && res.data) {
-          setSavedVehicle({
-            manufacturer: res.data.manufacturer,
-            model: res.data.model,
-            variant: res.data.variant || null,
-            year: res.data.year,
-            mileage: res.data.mileage,
-            fuelType: res.data.fuel_type,
-          });
+        const res = await fetchVehicles();
+        if (res.success && res.data && res.data.length > 0) {
+          setSavedVehicles(res.data);
         }
       } catch {
         // 무시
       }
     };
-    loadSavedVehicle();
+    loadSavedVehicles();
   }, [applyOcrResultToState]);
 
-  // 정비소 검색
-  const searchShops = useCallback(async (q: string) => {
+  // 정비소 검색 (q 비어 있고 location 있으면 가까운 순 기본 목록)
+  const searchShops = useCallback(async (q: string, location?: { lat: number; lng: number }) => {
     setShopSearching(true);
     try {
-      const res = await fetch(`/api/shops?q=${encodeURIComponent(q)}`);
+      const url =
+        q === '' && location
+          ? `/api/shops?lat=${location.lat}&lng=${location.lng}`
+          : `/api/shops?q=${encodeURIComponent(q)}`;
+      const res = await fetch(url);
       const data = await res.json();
       setShopSearchResults(data.shops ?? []);
     } catch {
@@ -399,11 +409,91 @@ const ReviewPage: React.FC = () => {
     }
   }, []);
 
+  // 정비소 시트 열릴 때 사용자 위치 요청 (거리순 정렬·기본 목록용)
+  useEffect(() => {
+    if (!editSheetOpen || editSheetMode !== 'shop') return;
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      },
+      () => {
+        setUserLocation(null);
+      },
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
+    );
+  }, [editSheetOpen, editSheetMode]);
+
+  // 검색어 없을 때 위치 받으면 가까운 순 기본 목록으로 다시 요청
+  useEffect(() => {
+    if (!userLocation || !editSheetOpen || editSheetMode !== 'shop' || shopSearchQuery !== '') return;
+    searchShops('', userLocation);
+  }, [userLocation, editSheetOpen, editSheetMode, shopSearchQuery, searchShops]);
+
+  // 사용자 위치 기준 거리순 정렬 (API 좌표 + 지오코딩 캐시 활용, 전체 정비소 거리 표시)
+  const sortedShopResults = useMemo((): ShopWithLocation[] => {
+    const list = shopSearchResults as ShopWithLocation[];
+    if (!userLocation || list.length === 0) return list;
+    const withDistance = list.map((shop) => {
+      let lat = shop.latitude;
+      let lng = shop.longitude;
+      const addressKey = [shop.시군구, shop.주소].filter(Boolean).join(' ').trim();
+      if ((lat == null || lng == null) && addressKey && geocodeCache[addressKey]) {
+        lat = geocodeCache[addressKey].lat;
+        lng = geocodeCache[addressKey].lng;
+      }
+      const distanceKm =
+        lat != null && lng != null ? haversineKm(userLocation.lat, userLocation.lng, lat, lng) : null;
+      return { ...shop, latitude: lat ?? shop.latitude, longitude: lng ?? shop.longitude, distanceKm };
+    });
+    return withDistance.sort((a, b) => {
+      if (a.distanceKm == null && b.distanceKm == null) return 0;
+      if (a.distanceKm == null) return 1;
+      if (b.distanceKm == null) return -1;
+      return a.distanceKm - b.distanceKm;
+    });
+  }, [shopSearchResults, userLocation, geocodeCache]);
+
+  // 좌표가 없는 정비소는 주소로 지오코딩 (1건씩 순차 요청, rate limit 준수)
+  useEffect(() => {
+    if (!userLocation || shopSearchResults.length === 0 || !editSheetOpen || editSheetMode !== 'shop') return;
+    const list = shopSearchResults as ShopWithLocation[];
+    const needGeocode = list.filter(
+      (s) =>
+        (s.latitude == null || s.longitude == null) &&
+        (s.주소 || s.시군구) &&
+        !geocodeCache[[s.시군구, s.주소].filter(Boolean).join(' ').trim()]
+    );
+    if (needGeocode.length === 0) return;
+    const addressKey = [needGeocode[0].시군구, needGeocode[0].주소].filter(Boolean).join(' ').trim();
+    if (geocodeRequestedRef.current.has(addressKey)) return;
+    geocodeRequestedRef.current.add(addressKey);
+    const timer = setTimeout(() => {
+      fetch(`/api/geocode?address=${encodeURIComponent(addressKey)}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (data && typeof data.lat === 'number' && typeof data.lng === 'number') {
+            setGeocodeCache((prev) => ({ ...prev, [addressKey]: { lat: data.lat, lng: data.lng } }));
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          geocodeRequestedRef.current.delete(addressKey);
+        });
+    }, 1200); // Nominatim 1 req/sec
+    return () => clearTimeout(timer);
+  }, [shopSearchResults, userLocation, editSheetOpen, editSheetMode, geocodeCache]);
+
   useEffect(() => {
     if (!editSheetOpen || editSheetMode !== 'shop') return;
     const t = setTimeout(() => searchShops(shopSearchQuery), editSheetMode === 'shop' && !shopSearchQuery ? 0 : 300);
     return () => clearTimeout(t);
   }, [editSheetOpen, editSheetMode, shopSearchQuery, searchShops]);
+
+  // 검색 결과가 바뀌면 지오코딩 요청 추적 초기화
+  useEffect(() => {
+    geocodeRequestedRef.current.clear();
+  }, [shopSearchResults]);
 
   // 총 금액 = 항목 합계 (견적서 화면에서는 항목 금액이 보통 부가세 포함이므로 이 합계가 VAT 포함 총액)
   const totalAmount = items.reduce((sum, i) => sum + i.totalCost, 0);
@@ -493,20 +583,28 @@ const ReviewPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const vehicleResult = await saveVehicle({
-        manufacturer: vehicleInfo.manufacturer,
-        model: vehicleInfo.model,
-        variant: vehicleInfo.variant ?? undefined,
-        year: vehicleInfo.year,
-        mileage,
-        fuelType: vehicleInfo.fuelType,
-      });
-
-      if (!vehicleResult.success || !vehicleResult.data) {
-        throw new Error(vehicleResult.error || '차량 정보 저장 실패');
+      let vehicleId: string;
+      if (selectedVehicleId) {
+        vehicleId = selectedVehicleId;
+      } else {
+        const vehicleResult = await saveVehicle(
+          {
+            manufacturer: vehicleInfo.manufacturer,
+            model: vehicleInfo.model,
+            variant: vehicleInfo.variant ?? undefined,
+            year: vehicleInfo.year,
+            mileage,
+            fuelType: vehicleInfo.fuelType,
+          },
+          {
+            registrationNumber: vehicleNumber.replace(/\s|-/g, '').trim() || undefined,
+          }
+        );
+        if (!vehicleResult.success || !vehicleResult.data) {
+          throw new Error(vehicleResult.error || '차량 정보 저장 실패');
+        }
+        vehicleId = vehicleResult.data.id;
       }
-
-      const vehicleId = vehicleResult.data.id;
 
       const estimateResult = await createEstimate({
         vehicleId,
@@ -800,40 +898,97 @@ const ReviewPage: React.FC = () => {
         </p>
       </div>
 
-      {/* 저장된 내 차 정보가 있고, 아직 차량 정보를 설정하지 않았을 때 */}
-      {savedVehicle && !vehicleInfo && !savedVehicleDismissed && vehicleStep === 'input' && (
-        <div className="mb-4 p-4 bg-hyundai-gray-50 rounded-2xl">
-          <p className="text-xs text-hyundai-gray-500 mb-2">저장된 내 차 정보</p>
-          <p className="text-base font-medium text-hyundai-gray-900 mb-3">
-            {savedVehicle.manufacturer} {savedVehicle.model}
-            {savedVehicle.variant ? ` ${savedVehicle.variant}` : ''} · {savedVehicle.year}년식
-          </p>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setVehicleInfo(savedVehicle);
-                setEstimateMileage(savedVehicle.mileage);
-                setSavedVehicleDismissed(true);
-                setVehicleStep('confirmed');
-              }}
-              className="flex-1 py-2.5 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 transition-colors"
-            >
-              이 차량 선택
-            </button>
-            <button
-              type="button"
-              onClick={() => setSavedVehicleDismissed(true)}
-              className="py-2.5 px-4 rounded-xl bg-white text-hyundai-gray-500 text-sm font-medium active:bg-hyundai-gray-100 transition-colors border border-hyundai-gray-200"
-            >
-              다른 차량
-            </button>
-          </div>
+      {/* 저장된 내 차 목록이 있고, 아직 차량 정보를 설정하지 않았을 때 */}
+      {savedVehicles.length > 0 && !vehicleInfo && !savedVehicleDismissed && vehicleStep === 'input' && (
+        <div className="mb-4 space-y-3">
+          <p className="text-xs text-hyundai-gray-500">저장된 내 차량</p>
+          {savedVehicles.length === 1 ? (
+            <div className="p-4 bg-hyundai-gray-50 rounded-2xl">
+              <p className="text-base font-medium text-hyundai-gray-900 mb-3">
+                {savedVehicles[0].manufacturer} {savedVehicles[0].model}
+                {savedVehicles[0].variant ? ` ${savedVehicles[0].variant}` : ''} · {savedVehicles[0].year}년식
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const v = savedVehicles[0];
+                    setVehicleInfo({
+                      manufacturer: v.manufacturer,
+                      model: v.model,
+                      variant: v.variant,
+                      year: v.year,
+                      mileage: v.mileage,
+                      fuelType: v.fuel_type,
+                    });
+                    setEstimateMileage(v.mileage);
+                    setSelectedVehicleId(v.id);
+                    setSavedVehicleDismissed(true);
+                    setVehicleStep('confirmed');
+                  }}
+                  className="flex-1 py-2.5 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 transition-colors"
+                >
+                  이 차량 선택
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSavedVehicleDismissed(true);
+                    setSelectedVehicleId(null);
+                  }}
+                  className="py-2.5 px-4 rounded-xl bg-white text-hyundai-gray-500 text-sm font-medium active:bg-hyundai-gray-100 transition-colors border border-hyundai-gray-200"
+                >
+                  다른 차량
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              {savedVehicles.map((v) => (
+                <div key={v.id} className="p-4 bg-hyundai-gray-50 rounded-2xl">
+                  <p className="text-base font-medium text-hyundai-gray-900 mb-3">
+                    {v.manufacturer} {v.model}
+                    {v.variant ? ` ${v.variant}` : ''} · {v.year}년식
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setVehicleInfo({
+                        manufacturer: v.manufacturer,
+                        model: v.model,
+                        variant: v.variant,
+                        year: v.year,
+                        mileage: v.mileage,
+                        fuelType: v.fuel_type,
+                      });
+                      setEstimateMileage(v.mileage);
+                      setSelectedVehicleId(v.id);
+                      setSavedVehicleDismissed(true);
+                      setVehicleStep('confirmed');
+                    }}
+                    className="w-full py-2.5 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 transition-colors"
+                  >
+                    이 차량 선택
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setSavedVehicleDismissed(true);
+                  setSelectedVehicleId(null);
+                }}
+                className="w-full py-2.5 rounded-xl border border-hyundai-gray-200 text-hyundai-gray-600 text-sm font-medium active:bg-hyundai-gray-50 transition-colors"
+              >
+                다른 차량으로 입력
+              </button>
+            </>
+          )}
         </div>
       )}
 
       {/* 차량 확인 플로우 */}
-      {(savedVehicleDismissed || !savedVehicle) && vehicleStep !== 'confirmed' && (
+      {(savedVehicleDismissed || savedVehicles.length === 0) && vehicleStep !== 'confirmed' && (
         <div className="space-y-4">
           {/* Step 3-1: 차량번호 입력 */}
           {vehicleStep === 'input' && (
@@ -970,6 +1125,7 @@ const ReviewPage: React.FC = () => {
               setVehicleStep('input');
               setVehicleInfo(null);
               setOwnerName('');
+              setSelectedVehicleId(null);
             }}
             className="text-sm text-hyundai-gray-500 underline"
           >
@@ -1306,8 +1462,8 @@ const ReviewPage: React.FC = () => {
         }
       >
         {editSheetMode === 'shop' && (
-          <div className="space-y-3">
-            <p className="text-xs text-hyundai-gray-500">
+          <div className="h-[55vh] flex flex-col gap-3">
+            <p className="text-xs text-hyundai-gray-500 shrink-0">
               전국 등록 정비업체에서 검색해요. 업체명·주소로 찾을 수 있어요.
             </p>
             <Input
@@ -1315,8 +1471,9 @@ const ReviewPage: React.FC = () => {
               value={shopSearchQuery}
               onChange={(e) => setShopSearchQuery(e.target.value)}
               fullWidth
+              className="shrink-0"
             />
-            <div className="max-h-64 overflow-y-auto -mx-1">
+            <div className="flex-1 min-h-0 overflow-y-auto -mx-1">
               {shopSearching && (
                 <div className="flex justify-center py-6">
                   <Loader2 className="w-5 h-5 animate-spin text-hyundai-gray-300" strokeWidth={1.5} />
@@ -1326,7 +1483,7 @@ const ReviewPage: React.FC = () => {
                 <p className="text-xs text-hyundai-gray-400 py-6 text-center">검색 결과가 없어요</p>
               )}
               {!shopSearching &&
-                shopSearchResults.map((shop, idx) => (
+                sortedShopResults.map((shop, idx) => (
                   <button
                     key={`${shop.업체명}-${shop.주소}-${idx}`}
                     type="button"
@@ -1336,13 +1493,22 @@ const ReviewPage: React.FC = () => {
                     }}
                     className="w-full text-left px-3 py-3 rounded-xl active:bg-hyundai-gray-50 transition-colors border-b border-hyundai-gray-50 last:border-b-0"
                   >
-                    <p className="text-sm font-medium text-hyundai-gray-900">{shop.업체명}</p>
-                    <p className="text-xs text-hyundai-gray-400 mt-0.5">
-                      {[shop.시군구, shop.주소].filter(Boolean).join(' · ')}
-                    </p>
-                    {shop.전화번호 && (
-                      <p className="text-xs text-hyundai-gray-500 mt-0.5">{shop.전화번호}</p>
-                    )}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-hyundai-gray-900">{shop.업체명}</p>
+                        <p className="text-xs text-hyundai-gray-400 mt-0.5">
+                          {[shop.시군구, shop.주소].filter(Boolean).join(' · ')}
+                        </p>
+                        {shop.전화번호 && (
+                          <p className="text-xs text-hyundai-gray-500 mt-0.5">{shop.전화번호}</p>
+                        )}
+                      </div>
+                      {shop.distanceKm != null && (
+                        <span className="text-xs text-hyundai-gray-500 shrink-0 whitespace-nowrap">
+                          약 {shop.distanceKm < 1 ? `${Math.round(shop.distanceKm * 1000)}m` : `${shop.distanceKm.toFixed(1)}km`}
+                        </span>
+                      )}
+                    </div>
                   </button>
                 ))}
             </div>

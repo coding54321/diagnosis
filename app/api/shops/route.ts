@@ -2,15 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { parseBluehandsSeoulCSV, searchShops } from '@/lib/data/bluehands-seoul';
-import { searchNationalRepairShops, searchNationalRepairShopsByAddress } from '@/lib/data/national-repair-shops';
+import { searchNationalRepairShops, searchNationalRepairShopsByAddress, getNearbyNationalRepairShops } from '@/lib/data/national-repair-shops';
 import type { BluehandsShop } from '@/lib/data/bluehands-seoul';
 
 export const dynamic = 'force-dynamic';
 
-/** 전국 표준데이터 검색 결과를 BluehandsShop 호환 형태로 반환 (score 포함) */
+/** 전국 표준데이터 검색 결과를 BluehandsShop 호환 형태로 반환 (score, 좌표 포함) */
 function toBluehandsShape(
-  row: { 업체명: string; 시군구: string; 주소: string; 구분: string; 광역시도: string; 전화번호: string; 유형별_블루핸즈: string; score?: number }
-): BluehandsShop & { score?: number } {
+  row: { 업체명: string; 시군구: string; 주소: string; 구분: string; 광역시도: string; 전화번호: string; 유형별_블루핸즈: string; score?: number; latitude?: number | null; longitude?: number | null }
+): BluehandsShop & { score?: number; latitude?: number | null; longitude?: number | null } {
   return {
     업체명: row.업체명,
     구분: row.구분,
@@ -20,6 +20,8 @@ function toBluehandsShape(
     전화번호: row.전화번호,
     유형별_블루핸즈: row.유형별_블루핸즈,
     score: row.score,
+    ...(row.latitude != null && { latitude: row.latitude }),
+    ...(row.longitude != null && { longitude: row.longitude }),
   };
 }
 
@@ -43,8 +45,22 @@ export async function GET(request: NextRequest) {
   try {
     const raw = request.nextUrl.searchParams.get('q') ?? '';
     const addressRaw = request.nextUrl.searchParams.get('address') ?? '';
+    const latParam = request.nextUrl.searchParams.get('lat');
+    const lngParam = request.nextUrl.searchParams.get('lng');
     const q = raw.trim().replace(/\s+/g, ' ');
     const address = addressRaw.trim();
+    const lat = latParam ? parseFloat(latParam) : NaN;
+    const lng = lngParam ? parseFloat(lngParam) : NaN;
+    const hasLocation = !Number.isNaN(lat) && !Number.isNaN(lng);
+
+    // 0. 검색어 없고 위경도 있으면 가까운 순 기본 목록
+    if (!q && !address && hasLocation) {
+      const nearby = await getNearbyNationalRepairShops(lat, lng, 50);
+      return NextResponse.json({
+        shops: nearby.map(toBluehandsShape),
+        matchedBy: 'nearby',
+      });
+    }
 
     // 1. 주소가 있으면 주소로 먼저 검색
     if (address) {

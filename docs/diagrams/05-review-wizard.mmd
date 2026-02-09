@@ -1,0 +1,17 @@
+stateDiagram-v2
+  [*] --> Step1: 카메라/앨범에서 이미지 입력 후
+
+  Step1: Step 1 OCR 결과
+  Step2: Step 2 정비 정보 (날짜·정비소)
+  Step3: Step 3 차량 정보 (차량번호·소유주)
+  Step4: Step 4 견적 목록 확인
+
+  Step1 --> Step2: OCR 성공 (또는 직접입력 진입)
+  Step1 --> 카메라: 다시 촬영하기
+  Step1 --> Step2: 직접 입력하기
+  Step2 --> Step3: 다음
+  Step2 --> 카메라: 뒤로가기
+  Step3 --> Step4: 다음 (차량 확정 후)
+  Step3 --> Step3: 차량 조회·소유주 확인
+  Step4 --> 검증결과: 견적 검증하기
+  Step4 --> Step3: 뒤로가기

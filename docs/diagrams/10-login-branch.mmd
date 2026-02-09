@@ -1,0 +1,12 @@
+flowchart TB
+  Home["홈 /"]
+  Home --> LoggedOut{비로그인?}
+  LoggedOut -->|Yes| Guest["CTA 촬영 + 직접입력\n+ 로그인 유도 카드"]
+  LoggedOut -->|No| LoggedIn["CTA 촬영 + 직접입력\n+ 내 차량 카드\n+ 최근 검증"]
+  Guest --> Login["/auth/login"]
+  LoggedIn --> Vehicle["/vehicle"]
+  LoggedIn --> History["/history/[id]"]
+  Vehicle --> VehicleNeedLogin{로그인 필요}
+  VehicleNeedLogin -->|차량/이력 보기| VehiclePage["내 차 페이지"]
+  VehicleNeedLogin -->|비로그인| VehicleGuest["차량 등록 유도\n로그인 안내"]
+  History --> HistoryLogin["로그인 필수\n미로그인 시 404"]

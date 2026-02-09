@@ -7,6 +7,7 @@ import type { User } from '@supabase/supabase-js';
 interface AuthContextValue {
   user: User | null;
   isLoading: boolean;
+  isAnonymous: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -22,12 +23,25 @@ export function AuthProvider({ children, initialUser = null }: AuthProviderProps
   const [isLoading, setIsLoading] = useState(!initialUser);
 
   useEffect(() => {
-    // 서버에서 initialUser를 넘겼으면 클라이언트에서 한 번 더 동기화
     const syncUser = async () => {
       const {
         data: { user: currentUser },
       } = await supabase.auth.getUser();
-      setUser(currentUser ?? null);
+
+      if (currentUser) {
+        setUser(currentUser);
+        setIsLoading(false);
+        return;
+      }
+
+      // 세션이 없으면 익명 로그인
+      const { data: anonData, error: anonError } = await supabase.auth.signInAnonymously();
+      if (!anonError && anonData.user) {
+        setUser(anonData.user);
+      } else {
+        console.error('Anonymous sign-in failed:', anonError);
+        setUser(null);
+      }
       setIsLoading(false);
     };
 
@@ -43,7 +57,11 @@ export function AuthProvider({ children, initialUser = null }: AuthProviderProps
     return () => subscription.unsubscribe();
   }, []);
 
-  const value: AuthContextValue = { user, isLoading };
+  const value: AuthContextValue = {
+    user,
+    isLoading,
+    isAnonymous: user?.is_anonymous ?? false,
+  };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
@@ -54,6 +72,7 @@ export function useAuth(): AuthContextValue {
     return {
       user: null,
       isLoading: false,
+      isAnonymous: false,
     };
   }
   return ctx;

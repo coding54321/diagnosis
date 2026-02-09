@@ -1,0 +1,17 @@
+flowchart LR
+  subgraph Nav["하단 네비 탭"]
+    N1[홈 /]
+    N2[검증 /verify/camera]
+    N3[내 차 /vehicle]
+    N4[더보기 /settings]
+  end
+
+  N1 --> Home
+  N2 --> Camera
+  N3 --> Vehicle
+  N4 --> Settings
+
+  Home["홈"]
+  Camera["견적서 촬영"]
+  Vehicle["내 차"]
+  Settings["설정"]

@@ -16,6 +16,8 @@ export type NationalRepairShopDisplay = {
   광역시도: string;
   전화번호: string;
   유형별_블루핸즈: string;
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
 /** DB에서 select하는 필드 타입 */
@@ -26,6 +28,8 @@ type DBSelectRow = {
   rdnmadr: string | null;
   lnmadr: string | null;
   phone_number: string | null;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 /** 주소 문자열에서 시군구 추정 (예: "서울특별시 강남구 ..." → "강남구") */
@@ -51,6 +55,8 @@ function toDisplay(row: DBSelectRow): NationalRepairShopDisplay {
     광역시도: '',
     전화번호: row.phone_number || '',
     유형별_블루핸즈: '',
+    latitude: row.latitude ?? null,
+    longitude: row.longitude ?? null,
   };
 }
 
@@ -131,7 +137,7 @@ export async function searchNationalRepairShops(
   if (!term) {
     const { data } = await supabase
       .from('national_repair_shops')
-      .select('id, inspofc_nm, inspofc_type, rdnmadr, lnmadr, phone_number')
+      .select('id, inspofc_nm, inspofc_type, rdnmadr, lnmadr, phone_number, latitude, longitude')
       .limit(limit)
       .order('inspofc_nm', { ascending: true });
 
@@ -165,7 +171,7 @@ export async function searchNationalRepairShops(
 
   const dbQuery = supabase
     .from('national_repair_shops')
-    .select('id, inspofc_nm, inspofc_type, rdnmadr, lnmadr, phone_number')
+    .select('id, inspofc_nm, inspofc_type, rdnmadr, lnmadr, phone_number, latitude, longitude')
     .or(patterns.join(','))
     .limit(fetchLimit);
 
@@ -182,7 +188,7 @@ export async function searchNationalRepairShops(
     if (fallbackToken && fallbackToken.length >= 2) {
       const { data: retryData } = await supabase
         .from('national_repair_shops')
-        .select('id, inspofc_nm, inspofc_type, rdnmadr, lnmadr, phone_number')
+        .select('id, inspofc_nm, inspofc_type, rdnmadr, lnmadr, phone_number, latitude, longitude')
         .ilike('inspofc_nm', `%${fallbackToken}%`)
         .limit(fetchLimit);
 
@@ -297,7 +303,7 @@ export async function searchNationalRepairShopsByAddress(
 
   const { data, error } = await supabase
     .from('national_repair_shops')
-    .select('id, inspofc_nm, inspofc_type, rdnmadr, lnmadr, phone_number')
+    .select('id, inspofc_nm, inspofc_type, rdnmadr, lnmadr, phone_number, latitude, longitude')
     .or(patterns.join(','))
     .limit(100);
 
@@ -323,4 +329,32 @@ export async function searchNationalRepairShopsByAddress(
     .filter((shop) => shop.score > 0.3) // 최소 30% 이상 매칭
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
+}
+
+/**
+ * 사용자 위치 기준 가까운 순 정비소 (검색어 없을 때 기본 목록)
+ */
+export async function getNearbyNationalRepairShops(
+  lat: number,
+  lng: number,
+  limit = 50
+): Promise<NationalRepairShopWithScore[]> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return [];
+
+  const supabase = createClient<Database>(url, key);
+  const { data, error } = await supabase.rpc('get_nearby_national_repair_shops', {
+    user_lat: lat,
+    user_lng: lng,
+    lim: limit,
+  });
+
+  if (error) {
+    console.error('[national-repair-shops] getNearby error:', error);
+    return [];
+  }
+  if (!data || !Array.isArray(data)) return [];
+
+  return data.map((row: DBSelectRow) => ({ ...toDisplay(row), score: 0 }));
 }

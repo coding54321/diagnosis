@@ -44,6 +44,8 @@ export interface Vehicle {
   year: number; // 연식
   mileage: number; // 주행거리
   fuelType: string; // 연료 타입
+  registration_number?: string | null; // 차량등록번호 (표시·구분용)
+  nickname?: string | null; // 사용자 지정 별칭
 }
 
 // 검증 결과 관련 타입 (2단계: 적정 / 확인필요)
@@ -120,4 +122,6 @@ export interface VerificationHistory {
   totalAmount: number;
   status: VerificationStatus;
   shopName?: string; // 정비소 이름
+  /** 해당 검증이 어떤 차량에 대한 것인지 (예: "현대 쏘나타 NX4") */
+  vehicleLabel?: string;
 }

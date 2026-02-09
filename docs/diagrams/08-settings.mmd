@@ -1,0 +1,18 @@
+flowchart TB
+  Settings["/settings 더보기"]
+  Login["/auth/login"]
+
+  Settings -->|"비로그인: 로그인/회원가입"| Login
+  Settings -->|"로그인: 로그아웃"| Home
+  Login -->|"성공"| Home
+
+  subgraph 로그인시["로그인 시 표시"]
+    알림["알림 설정 토글"]
+    데이터["데이터: 내 차량, 검증 이력 등"]
+    로그아웃["로그아웃"]
+  end
+
+  Settings --> 알림
+  Settings --> 데이터
+  Settings --> 로그아웃
+  Home([홈])

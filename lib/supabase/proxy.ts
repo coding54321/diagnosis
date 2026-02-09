@@ -32,9 +32,13 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  // getClaims() 호출로 JWT 검증 및 만료 시 토큰 갱신 → 쿠키 업데이트
-  // 이 호출 없이 Server Components에서만 세션을 쓰면 랜덤 로그아웃 등이 발생할 수 있음
-  await supabase.auth.getUser();
+  // JWT 검증 및 만료 시 토큰 갱신 → 쿠키 업데이트
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // 세션이 없으면 익명 로그인 → 서버 컴포넌트에서도 user 사용 가능
+  if (!user) {
+    await supabase.auth.signInAnonymously();
+  }
 
   return supabaseResponse;
 }

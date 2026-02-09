@@ -50,52 +50,118 @@ export async function getVehicle(userId: string): Promise<Vehicle | null> {
   return data;
 }
 
-/**
- * 차량 정보 저장/업데이트
- * 실패 시 { data: null, error: 메시지 } 반환 (RLS 정책·제약 등 원인 전달용)
- */
-export async function upsertVehicle(
+/** 차량 목록 조회 (최신순) */
+export async function getVehicles(userId: string): Promise<Vehicle[]> {
+  if (!userId || userId === '') {
+    return [];
+  }
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from('vehicles')
+    .select('*')
+    .eq('user_id', userId)
+    .order('updated_at', { ascending: false });
+  if (error) {
+    console.error('Error fetching vehicles:', error);
+    return [];
+  }
+  return data ?? [];
+}
+
+/** 차량 단건 조회 (소유자 확인 시 userId 전달) */
+export async function getVehicleById(
+  vehicleId: string,
+  userId?: string
+): Promise<Vehicle | null> {
+  if (!vehicleId) return null;
+  const supabase = await createServerClient();
+  let query = supabase.from('vehicles').select('*').eq('id', vehicleId);
+  if (userId) query = query.eq('user_id', userId);
+  const { data, error } = await query.maybeSingle();
+  if (error) {
+    console.error('Error fetching vehicle by id:', error);
+    return null;
+  }
+  return data;
+}
+
+/** 차량 새로 생성 */
+export async function createVehicle(
   userId: string,
   vehicle: Omit<VehicleInsert, 'user_id' | 'id'>
 ): Promise<{ data: Vehicle | null; error: string | null }> {
+  if (!userId) return { data: null, error: '사용자 인증 정보가 없습니다.' };
   const supabase = await createServerClient();
-
-  // 기존 차량 확인 (익명은 user_id=null이라 getVehicle('anonymous')는 항상 null)
-  const existing = await getVehicle(userId === 'anonymous' ? '' : userId);
-
-  if (existing) {
-    const { data, error } = await supabase
-      .from('vehicles')
-      .update({
-        ...vehicle,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', existing.id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error updating vehicle:', error);
-      return { data: null, error: error.message };
-    }
-    return { data, error: null };
-  }
-
-  // 새로 생성 (익명 사용자는 user_id를 null로 저장)
   const { data, error } = await supabase
     .from('vehicles')
     .insert({
       ...vehicle,
-      user_id: userId === 'anonymous' ? null : userId,
+      user_id: userId,
     })
     .select()
     .single();
-
   if (error) {
     console.error('Error creating vehicle:', error);
     return { data: null, error: error.message };
   }
   return { data, error: null };
+}
+
+/** 차량 수정 */
+export async function updateVehicle(
+  vehicleId: string,
+  userId: string,
+  vehicle: Partial<Omit<VehicleInsert, 'user_id' | 'id'>>
+): Promise<{ data: Vehicle | null; error: string | null }> {
+  if (!userId || !vehicleId) return { data: null, error: '잘못된 요청입니다.' };
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from('vehicles')
+    .update({
+      ...vehicle,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', vehicleId)
+    .eq('user_id', userId)
+    .select()
+    .single();
+  if (error) {
+    console.error('Error updating vehicle:', error);
+    return { data: null, error: error.message };
+  }
+  return { data, error: null };
+}
+
+/** 차량 삭제 (소유자만, 견적이 연결된 경우에도 삭제 가능하도록 FK는 nullable 유지) */
+export async function deleteVehicle(
+  vehicleId: string,
+  userId: string
+): Promise<{ success: boolean; error: string | null }> {
+  if (!userId || !vehicleId) return { success: false, error: '잘못된 요청입니다.' };
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from('vehicles')
+    .delete()
+    .eq('id', vehicleId)
+    .eq('user_id', userId);
+  if (error) {
+    console.error('Error deleting vehicle:', error);
+    return { success: false, error: error.message };
+  }
+  return { success: true, error: null };
+}
+
+/**
+ * 차량 정보 저장/업데이트 (기존 1대 덮어쓰기 호환)
+ * @deprecated 다차량 지원 시 createVehicle / updateVehicle 사용
+ */
+export async function upsertVehicle(
+  userId: string,
+  vehicle: Omit<VehicleInsert, 'user_id' | 'id'>
+): Promise<{ data: Vehicle | null; error: string | null }> {
+  const existing = await getVehicle(userId);
+  if (existing) return updateVehicle(existing.id, userId, vehicle);
+  return createVehicle(userId, vehicle);
 }
 
 /** 목업: 차량등록번호로 조회 시 반환할 Vehicle 형태 */
@@ -210,6 +276,8 @@ export async function getRecentVerificationHistory(
   totalAmount: number;
   status: string;
   shopName?: string;
+  /** 해당 검증이 어떤 차량에 대한 것인지 (제조사·모델·variant) */
+  vehicleLabel?: string;
 }>> {
   if (!userId || userId === '') {
     return [];
@@ -236,6 +304,53 @@ export async function getRecentVerificationHistory(
     return [];
   }
 
+  return (data || []).map((item) => {
+    const manufacturer = item.manufacturer ?? '';
+    const model = item.model ?? '';
+    const variant = item.variant ?? '';
+    const vehicleLabel = [manufacturer, model, variant].filter(Boolean).join(' ') || undefined;
+    return {
+      id: item.id || '',
+      estimateId: item.estimate_id,
+      date: item.date ? new Date(item.date) : new Date(),
+      items: item.items_summary || '',
+      totalAmount: item.total_amount || 0,
+      status: item.status || 'appropriate',
+      shopName: item.shop_name || undefined,
+      vehicleLabel,
+    };
+  });
+}
+
+/**
+ * 특정 차량의 최근 검증 내역 조회
+ */
+export async function getRecentVerificationHistoryByVehicleId(
+  userId: string,
+  vehicleId: string,
+  limit: number = 100
+): Promise<Array<{
+  id: string;
+  estimateId: string | null;
+  date: Date;
+  items: string;
+  totalAmount: number;
+  status: string;
+  shopName?: string;
+}>> {
+  if (!userId || !vehicleId) return [];
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from('verification_history')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('vehicle_id', vehicleId)
+    .order('date', { ascending: false })
+    .limit(limit);
+  if (error) {
+    console.error('Error fetching verification history by vehicle:', error);
+    return [];
+  }
   return (data || []).map((item) => ({
     id: item.id || '',
     estimateId: item.estimate_id,
@@ -355,12 +470,11 @@ export async function saveEstimate(
 ): Promise<{ estimateId: string; items: EstimateItem[] } | null> {
   const supabase = await createServerClient();
 
-  // 견적서 저장 (익명 사용자는 user_id를 null로 저장), 정비소 유형 분류 후 shop_type 저장
   const shopType = classifyShopType(estimate.shopName);
   const { data: estimateData, error: estimateError } = await supabase
     .from('estimates')
     .insert({
-      user_id: userId === 'anonymous' ? null : userId,
+      user_id: userId,
       vehicle_id: vehicleId,
       shop_name: estimate.shopName,
       shop_type: shopType,
@@ -453,11 +567,10 @@ export async function saveVerificationResult(
 ): Promise<{ verificationResultId: string; itemVerifications: ItemVerification[] } | null> {
   const supabase = await createServerClient();
 
-  // 검증 결과 저장 (익명 사용자는 user_id를 null로 저장)
   const { data: verificationData, error: verificationError } = await supabase
     .from('verification_results')
     .insert({
-      user_id: userId === 'anonymous' ? null : userId,
+      user_id: userId,
       estimate_id: estimateId,
       total_amount: result.totalAmount,
       status: result.status,

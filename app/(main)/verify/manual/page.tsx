@@ -6,7 +6,7 @@ import { Loader2, Plus, ArrowLeft } from 'lucide-react';
 import { Container } from '@/components/layout';
 import { Card, BottomSheet, Input } from '@/components/ui';
 import { popularItems } from '@/lib/mockData';
-import { createEstimate, saveVehicle, fetchVehicleByRegistrationNumber, fetchVehicle } from '@/lib/supabase/actions';
+import { createEstimate, saveVehicle, fetchVehicleByRegistrationNumber, fetchVehicles } from '@/lib/supabase/actions';
 import { formatPrice } from '@/lib/utils';
 import type { EstimateItem } from '@/types';
 
@@ -30,9 +30,10 @@ const ManualInputPage: React.FC = () => {
   const [vehicleLoading, setVehicleLoading] = useState(false);
   const [estimateMileage, setEstimateMileage] = useState(0);
 
-  // 저장된 내 차 정보
-  const [savedVehicle, setSavedVehicle] = useState<VehicleInfoFromLookup | null>(null);
+  // 저장된 내 차 목록 (다차량)
+  const [savedVehicles, setSavedVehicles] = useState<Array<{ id: string; manufacturer: string; model: string; variant: string | null; year: number; mileage: number; fuel_type: string }>>([]);
   const [savedVehicleDismissed, setSavedVehicleDismissed] = useState(false);
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
 
   const [items, setItems] = useState<EstimateItem[]>([]);
   const [currentItem, setCurrentItem] = useState<Partial<EstimateItem>>({
@@ -49,24 +50,17 @@ const ManualInputPage: React.FC = () => {
   const [editItemIndex, setEditItemIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    const loadSavedVehicle = async () => {
+    const loadSavedVehicles = async () => {
       try {
-        const res = await fetchVehicle();
-        if (res.success && res.data) {
-          setSavedVehicle({
-            manufacturer: res.data.manufacturer,
-            model: res.data.model,
-            variant: res.data.variant || null,
-            year: res.data.year,
-            mileage: res.data.mileage,
-            fuelType: res.data.fuel_type,
-          });
+        const res = await fetchVehicles();
+        if (res.success && res.data && res.data.length > 0) {
+          setSavedVehicles(res.data);
         }
       } catch {
         // 무시
       }
     };
-    loadSavedVehicle();
+    loadSavedVehicles();
   }, []);
 
   const openSheet = (mode: SheetMode) => {
@@ -166,20 +160,28 @@ const ManualInputPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const vehicleResult = await saveVehicle({
-        manufacturer: vehicleInfo.manufacturer,
-        model: vehicleInfo.model,
-        variant: vehicleInfo.variant ?? undefined,
-        year: vehicleInfo.year,
-        mileage,
-        fuelType: vehicleInfo.fuelType,
-      });
-
-      if (!vehicleResult.success || !vehicleResult.data) {
-        throw new Error(vehicleResult.error || '차량 정보 저장 실패');
+      let vehicleId: string;
+      if (selectedVehicleId) {
+        vehicleId = selectedVehicleId;
+      } else {
+        const vehicleResult = await saveVehicle(
+          {
+            manufacturer: vehicleInfo.manufacturer,
+            model: vehicleInfo.model,
+            variant: vehicleInfo.variant ?? undefined,
+            year: vehicleInfo.year,
+            mileage,
+            fuelType: vehicleInfo.fuelType,
+          },
+          {
+            registrationNumber: vehicleNumber.replace(/\s|-/g, '').trim() || undefined,
+          }
+        );
+        if (!vehicleResult.success || !vehicleResult.data) {
+          throw new Error(vehicleResult.error || '차량 정보 저장 실패');
+        }
+        vehicleId = vehicleResult.data.id;
       }
-
-      const vehicleId = vehicleResult.data.id;
 
       const totalAmount = items.reduce((sum, item) => sum + item.totalCost, 0);
       const vatAmount = Math.floor(totalAmount * 0.1);
@@ -247,40 +249,96 @@ const ManualInputPage: React.FC = () => {
               <div className="px-5 py-4">
                 <p className="text-xs text-hyundai-gray-400 mb-2">차량</p>
 
-                {/* 저장된 내 차 정보 */}
-                {savedVehicle && !vehicleInfo && !savedVehicleDismissed && (
-                  <div className="mb-3 p-3 bg-hyundai-gray-50 rounded-xl">
-                    <p className="text-xs text-hyundai-gray-500 mb-2">저장된 내 차 정보가 있어요</p>
-                    <p className="text-sm font-medium text-hyundai-gray-900 mb-2.5">
-                      {savedVehicle.manufacturer} {savedVehicle.model}
-                      {savedVehicle.variant ? ` ${savedVehicle.variant}` : ''} · {savedVehicle.year}년식 · {savedVehicle.fuelType}
-                      {savedVehicle.mileage > 0 ? ` · ${savedVehicle.mileage.toLocaleString()}km` : ''}
-                    </p>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setVehicleInfo(savedVehicle);
-                          setEstimateMileage(savedVehicle.mileage);
-                          setSavedVehicleDismissed(true);
-                        }}
-                        className="flex-1 py-2 rounded-lg bg-hyundai-gray-900 text-white text-xs font-medium active:bg-hyundai-gray-800 transition-colors"
-                      >
-                        이 차량으로 검증
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setSavedVehicleDismissed(true)}
-                        className="py-2 px-3 rounded-lg bg-white text-hyundai-gray-500 text-xs font-medium active:bg-hyundai-gray-100 transition-colors border border-hyundai-gray-200"
-                      >
-                        다른 차량
-                      </button>
-                    </div>
+                {/* 저장된 내 차 목록 */}
+                {savedVehicles.length > 0 && !vehicleInfo && !savedVehicleDismissed && (
+                  <div className="mb-3 space-y-2">
+                    <p className="text-xs text-hyundai-gray-500 mb-2">저장된 내 차량이 있어요</p>
+                    {savedVehicles.length === 1 ? (
+                      <div className="p-3 bg-hyundai-gray-50 rounded-xl">
+                        <p className="text-sm font-medium text-hyundai-gray-900 mb-2.5">
+                          {savedVehicles[0].manufacturer} {savedVehicles[0].model}
+                          {savedVehicles[0].variant ? ` ${savedVehicles[0].variant}` : ''} · {savedVehicles[0].year}년식 · {savedVehicles[0].fuel_type}
+                          {savedVehicles[0].mileage > 0 ? ` · ${savedVehicles[0].mileage.toLocaleString()}km` : ''}
+                        </p>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const v = savedVehicles[0];
+                              setVehicleInfo({
+                                manufacturer: v.manufacturer,
+                                model: v.model,
+                                variant: v.variant,
+                                year: v.year,
+                                mileage: v.mileage,
+                                fuelType: v.fuel_type,
+                              });
+                              setEstimateMileage(v.mileage);
+                              setSelectedVehicleId(v.id);
+                              setSavedVehicleDismissed(true);
+                            }}
+                            className="flex-1 py-2 rounded-lg bg-hyundai-gray-900 text-white text-xs font-medium active:bg-hyundai-gray-800 transition-colors"
+                          >
+                            이 차량으로 검증
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSavedVehicleDismissed(true);
+                              setSelectedVehicleId(null);
+                            }}
+                            className="py-2 px-3 rounded-lg bg-white text-hyundai-gray-500 text-xs font-medium active:bg-hyundai-gray-100 transition-colors border border-hyundai-gray-200"
+                          >
+                            다른 차량
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {savedVehicles.map((v) => (
+                          <div key={v.id} className="p-3 bg-hyundai-gray-50 rounded-xl">
+                            <p className="text-sm font-medium text-hyundai-gray-900 mb-2">
+                              {v.manufacturer} {v.model}
+                              {v.variant ? ` ${v.variant}` : ''} · {v.year}년식
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setVehicleInfo({
+                                  manufacturer: v.manufacturer,
+                                  model: v.model,
+                                  variant: v.variant,
+                                  year: v.year,
+                                  mileage: v.mileage,
+                                  fuelType: v.fuel_type,
+                                });
+                                setEstimateMileage(v.mileage);
+                                setSelectedVehicleId(v.id);
+                                setSavedVehicleDismissed(true);
+                              }}
+                              className="w-full py-2 rounded-lg bg-hyundai-gray-900 text-white text-xs font-medium active:bg-hyundai-gray-800 transition-colors"
+                            >
+                              이 차량으로 검증
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSavedVehicleDismissed(true);
+                            setSelectedVehicleId(null);
+                          }}
+                          className="w-full py-2 rounded-lg border border-hyundai-gray-200 text-hyundai-gray-600 text-xs font-medium active:bg-hyundai-gray-50"
+                        >
+                          다른 차량으로 입력
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
 
                 {/* 차량번호 입력 */}
-                {(savedVehicleDismissed || !savedVehicle || vehicleInfo) && !vehicleInfo && (
+                {(savedVehicleDismissed || savedVehicles.length === 0 || vehicleInfo) && !vehicleInfo && (
                   <>
                     <div className="flex items-center gap-2 mb-2">
                       <div className="flex-1 min-w-0">
