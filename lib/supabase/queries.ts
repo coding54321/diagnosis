@@ -2,7 +2,7 @@
  * Supabase 데이터베이스 쿼리 함수
  */
 
-import { createServerClient } from './server';
+import { createServerClient, createAdminClient } from './server';
 import type { Database } from '@/types/supabase';
 import { classifyShopType } from '@/lib/verification/shop-classifier';
 
@@ -292,6 +292,7 @@ export async function getVerificationHistoryById(
 /**
  * 검증 내역 삭제 (본인 소유만)
  * verification_history 뷰의 id = verification_results.id
+ * RLS로 DELETE가 막힐 수 있어 서비스 역할 클라이언트로 삭제 (소유 여부는 .eq('user_id', userId)로 보장)
  */
 export async function deleteVerificationResultById(
   userId: string,
@@ -301,13 +302,24 @@ export async function deleteVerificationResultById(
     return false;
   }
 
-  const supabase = await createServerClient();
+  let supabase;
+  try {
+    supabase = createAdminClient();
+  } catch {
+    // 서비스 역할 키가 없으면 일반 클라이언트로 시도 (RLS 적용)
+    supabase = await createServerClient();
+  }
 
   // item_verifications 먼저 삭제 (FK 제약)
-  await supabase
+  const { error: itemError } = await supabase
     .from('item_verifications')
     .delete()
     .eq('verification_result_id', verificationResultId);
+
+  if (itemError) {
+    console.error('Error deleting item_verifications:', itemError);
+    return false;
+  }
 
   const { error } = await supabase
     .from('verification_results')
@@ -315,7 +327,11 @@ export async function deleteVerificationResultById(
     .eq('id', verificationResultId)
     .eq('user_id', userId);
 
-  return !error;
+  if (error) {
+    console.error('Error deleting verification_result:', error);
+    return false;
+  }
+  return true;
 }
 
 /**

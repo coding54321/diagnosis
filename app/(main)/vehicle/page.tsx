@@ -149,7 +149,7 @@ export default async function VehiclePage() {
                   )}
                 </div>
                 {hasMoreHistory && (
-                  <Link href="/history" className="text-xs text-hyundai-gray-400 font-medium flex items-center gap-0.5">
+                  <Link href="/vehicle" className="text-xs text-hyundai-gray-400 font-medium flex items-center gap-0.5">
                     전체보기
                     <ChevronRight className="w-3.5 h-3.5" />
                   </Link>

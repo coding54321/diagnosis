@@ -143,10 +143,26 @@ const ReviewPage: React.FC = () => {
   const syncDayFromScroll = useCallback(() => {
     const el = dayScrollRef.current;
     if (!el) return;
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth() + 1;
+    const currentDay = today.getDate();
     const daysInMonth = getDaysInMonthForPicker(tempYear, tempMonth);
     const index = Math.round(el.scrollTop / DATE_PICKER_ITEM_HEIGHT);
-    const day = Math.max(1, Math.min(index + 1, daysInMonth));
-    if (isDateValidForPicker(tempYear, tempMonth, day)) setTempDay(day);
+    let day = Math.max(1, Math.min(index + 1, daysInMonth));
+    const maxValidDay =
+      tempYear === currentYear && tempMonth === currentMonth ? currentDay : daysInMonth;
+    if (day > maxValidDay || !isDateValidForPicker(tempYear, tempMonth, day)) {
+      day = maxValidDay;
+      setTempDay(day);
+      const PADDING_TOP = 72;
+      el.scrollTo({
+        top: PADDING_TOP + (day - 1) * DATE_PICKER_ITEM_HEIGHT - 72,
+        behavior: 'smooth',
+      });
+      return;
+    }
+    setTempDay(day);
   }, [tempYear, tempMonth, getDaysInMonthForPicker, isDateValidForPicker]);
 
   // OCR 결과를 state에 반영 (mount 시 + Step 1에서 OCR 완료 시 공통)
@@ -1210,7 +1226,7 @@ const ReviewPage: React.FC = () => {
                       ? 'text-hyundai-gray-900 font-bold text-lg'
                       : isValidDate
                       ? 'text-hyundai-gray-400 text-base'
-                      : 'text-hyundai-gray-200 text-base'
+                      : 'text-hyundai-gray-200 text-base cursor-not-allowed'
                   }`}
                 >
                   {day}일

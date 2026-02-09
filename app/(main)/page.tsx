@@ -1,7 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
 import { Container } from '@/components/layout';
-import UserMenu from '@/components/auth/UserMenu';
 import { fetchVehicle, fetchRecentHistory } from '@/lib/supabase/actions';
 import { getCurrentUser } from '@/lib/supabase/auth-server';
 import { Camera, ChevronRight, CheckCircle2, AlertCircle } from 'lucide-react';
@@ -51,20 +50,13 @@ export default async function HomePage() {
     : null;
 
   return (
-    <main className="min-h-[calc(100vh-60px)] bg-white">
-      {/* 최상단 — 프로필 아이콘만 (헤더 바 없음) */}
-      <div className="flex items-center justify-end px-4 pt-[env(safe-area-inset-top,0px)]">
-        <div className="h-12 flex items-center">
-          <UserMenu />
-        </div>
-      </div>
-
+    <main className="min-h-[calc(100vh-60px)] bg-white pt-[env(safe-area-inset-top,0px)]">
       <Container>
         {user ? (
           /* ===== 로그인 사용자 ===== */
           <div className="pb-8">
             {/* 히어로 카피 */}
-            <div className="px-1 pt-2 pb-6">
+            <div className="px-1 pt-8 pb-6">
               <h1 className="text-[22px] font-bold text-hyundai-gray-900 leading-tight tracking-tight">
                 {userName}님,<br />
                 견적서를 검증해볼까요?
@@ -111,7 +103,7 @@ export default async function HomePage() {
               <div className="mt-6">
                 <div className="flex items-center justify-between px-1 mb-2">
                   <h3 className="text-sm font-bold text-hyundai-gray-900">최근 검증</h3>
-                  <Link href="/history" className="text-xs text-hyundai-gray-400 font-medium flex items-center gap-0.5">
+                  <Link href="/vehicle" className="text-xs text-hyundai-gray-400 font-medium flex items-center gap-0.5">
                     전체보기
                     <ChevronRight className="w-3.5 h-3.5" />
                   </Link>
@@ -151,7 +143,7 @@ export default async function HomePage() {
           /* ===== 비로그인 사용자 ===== */
           <div className="pb-8">
             {/* 히어로 카피 */}
-            <div className="px-1 pt-4 pb-7">
+            <div className="px-1 pt-8 pb-7">
               <h1 className="text-[22px] font-bold text-hyundai-gray-900 leading-tight tracking-tight">
                 정비 견적,<br />
                 적정 가격인지<br />
