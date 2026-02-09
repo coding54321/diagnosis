@@ -749,9 +749,16 @@ const ReviewPage: React.FC = () => {
           <h1 className="text-xl font-bold text-hyundai-gray-900 text-center mb-2">
             인식에 실패했어요
           </h1>
-          <p className="text-sm text-hyundai-gray-500 text-center mb-6">
-            {ocrError.message}
-          </p>
+          <div className="text-sm text-hyundai-gray-500 text-center mb-6 space-y-1">
+            {ocrError.type === 'NOT_ESTIMATE' && ocrError.message.includes('.') ? (
+              <>
+                <p>{ocrError.message.split('.')[0]}.</p>
+                <p>{ocrError.message.split('.').slice(1).join('.').trim()}</p>
+              </>
+            ) : (
+              <p>{ocrError.message}</p>
+            )}
+          </div>
           <div className="flex flex-col gap-2.5 w-full max-w-xs">
             <button
               type="button"
