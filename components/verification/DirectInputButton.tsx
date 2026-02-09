@@ -20,7 +20,7 @@ export default function DirectInputButton() {
     <button
       type="button"
       onClick={handleClick}
-      className="w-full rounded-2xl border border-hyundai-gray-300 bg-white px-5 py-5 text-left active:bg-hyundai-gray-50 transition-colors"
+      className="w-full rounded-2xl bg-hyundai-gray-50 px-5 py-5 text-left active:bg-hyundai-gray-100 transition-colors"
     >
       <p className="text-base font-semibold text-hyundai-gray-900">견적 내용 직접 입력하기</p>
       <p className="mt-0.5 text-xs text-hyundai-gray-400">날짜·정비소·항목을 직접 입력해 검증해요</p>
