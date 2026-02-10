@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CheckCircle2, AlertCircle, Check, ChevronRight, MapPin, ChevronDown, Pencil, Loader2 } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Check, ChevronRight, MapPin, ChevronDown, Pencil, Loader2, Trash2 } from 'lucide-react';
 import { Container } from '@/components/layout';
 import { Badge, Input } from '@/components/ui';
 import {
@@ -11,6 +11,7 @@ import {
   fetchVehicleByRegistrationNumber,
   verifyVehicleOwnerAction,
   saveVehicle,
+  deleteVehicleAction,
 } from '@/lib/supabase/actions';
 import { formatPrice } from '@/lib/utils';
 import type { VerificationHistory } from '@/types';
@@ -68,6 +69,8 @@ export function VehicleTabContent({
   const [editingMileage, setEditingMileage] = useState(false);
   const [savingMileage, setSavingMileage] = useState(false);
   const [sortBy, setSortBy] = useState<HistorySortBy>('latest');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // --- 인라인 등록 폼 state ---
   const [regStep, setRegStep] = useState<RegStep>('input');
@@ -100,6 +103,23 @@ export function VehicleTabContent({
   const handleVehicleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value;
     if (id) router.push(`/vehicle?vehicleId=${id}`);
+  };
+
+  const handleDeleteVehicle = async () => {
+    if (!selectedVehicle) return;
+    setIsDeleting(true);
+    try {
+      const res = await deleteVehicleAction(selectedVehicle.id);
+      if (res.success) {
+        setShowDeleteConfirm(false);
+        router.push('/vehicle');
+        router.refresh();
+      } else {
+        alert(res.error ?? '삭제에 실패했어요.');
+      }
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleSaveMileage = async () => {
@@ -387,9 +407,39 @@ export function VehicleTabContent({
     : '';
 
   return (
-    <main className="min-h-[calc(100vh-52px)] bg-white">
-      <Container>
-        <div className="pb-8">
+    <>
+      {/* 삭제 확인 모달 */}
+      {showDeleteConfirm && selectedVehicle && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-2xl p-6 mx-6 max-w-sm w-full">
+            <p className="text-base font-bold text-hyundai-gray-900 mb-2">차량을 삭제할까요?</p>
+            <p className="text-sm text-hyundai-gray-500 mb-5">
+              {modelLabel}의 정보가 삭제됩니다.
+            </p>
+            <div className="flex gap-2.5">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 py-3 rounded-xl border border-hyundai-gray-200 text-sm font-medium text-hyundai-gray-700 active:bg-hyundai-gray-50 transition-colors"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteVehicle}
+                disabled={isDeleting}
+                className="flex-1 py-3 rounded-xl bg-red-500 text-white text-sm font-medium active:bg-red-600 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5"
+              >
+                {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : '삭제'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <main className="min-h-[calc(100vh-52px)] bg-white">
+        <Container>
+          <div className="pb-8">
           {/* 상단: 차량 선택 드롭다운 */}
           <div className="pt-6 pb-4 px-1">
             <div className="flex items-center justify-between gap-3">
@@ -423,12 +473,24 @@ export function VehicleTabContent({
           {selectedVehicle && (
             <div className="rounded-2xl bg-hyundai-gray-50 mx-1">
               <div className="px-5 py-5">
-                <p className="text-lg font-bold text-hyundai-gray-900">
-                  {modelLabel}
-                </p>
-                <p className="text-xs text-hyundai-gray-400 mt-0.5">
-                  {selectedVehicle.year}년식 · {selectedVehicle.fuel_type}
-                </p>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-lg font-bold text-hyundai-gray-900">
+                      {modelLabel}
+                    </p>
+                    <p className="text-xs text-hyundai-gray-400 mt-0.5">
+                      {selectedVehicle.year}년식 · {selectedVehicle.fuel_type}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="p-1.5 rounded-lg text-hyundai-gray-300 active:bg-hyundai-gray-100 transition-colors"
+                    aria-label="차량 삭제"
+                  >
+                    <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+                  </button>
+                </div>
 
                 {/* 주행거리 */}
                 <div className="mt-3 flex items-center gap-2">
@@ -570,6 +632,7 @@ export function VehicleTabContent({
         </div>
       </Container>
     </main>
+    </>
   );
 }
 
