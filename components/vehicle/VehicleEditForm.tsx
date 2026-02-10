@@ -140,7 +140,7 @@ export default function VehicleEditForm({ initialVehicle, vehicleId, title }: Ve
     <>
       <Header title={title} showBackButton onBack={() => router.back()} className="border-b-0" />
 
-      <main className="min-h-screen bg-hyundai-gray-50 pb-40">
+      <main className="min-h-screen bg-white pb-40">
         <Container>
           <div className="px-1 pt-8 pb-6">
             <h1 className="text-[22px] font-bold text-hyundai-gray-900 leading-tight">

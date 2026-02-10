@@ -3,14 +3,29 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CheckCircle2, AlertCircle, ChevronRight, MapPin, Plus, ChevronDown, Pencil, Loader2 } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Check, ChevronRight, MapPin, ChevronDown, Pencil, Loader2 } from 'lucide-react';
 import { Container } from '@/components/layout';
-import { Card, Badge, Input } from '@/components/ui';
-import { updateVehicleMileageAction } from '@/lib/supabase/actions';
+import { Badge, Input } from '@/components/ui';
+import {
+  updateVehicleMileageAction,
+  fetchVehicleByRegistrationNumber,
+  verifyVehicleOwnerAction,
+  saveVehicle,
+} from '@/lib/supabase/actions';
 import { formatPrice } from '@/lib/utils';
 import type { VerificationHistory } from '@/types';
 
 type HistorySortBy = 'latest' | 'cost';
+type RegStep = 'input' | 'checking' | 'owner' | 'confirmed';
+
+type VehicleInfoFromLookup = {
+  manufacturer: string;
+  model: string;
+  variant: string | null;
+  year: number;
+  mileage: number;
+  fuelType: string;
+};
 
 export type VehicleRow = {
   id: string;
@@ -47,10 +62,23 @@ export function VehicleTabContent({
   history: VerificationHistory[];
 }) {
   const router = useRouter();
+
+  // --- 기존 차량 관련 state ---
   const [mileageInput, setMileageInput] = useState(selectedVehicle ? String(selectedVehicle.mileage || '') : '');
   const [editingMileage, setEditingMileage] = useState(false);
   const [savingMileage, setSavingMileage] = useState(false);
   const [sortBy, setSortBy] = useState<HistorySortBy>('latest');
+
+  // --- 인라인 등록 폼 state ---
+  const [regStep, setRegStep] = useState<RegStep>('input');
+  const [vehicleNumber, setVehicleNumber] = useState('');
+  const [vehicleInfo, setVehicleInfo] = useState<VehicleInfoFromLookup | null>(null);
+  const [ownerName, setOwnerName] = useState('');
+  const [nickname, setNickname] = useState('');
+  const [regMileage, setRegMileage] = useState(0);
+  const [checkError, setCheckError] = useState<string | null>(null);
+  const [ownerVerifying, setOwnerVerifying] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     setMileageInput(selectedVehicle ? String(selectedVehicle.mileage || '') : '');
@@ -95,44 +123,271 @@ export function VehicleTabContent({
     }
   };
 
-  // 선택한 차량 표시 라벨 (드롭다운 옵션용)
+  // --- 인라인 등록 핸들러 ---
+  const handleCheckVehicle = async () => {
+    const num = vehicleNumber.replace(/\s|-/g, '').trim();
+    if (!num) { setCheckError('차량번호를 입력해 주세요.'); return; }
+    setCheckError(null);
+    setRegStep('checking');
+    try {
+      const res = await fetchVehicleByRegistrationNumber(num);
+      if (res.success && res.data) {
+        setVehicleInfo(res.data);
+        setRegMileage(res.data.mileage > 0 ? res.data.mileage : 0);
+        setRegStep('owner');
+      } else {
+        setCheckError(res.error ?? '등록된 차량을 찾을 수 없어요. 차량번호를 다시 확인해 주세요.');
+        setRegStep('input');
+      }
+    } catch {
+      setCheckError('조회 중 오류가 발생했어요. 다시 시도해 주세요.');
+      setRegStep('input');
+    }
+  };
+
+  const handleConfirmOwner = async () => {
+    if (!ownerName.trim()) { setCheckError('소유주 이름을 입력해 주세요.'); return; }
+    setCheckError(null);
+    setOwnerVerifying(true);
+    try {
+      const res = await verifyVehicleOwnerAction(
+        vehicleNumber.replace(/\s|-/g, '').trim(),
+        ownerName.trim()
+      );
+      if (res.success) {
+        setRegStep('confirmed');
+      } else {
+        setCheckError(res.error ?? '소유주 정보가 일치하지 않아요.');
+      }
+    } finally {
+      setOwnerVerifying(false);
+    }
+  };
+
+  const handleRegSave = async () => {
+    if (!vehicleInfo) return;
+    const finalMileage = regMileage > 0 ? regMileage : vehicleInfo.mileage;
+    if (finalMileage <= 0) { alert('주행거리를 입력해 주세요.'); return; }
+    setIsSubmitting(true);
+    try {
+      const result = await saveVehicle(
+        {
+          manufacturer: vehicleInfo.manufacturer,
+          model: vehicleInfo.model,
+          variant: vehicleInfo.variant ?? undefined,
+          year: vehicleInfo.year,
+          mileage: finalMileage,
+          fuelType: vehicleInfo.fuelType,
+        },
+        {
+          registrationNumber: vehicleNumber.replace(/\s|-/g, '').trim() || undefined,
+          nickname: nickname.trim() || undefined,
+        }
+      );
+      if (result.success) {
+        router.push('/vehicle');
+        router.refresh();
+      } else {
+        alert(result.error || '저장에 실패했습니다.');
+      }
+    } catch {
+      alert('저장 중 오류가 발생했습니다.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const vehicleOptionLabel = (v: VehicleRow) => {
     if (v.registration_number) return v.nickname ? `${v.registration_number} (${v.nickname})` : v.registration_number;
     return v.nickname || `${v.manufacturer} ${v.model}${v.variant ? ` ${v.variant}` : ''}`;
   };
 
+  // ============================
+  // 차량 미등록 → 인라인 등록 폼
+  // ============================
   if (vehicles.length === 0) {
     return (
-      <main className="min-h-[calc(100vh-52px)] bg-hyundai-gray-50">
+      <main className="min-h-[calc(100vh-52px)] bg-white">
         <Container>
           <div className="pt-8 pb-6 px-1">
             <h2 className="text-[22px] font-bold text-hyundai-gray-900 leading-tight">차량을 등록해주세요</h2>
-            <p className="text-sm text-hyundai-gray-400 mt-1.5">차량번호·소유주로 검증 후 맞춤 가격을 확인해요</p>
+            <p className="text-sm text-hyundai-gray-400 mt-1.5">차량번호와 소유주 확인으로 등록할 수 있어요</p>
           </div>
-          <div className="px-1">
-            <Link href="/vehicle/edit">
-              <Card variant="default" padding="none">
-                <div className="flex flex-col items-center justify-center px-5 py-12 text-center">
-                  <div className="w-14 h-14 rounded-full bg-hyundai-gray-100 flex items-center justify-center mb-4">
-                    <Plus className="w-6 h-6 text-hyundai-gray-400" strokeWidth={1.5} />
+
+          <div className="px-1 space-y-4">
+            {/* Step 1: 차량번호 입력 */}
+            {regStep === 'input' && (
+              <div className="space-y-3">
+                <label className="block">
+                  <span className="text-sm font-medium text-hyundai-gray-700 mb-2 block">차량등록번호(번호판)</span>
+                  <Input
+                    placeholder="예: 12가3456"
+                    value={vehicleNumber}
+                    onChange={(e) => { setVehicleNumber(e.target.value.trim()); setCheckError(null); }}
+                    className="text-base"
+                    fullWidth
+                  />
+                </label>
+                {checkError && (
+                  <p className="text-xs text-semantic-error-main flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3 shrink-0" />
+                    {checkError}
+                  </p>
+                )}
+                <button
+                  type="button"
+                  onClick={handleCheckVehicle}
+                  disabled={!vehicleNumber.trim()}
+                  className="w-full py-3.5 rounded-2xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 disabled:opacity-40 disabled:pointer-events-none"
+                >
+                  차량 조회
+                </button>
+              </div>
+            )}
+
+            {/* Step 1.5: 조회 중 */}
+            {regStep === 'checking' && (
+              <div className="flex flex-col items-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-hyundai-gray-300 mb-3" />
+                <p className="text-sm text-hyundai-gray-400">차량 정보를 조회하고 있어요...</p>
+              </div>
+            )}
+
+            {/* Step 2: 소유주 확인 */}
+            {regStep === 'owner' && vehicleInfo && (
+              <div className="space-y-4">
+                <div className="p-4 bg-semantic-success-light rounded-2xl">
+                  <div className="flex items-start gap-2">
+                    <div className="w-5 h-5 rounded-full bg-semantic-success-main flex items-center justify-center shrink-0 mt-0.5">
+                      <Check className="w-3 h-3 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-hyundai-gray-900">
+                        {vehicleInfo.manufacturer} {vehicleInfo.model}
+                        {vehicleInfo.variant ? ` ${vehicleInfo.variant}` : ''}
+                      </p>
+                      <p className="text-xs text-hyundai-gray-500 mt-0.5">
+                        {vehicleNumber} · {vehicleInfo.year}년식 · {vehicleInfo.fuelType}
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-sm font-medium text-hyundai-gray-900">차량 추가하기</p>
-                  <p className="text-xs text-hyundai-gray-400 mt-0.5">차량번호·소유주 검증 후 등록해요</p>
                 </div>
-              </Card>
-            </Link>
+                <label className="block">
+                  <span className="text-sm font-medium text-hyundai-gray-700 mb-2 block">소유주 이름</span>
+                  <Input
+                    placeholder="차량등록증에 기재된 이름"
+                    value={ownerName}
+                    onChange={(e) => { setOwnerName(e.target.value); setCheckError(null); }}
+                    className="text-base"
+                    fullWidth
+                  />
+                  <p className="text-xs text-hyundai-gray-400 mt-1.5">차량등록증에 기재된 소유주명을 입력해 주세요</p>
+                </label>
+                {checkError && (
+                  <p className="text-xs text-semantic-error-main flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3 shrink-0" />
+                    {checkError}
+                  </p>
+                )}
+                <button
+                  type="button"
+                  onClick={handleConfirmOwner}
+                  disabled={!ownerName.trim() || ownerVerifying}
+                  className="w-full py-3.5 rounded-2xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
+                >
+                  {ownerVerifying ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />확인 중...</>
+                  ) : '소유주 확인'}
+                </button>
+              </div>
+            )}
+
+            {/* Step 3: 확정 — 주행거리·별칭 입력 + 저장 */}
+            {regStep === 'confirmed' && vehicleInfo && (
+              <div className="space-y-4">
+                <div className="p-4 bg-semantic-success-light rounded-2xl">
+                  <div className="flex items-start gap-2">
+                    <div className="w-5 h-5 rounded-full bg-semantic-success-main flex items-center justify-center shrink-0 mt-0.5">
+                      <Check className="w-3 h-3 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-hyundai-gray-900">
+                        {vehicleInfo.manufacturer} {vehicleInfo.model}
+                        {vehicleInfo.variant ? ` ${vehicleInfo.variant}` : ''}
+                      </p>
+                      <p className="text-xs text-hyundai-gray-500 mt-0.5">
+                        {vehicleNumber} · {vehicleInfo.year}년식 · {vehicleInfo.fuelType}
+                      </p>
+                      {ownerName && <p className="text-xs text-semantic-success-dark mt-1">소유주: {ownerName}</p>}
+                    </div>
+                  </div>
+                </div>
+
+                <label className="block">
+                  <span className="text-sm font-medium text-hyundai-gray-700 mb-2 block">별칭 (선택)</span>
+                  <Input
+                    placeholder="예: 우리 엄마 차"
+                    value={nickname}
+                    onChange={(e) => setNickname(e.target.value)}
+                    className="text-base"
+                    fullWidth
+                  />
+                  <p className="text-xs text-hyundai-gray-400 mt-1.5">목록에서 구분하기 쉬운 이름을 붙여보세요</p>
+                </label>
+
+                <label className="block">
+                  <span className="text-sm font-medium text-hyundai-gray-700 mb-2 block">주행거리 (km)</span>
+                  <Input
+                    type="number"
+                    placeholder="예: 45000"
+                    value={regMileage || ''}
+                    onChange={(e) => setRegMileage(parseInt(e.target.value, 10) || 0)}
+                    className="text-base"
+                    fullWidth
+                  />
+                  <p className="text-xs text-hyundai-gray-400 mt-1.5">현재 주행거리를 입력해 주세요</p>
+                </label>
+
+                <button
+                  type="button"
+                  onClick={handleRegSave}
+                  disabled={isSubmitting}
+                  className="w-full py-3.5 rounded-2xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />저장 중...</>
+                  ) : '차량 등록'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRegStep('input');
+                    setVehicleInfo(null);
+                    setOwnerName('');
+                    setCheckError(null);
+                  }}
+                  className="text-sm text-hyundai-gray-400 underline"
+                >
+                  다른 차량으로 변경
+                </button>
+              </div>
+            )}
           </div>
         </Container>
       </main>
     );
   }
 
+  // ============================
+  // 차량 등록됨 — 기존 뷰
+  // ============================
   const modelLabel = selectedVehicle
     ? `${selectedVehicle.manufacturer} ${selectedVehicle.model}${selectedVehicle.variant ? ` ${selectedVehicle.variant}` : ''}`
     : '';
 
   return (
-    <main className="min-h-[calc(100vh-52px)] bg-hyundai-gray-50">
+    <main className="min-h-[calc(100vh-52px)] bg-white">
       <Container>
         <div className="pb-8">
           {/* 상단: 차량 선택 드롭다운 */}
@@ -166,7 +421,7 @@ export function VehicleTabContent({
 
           {/* 차량 정보 카드 */}
           {selectedVehicle && (
-            <Card variant="default" padding="none">
+            <div className="rounded-2xl bg-hyundai-gray-50 mx-1">
               <div className="px-5 py-5">
                 <p className="text-lg font-bold text-hyundai-gray-900">
                   {modelLabel}
@@ -224,7 +479,7 @@ export function VehicleTabContent({
                   )}
                 </div>
               </div>
-            </Card>
+            </div>
           )}
 
           {/* 정비이력 */}
@@ -246,7 +501,7 @@ export function VehicleTabContent({
                     className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                       sortBy === 'latest'
                         ? 'bg-hyundai-gray-900 text-white'
-                        : 'bg-white text-hyundai-gray-500 border border-hyundai-gray-200 active:bg-hyundai-gray-50'
+                        : 'bg-white text-hyundai-gray-500 border border-hyundai-gray-200 active:bg-white'
                     }`}
                   >
                     최신순
@@ -257,7 +512,7 @@ export function VehicleTabContent({
                     className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                       sortBy === 'cost'
                         ? 'bg-hyundai-gray-900 text-white'
-                        : 'bg-white text-hyundai-gray-500 border border-hyundai-gray-200 active:bg-hyundai-gray-50'
+                        : 'bg-white text-hyundai-gray-500 border border-hyundai-gray-200 active:bg-white'
                     }`}
                   >
                     비용순
@@ -267,12 +522,12 @@ export function VehicleTabContent({
             </div>
 
             {history.length === 0 ? (
-              <Card variant="default" padding="md">
+              <div className="rounded-2xl bg-hyundai-gray-50 p-5">
                 <p className="text-sm text-hyundai-gray-400 text-center">이 차량의 정비 이력이 없어요</p>
                 <p className="text-xs text-hyundai-gray-300 mt-1 text-center">견적서를 검증하면 이력이 쌓여요</p>
-              </Card>
+              </div>
             ) : (
-              <Card variant="default" padding="none">
+              <div className="rounded-2xl bg-hyundai-gray-50 overflow-hidden">
                 {sortedHistory.map((item, index) => {
                   const config = statusConfig[item.status];
                   const StatusIcon = config.Icon;
@@ -280,7 +535,7 @@ export function VehicleTabContent({
                     <React.Fragment key={item.id}>
                       {index > 0 && <div className="mx-5 border-b border-hyundai-gray-100" />}
                       <Link href={`/history/${item.id}`}>
-                        <div className="px-5 py-3.5 active:bg-hyundai-gray-50 transition-colors">
+                        <div className="px-5 py-3.5 active:bg-hyundai-gray-100 transition-colors">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-xs text-hyundai-gray-400">
                               {formatHistoryDate(item.date)}
@@ -309,7 +564,7 @@ export function VehicleTabContent({
                     </React.Fragment>
                   );
                 })}
-              </Card>
+              </div>
             )}
           </div>
         </div>

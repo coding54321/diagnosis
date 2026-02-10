@@ -1,0 +1,804 @@
+﻿canonical_id,alias_text,alias_type,source
+CAN-002235,워터펌프 및 가스켓(텐션조정포함),seed_variant,bluehands_seed
+CAN-002235,워터펌프ASSY 및 가스켓(텐션조정포함),seed_variant,bluehands_seed
+CAN-002235,워터펌프assy 및 가스켓(텐션조정포함),seed_variant,bluehands_seed
+CAN-002235,워터펌프어셈블리 및 가스켓 (텐션조정포함),seed_variant,bluehands_seed
+CAN-002235,워터펌프어셈블리 및 가스켓 텐션조정포함,seed_variant,bluehands_seed
+CAN-002235,워터펌프어셈블리 및 가스켓(텐션조정포함),seed_variant,bluehands_seed
+CAN-002235,워터펌프어셈블리및가스켓(텐션조정포함),seed_variant,bluehands_seed
+CAN-000344,라디에이터,seed_variant,bluehands_seed
+CAN-000344,라디에이터 ASSY,seed_variant,bluehands_seed
+CAN-000344,라디에이터 assy,seed_variant,bluehands_seed
+CAN-000344,라디에이터 어셈블리,seed_variant,bluehands_seed
+CAN-000344,라디에이터어셈블리,seed_variant,bluehands_seed
+CAN-001129,블로워,seed_variant,bluehands_seed
+CAN-001129,블로워 ASSY,seed_variant,bluehands_seed
+CAN-001129,블로워 assy,seed_variant,bluehands_seed
+CAN-001129,블로워 어셈블리,seed_variant,bluehands_seed
+CAN-001129,블로워어셈블리,seed_variant,bluehands_seed
+CAN-000342,라디에이터 상부 호스,seed_variant,bluehands_seed
+CAN-000342,라디에이터상부호스,seed_variant,bluehands_seed
+CAN-000353,라디에이터 하부 호스,seed_variant,bluehands_seed
+CAN-000353,라디에이터하부호스,seed_variant,bluehands_seed
+CAN-000529,리어 머플러 (LH),seed_variant,bluehands_seed
+CAN-000529,리어 머플러 ASSY(LH),seed_variant,bluehands_seed
+CAN-000529,리어 머플러 assy(lh),seed_variant,bluehands_seed
+CAN-000529,리어 머플러 어셈블리 (LH),seed_variant,bluehands_seed
+CAN-000529,리어 머플러 어셈블리 LH,seed_variant,bluehands_seed
+CAN-000529,리어 머플러 어셈블리(LH),seed_variant,bluehands_seed
+CAN-000529,리어 머플러 어셈블리(좌),seed_variant,bluehands_seed
+CAN-000529,리어머플러어셈블리(LH),seed_variant,bluehands_seed
+CAN-001987,엔진 언더 커버 (LH OR 한개),seed_variant,bluehands_seed
+CAN-001987,엔진 언더 커버 LH OR 한개,seed_variant,bluehands_seed
+CAN-001987,엔진 언더 커버(LH OR 한개),seed_variant,bluehands_seed
+CAN-001987,엔진 언더 커버(lh or 한개),seed_variant,bluehands_seed
+CAN-001987,엔진언더커버(LHOR한개),seed_variant,bluehands_seed
+CAN-002990,프론트 머드 가드,seed_variant,bluehands_seed
+CAN-002990,프론트머드가드,seed_variant,bluehands_seed
+CAN-002035,연료 탱크,seed_variant,bluehands_seed
+CAN-002035,연료 탱크 ASSY,seed_variant,bluehands_seed
+CAN-002035,연료 탱크 assy,seed_variant,bluehands_seed
+CAN-002035,연료 탱크 어셈블리,seed_variant,bluehands_seed
+CAN-002035,연료탱크어셈블리,seed_variant,bluehands_seed
+CAN-001353,스로틀 바디 카본 청소,seed_variant,bluehands_seed
+CAN-001353,스로틀바디카본청소,seed_variant,bluehands_seed
+CAN-002623,클러치 릴리스 실린더,seed_variant,bluehands_seed
+CAN-002623,클러치 릴리스 실린더 ASSY,seed_variant,bluehands_seed
+CAN-002623,클러치 릴리스 실린더 assy,seed_variant,bluehands_seed
+CAN-002623,클러치 릴리스 실린더 어셈블리,seed_variant,bluehands_seed
+CAN-002623,클러치릴리스실린더어셈블리,seed_variant,bluehands_seed
+CAN-002850,파워 스티어링 오일 펌프,seed_variant,bluehands_seed
+CAN-002850,파워 스티어링 오일 펌프 ASSY,seed_variant,bluehands_seed
+CAN-002850,파워 스티어링 오일 펌프 assy,seed_variant,bluehands_seed
+CAN-002850,파워 스티어링 오일 펌프 어셈블리,seed_variant,bluehands_seed
+CAN-002850,파워스티어링오일펌프어셈블리,seed_variant,bluehands_seed
+CAN-002844,파워 스티어링 오일 압력 호스,seed_variant,bluehands_seed
+CAN-002844,파워 스티어링 오일 압력 호스 ASSY,seed_variant,bluehands_seed
+CAN-002844,파워 스티어링 오일 압력 호스 assy,seed_variant,bluehands_seed
+CAN-002844,파워 스티어링 오일 압력 호스 어셈블리,seed_variant,bluehands_seed
+CAN-002844,파워스티어링오일압력호스어셈블리,seed_variant,bluehands_seed
+CAN-002835,파워 스티어링 기어 및 링키지,seed_variant,bluehands_seed
+CAN-002835,파워 스티어링 기어 및 링키지 ASSY,seed_variant,bluehands_seed
+CAN-002835,파워 스티어링 기어 및 링키지 assy,seed_variant,bluehands_seed
+CAN-002835,파워 스티어링 기어 및 링키지 어셈블리,seed_variant,bluehands_seed
+CAN-002835,파워스티어링기어및링키지어셈블리,seed_variant,bluehands_seed
+CAN-002840,파워 스티어링 및 링키지 (크로스멤버 탈착후),seed_variant,bluehands_seed
+CAN-002840,파워 스티어링 및 링키지 크로스멤버 탈착후,seed_variant,bluehands_seed
+CAN-002840,파워 스티어링 및 링키지(크로스멤버 탈착후),seed_variant,bluehands_seed
+CAN-002840,파워스티어링및링키지(크로스멤버탈착후),seed_variant,bluehands_seed
+CAN-000341,라디에이터 및 콘덴서,seed_variant,bluehands_seed
+CAN-000341,라디에이터및콘덴서,seed_variant,bluehands_seed
+CAN-000330,라디에이터 그릴,seed_variant,bluehands_seed
+CAN-000330,라디에이터 그릴 ASSY,seed_variant,bluehands_seed
+CAN-000330,라디에이터 그릴 assy,seed_variant,bluehands_seed
+CAN-000330,라디에이터 그릴 어셈블리,seed_variant,bluehands_seed
+CAN-000330,라디에이터그릴어셈블리,seed_variant,bluehands_seed
+CAN-002912,프런트 휠 가드 (양쪽),seed_variant,bluehands_seed
+CAN-002912,프런트 휠 가드 ASSY (양쪽),seed_variant,bluehands_seed
+CAN-002912,프런트 휠 가드 assy (양쪽),seed_variant,bluehands_seed
+CAN-002912,프런트 휠 가드 어셈블리 (양쪽),seed_variant,bluehands_seed
+CAN-002912,프런트 휠 가드 어셈블리 양쪽,seed_variant,bluehands_seed
+CAN-002912,프런트휠가드어셈블리(양쪽),seed_variant,bluehands_seed
+CAN-001014,백 패널 몰딩 - - - -,seed_variant,bluehands_seed
+CAN-001014,백 패널 몰딩 ASSY - - - -,seed_variant,bluehands_seed
+CAN-001014,백 패널 몰딩 assy - - - -,seed_variant,bluehands_seed
+CAN-001014,백 패널 몰딩 어셈블리,seed_variant,bluehands_seed
+CAN-001014,백 패널 몰딩 어셈블리 - - - -,seed_variant,bluehands_seed
+CAN-001014,백패널몰딩어셈블리----,seed_variant,bluehands_seed
+CAN-001602,아웃사이드리어뷰미러(LH) - -,seed_variant,bluehands_seed
+CAN-001602,아웃사이드리어뷰미러ASSY(LH) - -,seed_variant,bluehands_seed
+CAN-001602,아웃사이드리어뷰미러assy(lh) - -,seed_variant,bluehands_seed
+CAN-001602,아웃사이드리어뷰미러어셈블리 (LH) - -,seed_variant,bluehands_seed
+CAN-001602,아웃사이드리어뷰미러어셈블리 LH,seed_variant,bluehands_seed
+CAN-001602,아웃사이드리어뷰미러어셈블리(LH) - -,seed_variant,bluehands_seed
+CAN-001602,아웃사이드리어뷰미러어셈블리(LH)--,seed_variant,bluehands_seed
+CAN-001602,아웃사이드리어뷰미러어셈블리(좌) - -,seed_variant,bluehands_seed
+CAN-001603,아웃사이드리어뷰미러(RH) - -,seed_variant,bluehands_seed
+CAN-001603,아웃사이드리어뷰미러ASSY(RH) - -,seed_variant,bluehands_seed
+CAN-001603,아웃사이드리어뷰미러assy(rh) - -,seed_variant,bluehands_seed
+CAN-001603,아웃사이드리어뷰미러어셈블리 (RH) - -,seed_variant,bluehands_seed
+CAN-001603,아웃사이드리어뷰미러어셈블리 RH,seed_variant,bluehands_seed
+CAN-001603,아웃사이드리어뷰미러어셈블리(RH) - -,seed_variant,bluehands_seed
+CAN-001603,아웃사이드리어뷰미러어셈블리(RH)--,seed_variant,bluehands_seed
+CAN-001603,아웃사이드리어뷰미러어셈블리(우) - -,seed_variant,bluehands_seed
+CAN-001598,아웃사이드 리어 뷰 리모트 컨트롤 미러,seed_variant,bluehands_seed
+CAN-001598,아웃사이드 리어 뷰 리모트 컨트롤 미러 ASSY,seed_variant,bluehands_seed
+CAN-001598,아웃사이드 리어 뷰 리모트 컨트롤 미러 assy,seed_variant,bluehands_seed
+CAN-001598,아웃사이드 리어 뷰 리모트 컨트롤 미러 어셈블리,seed_variant,bluehands_seed
+CAN-001598,아웃사이드리어뷰리모트컨트롤미러어셈블리,seed_variant,bluehands_seed
+CAN-001597,아웃사이드 리어 뷰 리모트 컨트롤 미러 (RH),seed_variant,bluehands_seed
+CAN-001597,아웃사이드 리어 뷰 리모트 컨트롤 미러 RH,seed_variant,bluehands_seed
+CAN-001597,아웃사이드 리어 뷰 리모트 컨트롤 미러(RH),seed_variant,bluehands_seed
+CAN-001597,아웃사이드 리어 뷰 리모트 컨트롤 미러(rh),seed_variant,bluehands_seed
+CAN-001597,아웃사이드 리어 뷰 리모트 컨트롤 미러(우),seed_variant,bluehands_seed
+CAN-001597,아웃사이드리어뷰리모트컨트롤미러(RH),seed_variant,bluehands_seed
+CAN-001600,아웃사이드 리어 뷰 미러 및 홀더 (LH),seed_variant,bluehands_seed
+CAN-001600,아웃사이드 리어 뷰 미러 및 홀더 ASSY (LH),seed_variant,bluehands_seed
+CAN-001600,아웃사이드 리어 뷰 미러 및 홀더 assy (lh),seed_variant,bluehands_seed
+CAN-001600,아웃사이드 리어 뷰 미러 및 홀더 어셈블리 (LH),seed_variant,bluehands_seed
+CAN-001600,아웃사이드 리어 뷰 미러 및 홀더 어셈블리 (좌),seed_variant,bluehands_seed
+CAN-001600,아웃사이드 리어 뷰 미러 및 홀더 어셈블리 LH,seed_variant,bluehands_seed
+CAN-001600,아웃사이드리어뷰미러및홀더어셈블리(LH),seed_variant,bluehands_seed
+CAN-001601,아웃사이드 리어 뷰 미러 및 홀더 (RH),seed_variant,bluehands_seed
+CAN-001601,아웃사이드 리어 뷰 미러 및 홀더 ASSY (RH),seed_variant,bluehands_seed
+CAN-001601,아웃사이드 리어 뷰 미러 및 홀더 assy (rh),seed_variant,bluehands_seed
+CAN-001601,아웃사이드 리어 뷰 미러 및 홀더 어셈블리 (RH),seed_variant,bluehands_seed
+CAN-001601,아웃사이드 리어 뷰 미러 및 홀더 어셈블리 (우),seed_variant,bluehands_seed
+CAN-001601,아웃사이드 리어 뷰 미러 및 홀더 어셈블리 RH,seed_variant,bluehands_seed
+CAN-001601,아웃사이드리어뷰미러및홀더어셈블리(RH),seed_variant,bluehands_seed
+CAN-003291,헤드 램프 (LH),seed_variant,bluehands_seed
+CAN-003291,헤드 램프 ASSY(LH),seed_variant,bluehands_seed
+CAN-003291,헤드 램프 assy(lh),seed_variant,bluehands_seed
+CAN-003291,헤드 램프 어셈블리 (LH),seed_variant,bluehands_seed
+CAN-003291,헤드 램프 어셈블리 LH,seed_variant,bluehands_seed
+CAN-003291,헤드 램프 어셈블리(LH),seed_variant,bluehands_seed
+CAN-003291,헤드 램프 어셈블리(좌),seed_variant,bluehands_seed
+CAN-003291,헤드램프어셈블리(LH),seed_variant,bluehands_seed
+CAN-003293,헤드 램프 (양쪽),seed_variant,bluehands_seed
+CAN-003293,헤드 램프 ASSY (양쪽),seed_variant,bluehands_seed
+CAN-003293,헤드 램프 assy (양쪽),seed_variant,bluehands_seed
+CAN-003293,헤드 램프 어셈블리 (양쪽),seed_variant,bluehands_seed
+CAN-003293,헤드 램프 어셈블리 양쪽,seed_variant,bluehands_seed
+CAN-003293,헤드램프어셈블리(양쪽),seed_variant,bluehands_seed
+CAN-003292,헤드 램프 (RH),seed_variant,bluehands_seed
+CAN-003292,헤드 램프 ASSY(RH),seed_variant,bluehands_seed
+CAN-003292,헤드 램프 assy(rh),seed_variant,bluehands_seed
+CAN-003292,헤드 램프 어셈블리 (RH),seed_variant,bluehands_seed
+CAN-003292,헤드 램프 어셈블리 RH,seed_variant,bluehands_seed
+CAN-003292,헤드 램프 어셈블리(RH),seed_variant,bluehands_seed
+CAN-003292,헤드 램프 어셈블리(우),seed_variant,bluehands_seed
+CAN-003292,헤드램프어셈블리(RH),seed_variant,bluehands_seed
+CAN-003142,프론트포그램프 (LH),seed_variant,bluehands_seed
+CAN-003142,프론트포그램프ASSY (LH),seed_variant,bluehands_seed
+CAN-003142,프론트포그램프assy (lh),seed_variant,bluehands_seed
+CAN-003142,프론트포그램프어셈블리 (LH),seed_variant,bluehands_seed
+CAN-003142,프론트포그램프어셈블리 (좌),seed_variant,bluehands_seed
+CAN-003142,프론트포그램프어셈블리 LH,seed_variant,bluehands_seed
+CAN-003142,프론트포그램프어셈블리(LH),seed_variant,bluehands_seed
+CAN-003144,프론트 포그 램프 (양쪽),seed_variant,bluehands_seed
+CAN-003144,프론트 포그 램프 ASSY (양쪽),seed_variant,bluehands_seed
+CAN-003144,프론트 포그 램프 assy (양쪽),seed_variant,bluehands_seed
+CAN-003144,프론트 포그 램프 어셈블리 (양쪽),seed_variant,bluehands_seed
+CAN-003144,프론트 포그 램프 어셈블리 양쪽,seed_variant,bluehands_seed
+CAN-003144,프론트포그램프어셈블리(양쪽),seed_variant,bluehands_seed
+CAN-003143,프론트포그램프 (RH),seed_variant,bluehands_seed
+CAN-003143,프론트포그램프ASSY (RH),seed_variant,bluehands_seed
+CAN-003143,프론트포그램프assy (rh),seed_variant,bluehands_seed
+CAN-003143,프론트포그램프어셈블리 (RH),seed_variant,bluehands_seed
+CAN-003143,프론트포그램프어셈블리 (우),seed_variant,bluehands_seed
+CAN-003143,프론트포그램프어셈블리 RH,seed_variant,bluehands_seed
+CAN-003143,프론트포그램프어셈블리(RH),seed_variant,bluehands_seed
+CAN-000715,리어컴비네이션램프 (LH),seed_variant,bluehands_seed
+CAN-000715,리어컴비네이션램프ASSY (LH),seed_variant,bluehands_seed
+CAN-000715,리어컴비네이션램프assy (lh),seed_variant,bluehands_seed
+CAN-000715,리어컴비네이션램프어셈블리 (LH),seed_variant,bluehands_seed
+CAN-000715,리어컴비네이션램프어셈블리 (좌),seed_variant,bluehands_seed
+CAN-000715,리어컴비네이션램프어셈블리 LH,seed_variant,bluehands_seed
+CAN-000715,리어컴비네이션램프어셈블리(LH),seed_variant,bluehands_seed
+CAN-000731,리어 콤비네이션 램프 (양쪽),seed_variant,bluehands_seed
+CAN-000731,리어 콤비네이션 램프 ASSY (양쪽),seed_variant,bluehands_seed
+CAN-000731,리어 콤비네이션 램프 assy (양쪽),seed_variant,bluehands_seed
+CAN-000731,리어 콤비네이션 램프 어셈블리 (양쪽),seed_variant,bluehands_seed
+CAN-000731,리어 콤비네이션 램프 어셈블리 양쪽,seed_variant,bluehands_seed
+CAN-000731,리어콤비네이션램프어셈블리(양쪽),seed_variant,bluehands_seed
+CAN-000716,리어컴비네이션램프 (RH),seed_variant,bluehands_seed
+CAN-000716,리어컴비네이션램프ASSY (RH),seed_variant,bluehands_seed
+CAN-000716,리어컴비네이션램프assy (rh),seed_variant,bluehands_seed
+CAN-000716,리어컴비네이션램프어셈블리 (RH),seed_variant,bluehands_seed
+CAN-000716,리어컴비네이션램프어셈블리 (우),seed_variant,bluehands_seed
+CAN-000716,리어컴비네이션램프어셈블리 RH,seed_variant,bluehands_seed
+CAN-000716,리어컴비네이션램프어셈블리(RH),seed_variant,bluehands_seed
+CAN-000715,리어컴비네이션램프 (LH) - -,seed_variant,bluehands_seed
+CAN-000715,리어컴비네이션램프ASSY (LH) - -,seed_variant,bluehands_seed
+CAN-000715,리어컴비네이션램프assy (lh) - -,seed_variant,bluehands_seed
+CAN-000715,리어컴비네이션램프어셈블리 (LH) - -,seed_variant,bluehands_seed
+CAN-000715,리어컴비네이션램프어셈블리 (좌) - -,seed_variant,bluehands_seed
+CAN-000715,리어컴비네이션램프어셈블리(LH)--,seed_variant,bluehands_seed
+CAN-000732,리어 콤비네이션 인사이드 램프 (양쪽) -,seed_variant,bluehands_seed
+CAN-000732,리어 콤비네이션 인사이드 램프 ASSY (양쪽) -,seed_variant,bluehands_seed
+CAN-000732,리어 콤비네이션 인사이드 램프 assy (양쪽) -,seed_variant,bluehands_seed
+CAN-000732,리어 콤비네이션 인사이드 램프 어셈블리 (양쪽) -,seed_variant,bluehands_seed
+CAN-000732,리어 콤비네이션 인사이드 램프 어셈블리 양쪽,seed_variant,bluehands_seed
+CAN-000732,리어콤비네이션인사이드램프어셈블리(양쪽)-,seed_variant,bluehands_seed
+CAN-000721,리어컴비네이션아웃사이드램프 (RH) -,seed_variant,bluehands_seed
+CAN-000721,리어컴비네이션아웃사이드램프ASSY (RH) -,seed_variant,bluehands_seed
+CAN-000721,리어컴비네이션아웃사이드램프assy (rh) -,seed_variant,bluehands_seed
+CAN-000721,리어컴비네이션아웃사이드램프어셈블리 (RH) -,seed_variant,bluehands_seed
+CAN-000721,리어컴비네이션아웃사이드램프어셈블리 (우) -,seed_variant,bluehands_seed
+CAN-000721,리어컴비네이션아웃사이드램프어셈블리 RH,seed_variant,bluehands_seed
+CAN-000721,리어컴비네이션아웃사이드램프어셈블리(RH)-,seed_variant,bluehands_seed
+CAN-002622,클락 스프링 (에어백 포함),seed_variant,bluehands_seed
+CAN-002622,클락 스프링 ASSY(에어백 포함),seed_variant,bluehands_seed
+CAN-002622,클락 스프링 assy(에어백 포함),seed_variant,bluehands_seed
+CAN-002622,클락 스프링 어셈블리 (에어백 포함),seed_variant,bluehands_seed
+CAN-002622,클락 스프링 어셈블리 에어백 포함,seed_variant,bluehands_seed
+CAN-002622,클락 스프링 어셈블리(에어백 포함),seed_variant,bluehands_seed
+CAN-002622,클락스프링어셈블리(에어백포함),seed_variant,bluehands_seed
+CAN-001374,스톱 램프 스위치,seed_variant,bluehands_seed
+CAN-001374,스톱 램프 스위치 ASSY,seed_variant,bluehands_seed
+CAN-001374,스톱 램프 스위치 assy,seed_variant,bluehands_seed
+CAN-001374,스톱 램프 스위치 어셈블리,seed_variant,bluehands_seed
+CAN-001374,스톱램프스위치어셈블리,seed_variant,bluehands_seed
+CAN-000881,밧데리 트랜스미터,seed_variant,bluehands_seed
+CAN-000881,밧데리-트랜스미터,seed_variant,bluehands_seed
+CAN-000088,PIC TX,seed_variant,bluehands_seed
+CAN-000088,PIC TX ASSY,seed_variant,bluehands_seed
+CAN-000088,PIC TX 어셈블리,seed_variant,bluehands_seed
+CAN-000088,PICTX어셈블리,seed_variant,bluehands_seed
+CAN-000088,pic tx assy,seed_variant,bluehands_seed
+CAN-001784,에어백 컨트롤 모듈,seed_variant,bluehands_seed
+CAN-001784,에어백컨트롤모듈,seed_variant,bluehands_seed
+CAN-003313,혼 (LH),seed_variant,bluehands_seed
+CAN-003313,혼 ASSY (LH),seed_variant,bluehands_seed
+CAN-003313,혼 assy (lh),seed_variant,bluehands_seed
+CAN-003313,혼 어셈블리 (LH),seed_variant,bluehands_seed
+CAN-003313,혼 어셈블리 (좌),seed_variant,bluehands_seed
+CAN-003313,혼 어셈블리 LH,seed_variant,bluehands_seed
+CAN-003313,혼어셈블리(LH),seed_variant,bluehands_seed
+CAN-002566,콘덴서 (**),seed_variant,bluehands_seed
+CAN-002566,콘덴서 ASSY (**),seed_variant,bluehands_seed
+CAN-002566,콘덴서 assy (**),seed_variant,bluehands_seed
+CAN-002566,콘덴서 어셈블리 (**),seed_variant,bluehands_seed
+CAN-002566,콘덴서 어셈블리 **,seed_variant,bluehands_seed
+CAN-002566,콘덴서어셈블리(**),seed_variant,bluehands_seed
+CAN-002561,컴프레셔 (**),seed_variant,bluehands_seed
+CAN-002561,컴프레셔 ASSY(**),seed_variant,bluehands_seed
+CAN-002561,컴프레셔 assy(**),seed_variant,bluehands_seed
+CAN-002561,컴프레셔 어셈블리 (**),seed_variant,bluehands_seed
+CAN-002561,컴프레셔 어셈블리 **,seed_variant,bluehands_seed
+CAN-002561,컴프레셔 어셈블리(**),seed_variant,bluehands_seed
+CAN-002561,컴프레셔어셈블리(**),seed_variant,bluehands_seed
+CAN-000289,디스차지 호스 및 O 링 **,seed_variant,bluehands_seed
+CAN-000289,디스차지 호스 및 O-링 (**),seed_variant,bluehands_seed
+CAN-000289,디스차지 호스 및 O-링(**),seed_variant,bluehands_seed
+CAN-000289,디스차지 호스 및 o-링(**),seed_variant,bluehands_seed
+CAN-000289,디스차지호스및O-링(**),seed_variant,bluehands_seed
+CAN-002244,윈드실드 와셔 모터 및 펌프,seed_variant,bluehands_seed
+CAN-002244,윈드실드 와셔 모터 및 펌프 ASSY,seed_variant,bluehands_seed
+CAN-002244,윈드실드 와셔 모터 및 펌프 assy,seed_variant,bluehands_seed
+CAN-002244,윈드실드 와셔 모터 및 펌프 어셈블리,seed_variant,bluehands_seed
+CAN-002244,윈드실드와셔모터및펌프어셈블리,seed_variant,bluehands_seed
+CAN-002243,윈드실드 와셔 리저버,seed_variant,bluehands_seed
+CAN-002243,윈드실드 와셔 리저버 ASSY,seed_variant,bluehands_seed
+CAN-002243,윈드실드 와셔 리저버 assy,seed_variant,bluehands_seed
+CAN-002243,윈드실드 와셔 리저버 어셈블리,seed_variant,bluehands_seed
+CAN-002243,윈드실드와셔리저버어셈블리,seed_variant,bluehands_seed
+CAN-000614,리어쇼크업소버(LH),seed_variant,bluehands_seed
+CAN-000614,리어쇼크업소버ASSY(LH),seed_variant,bluehands_seed
+CAN-000614,리어쇼크업소버assy(lh),seed_variant,bluehands_seed
+CAN-000614,리어쇼크업소버어셈블리 (LH),seed_variant,bluehands_seed
+CAN-000614,리어쇼크업소버어셈블리 LH,seed_variant,bluehands_seed
+CAN-000614,리어쇼크업소버어셈블리(LH),seed_variant,bluehands_seed
+CAN-000614,리어쇼크업소버어셈블리(좌),seed_variant,bluehands_seed
+CAN-000615,리어쇼크업소버(RH),seed_variant,bluehands_seed
+CAN-000615,리어쇼크업소버ASSY(RH),seed_variant,bluehands_seed
+CAN-000615,리어쇼크업소버assy(rh),seed_variant,bluehands_seed
+CAN-000615,리어쇼크업소버어셈블리 (RH),seed_variant,bluehands_seed
+CAN-000615,리어쇼크업소버어셈블리 RH,seed_variant,bluehands_seed
+CAN-000615,리어쇼크업소버어셈블리(RH),seed_variant,bluehands_seed
+CAN-000615,리어쇼크업소버어셈블리(우),seed_variant,bluehands_seed
+CAN-001817,에어컨 배출 및 충전,seed_variant,bluehands_seed
+CAN-001817,에어컨배출및충전,seed_variant,bluehands_seed
+CAN-001812,"에어컨 가스 충전 (신냉매,완충)",seed_variant,bluehands_seed
+CAN-001812,에어컨 가스 충전 신냉매 완충,seed_variant,bluehands_seed
+CAN-001812,"에어컨 가스 충전(신냉매,완충)",seed_variant,bluehands_seed
+CAN-001812,"에어컨가스충전(신냉매,완충)",seed_variant,bluehands_seed
+CAN-001350,수동 변속기 오일,seed_variant,bluehands_seed
+CAN-001350,수동변속기오일,seed_variant,bluehands_seed
+CAN-002328,전구,seed_variant,bluehands_seed
+CAN-003255,해드 램프 벌브 (한쪽),seed_variant,bluehands_seed
+CAN-003255,해드 램프 벌브 한쪽,seed_variant,bluehands_seed
+CAN-003255,해드램프벌브(한쪽),seed_variant,bluehands_seed
+CAN-001416,스파크 플러그 (전체),seed_variant,bluehands_seed
+CAN-001416,스파크 플러그 ASSY (전체),seed_variant,bluehands_seed
+CAN-001416,스파크 플러그 assy (전체),seed_variant,bluehands_seed
+CAN-001416,스파크 플러그 어셈블리 (전체),seed_variant,bluehands_seed
+CAN-001416,스파크 플러그 어셈블리 전체,seed_variant,bluehands_seed
+CAN-001416,스파크플러그어셈블리(전체),seed_variant,bluehands_seed
+CAN-002001,엔진 오일 휠터,seed_variant,bluehands_seed
+CAN-002001,엔진 오일/휠터,seed_variant,bluehands_seed
+CAN-002001,엔진오일/휠터,seed_variant,bluehands_seed
+CAN-002000,엔진오일 필터 에어크리너,seed_variant,bluehands_seed
+CAN-002000,엔진오일/필터/에어크리너,seed_variant,bluehands_seed
+CAN-001073,부동액 (냉각수),seed_variant,bluehands_seed
+CAN-001073,부동액 냉각수,seed_variant,bluehands_seed
+CAN-001073,부동액(냉각수),seed_variant,bluehands_seed
+CAN-001872,에어 클리너 필터,seed_variant,bluehands_seed
+CAN-001872,에어클리너필터,seed_variant,bluehands_seed
+CAN-000085,LPI 필터,seed_variant,bluehands_seed
+CAN-000085,LPI 필터 -,seed_variant,bluehands_seed
+CAN-000085,LPI필터-,seed_variant,bluehands_seed
+CAN-000085,lpi 필터 -,seed_variant,bluehands_seed
+CAN-001032,베터리,seed_variant,bluehands_seed
+CAN-001032,베터리 ASSY,seed_variant,bluehands_seed
+CAN-001032,베터리 assy,seed_variant,bluehands_seed
+CAN-001032,베터리 어셈블리,seed_variant,bluehands_seed
+CAN-001032,베터리어셈블리,seed_variant,bluehands_seed
+CAN-002178,오토 트랜스액슬 오일,seed_variant,bluehands_seed
+CAN-002178,오토트랜스액슬오일,seed_variant,bluehands_seed
+CAN-002175,오토미션 오일 (장비 사용),seed_variant,bluehands_seed
+CAN-002175,오토미션 오일 장비 사용,seed_variant,bluehands_seed
+CAN-002175,오토미션오일(장비사용),seed_variant,bluehands_seed
+CAN-003030,프론트브레이크디스크 (LH),seed_variant,bluehands_seed
+CAN-003030,프론트브레이크디스크 LH,seed_variant,bluehands_seed
+CAN-003030,프론트브레이크디스크(LH),seed_variant,bluehands_seed
+CAN-003030,프론트브레이크디스크(lh),seed_variant,bluehands_seed
+CAN-003030,프론트브레이크디스크(좌),seed_variant,bluehands_seed
+CAN-003032,프론트 브레이크 디스크 (양쪽),seed_variant,bluehands_seed
+CAN-003032,프론트 브레이크 디스크 양쪽,seed_variant,bluehands_seed
+CAN-003032,프론트 브레이크 디스크(양쪽),seed_variant,bluehands_seed
+CAN-003032,프론트브레이크디스크(양쪽),seed_variant,bluehands_seed
+CAN-003031,프론트브레이크디스크 (RH),seed_variant,bluehands_seed
+CAN-003031,프론트브레이크디스크 RH,seed_variant,bluehands_seed
+CAN-003031,프론트브레이크디스크(RH),seed_variant,bluehands_seed
+CAN-003031,프론트브레이크디스크(rh),seed_variant,bluehands_seed
+CAN-003031,프론트브레이크디스크(우),seed_variant,bluehands_seed
+CAN-002843,파워 스티어링 오일 및 공기빼기,seed_variant,bluehands_seed
+CAN-002843,파워스티어링오일및공기빼기,seed_variant,bluehands_seed
+CAN-002845,파워 스티어링 오일 (장비사용),seed_variant,bluehands_seed
+CAN-002845,파워 스티어링 오일 장비사용,seed_variant,bluehands_seed
+CAN-002845,파워스티어링오일(장비사용),seed_variant,bluehands_seed
+CAN-002982,프론트 디스크 브레이크 패드 키트 (LH),seed_variant,bluehands_seed
+CAN-002982,프론트 디스크 브레이크 패드 키트 LH,seed_variant,bluehands_seed
+CAN-002982,프론트 디스크 브레이크 패드 키트(LH),seed_variant,bluehands_seed
+CAN-002982,프론트 디스크 브레이크 패드 키트(lh),seed_variant,bluehands_seed
+CAN-002982,프론트 디스크 브레이크 패드 키트(좌),seed_variant,bluehands_seed
+CAN-002982,프론트디스크브레이크패드키트(LH),seed_variant,bluehands_seed
+CAN-002981,프론트 디스크 브레이크 패드 키드 (양쪽),seed_variant,bluehands_seed
+CAN-002981,프론트 디스크 브레이크 패드 키드 양쪽,seed_variant,bluehands_seed
+CAN-002981,프론트 디스크 브레이크 패드 키드(양쪽),seed_variant,bluehands_seed
+CAN-002981,프론트디스크브레이크패드키드(양쪽),seed_variant,bluehands_seed
+CAN-000525,리어 디스크브레이크패드 (양쪽),seed_variant,bluehands_seed
+CAN-000525,리어 디스크브레이크패드 ASSY (양쪽),seed_variant,bluehands_seed
+CAN-000525,리어 디스크브레이크패드 assy (양쪽),seed_variant,bluehands_seed
+CAN-000525,리어 디스크브레이크패드 어셈블리 (양쪽),seed_variant,bluehands_seed
+CAN-000525,리어 디스크브레이크패드 어셈블리 양쪽,seed_variant,bluehands_seed
+CAN-000525,리어디스크브레이크패드어셈블리(양쪽),seed_variant,bluehands_seed
+CAN-001092,브레이크 오일 및 공기 빼기,seed_variant,bluehands_seed
+CAN-001092,브레이크오일및공기빼기,seed_variant,bluehands_seed
+CAN-001856,에어컨휠터,seed_variant,bluehands_seed
+CAN-002042,연료 필러 도어,seed_variant,bluehands_seed
+CAN-002042,연료 필러 도어 ASSY,seed_variant,bluehands_seed
+CAN-002042,연료 필러 도어 assy,seed_variant,bluehands_seed
+CAN-002042,연료 필러 도어 어셈블리,seed_variant,bluehands_seed
+CAN-002042,연료필러도어어셈블리,seed_variant,bluehands_seed
+CAN-003394,휠 밸런스 (2휠),seed_variant,bluehands_seed
+CAN-003394,휠 밸런스 2휠,seed_variant,bluehands_seed
+CAN-003394,휠 밸런스(2휠),seed_variant,bluehands_seed
+CAN-003394,휠밸런스(2휠),seed_variant,bluehands_seed
+CAN-003402,휠 얼라인먼트 조정 (2휠),seed_variant,bluehands_seed
+CAN-003402,휠 얼라인먼트 조정 2휠,seed_variant,bluehands_seed
+CAN-003402,휠 얼라인먼트 조정(2휠),seed_variant,bluehands_seed
+CAN-003402,휠얼라인먼트조정(2휠),seed_variant,bluehands_seed
+CAN-003403,휠 얼라인먼트 조정 (4휠),seed_variant,bluehands_seed
+CAN-003403,휠 얼라인먼트 조정 4휠,seed_variant,bluehands_seed
+CAN-003403,휠 얼라인먼트 조정(4휠),seed_variant,bluehands_seed
+CAN-003403,휠얼라인먼트조정(4휠),seed_variant,bluehands_seed
+CAN-003400,휠 얼라인먼트 인스펙션,seed_variant,bluehands_seed
+CAN-003400,휠얼라인먼트인스펙션,seed_variant,bluehands_seed
+CAN-002696,타이어 펑크 수리,seed_variant,bluehands_seed
+CAN-002696,타이어펑크수리,seed_variant,bluehands_seed
+CAN-002692,타이어 및 휠 (1휠),seed_variant,bluehands_seed
+CAN-002692,타이어 및 휠 ASSY (1휠),seed_variant,bluehands_seed
+CAN-002692,타이어 및 휠 assy (1휠),seed_variant,bluehands_seed
+CAN-002692,타이어 및 휠 어셈블리 (1휠),seed_variant,bluehands_seed
+CAN-002692,타이어 및 휠 어셈블리 1휠,seed_variant,bluehands_seed
+CAN-002692,타이어및휠어셈블리(1휠),seed_variant,bluehands_seed
+CAN-002695,타이어 ASSY 및 휠 ASSY (2휠),seed_variant,bluehands_seed
+CAN-002695,타이어 assy 및 휠 assy (2휠),seed_variant,bluehands_seed
+CAN-002695,타이어 및 휠 (2휠),seed_variant,bluehands_seed
+CAN-002695,타이어 어셈블리 및 휠 어셈블리 (2휠),seed_variant,bluehands_seed
+CAN-002695,타이어 어셈블리 및 휠 어셈블리 2휠,seed_variant,bluehands_seed
+CAN-002695,타이어어셈블리및휠어셈블리(2휠),seed_variant,bluehands_seed
+CAN-003319,후드 래취,seed_variant,bluehands_seed
+CAN-003319,후드 래취 ASSY,seed_variant,bluehands_seed
+CAN-003319,후드 래취 assy,seed_variant,bluehands_seed
+CAN-003319,후드 래취 어셈블리,seed_variant,bluehands_seed
+CAN-003319,후드래취어셈블리,seed_variant,bluehands_seed
+CAN-002937,프론트 도어 래취 (LH),seed_variant,bluehands_seed
+CAN-002937,프론트 도어 래취 ASSY (LH),seed_variant,bluehands_seed
+CAN-002937,프론트 도어 래취 assy (lh),seed_variant,bluehands_seed
+CAN-002937,프론트 도어 래취 어셈블리 (LH),seed_variant,bluehands_seed
+CAN-002937,프론트 도어 래취 어셈블리 (좌),seed_variant,bluehands_seed
+CAN-002937,프론트 도어 래취 어셈블리 LH,seed_variant,bluehands_seed
+CAN-002937,프론트도어래취어셈블리(LH),seed_variant,bluehands_seed
+CAN-002961,프론트 도어 인사이드 핸들,seed_variant,bluehands_seed
+CAN-002961,프론트 도어 인사이드 핸들 ASSY,seed_variant,bluehands_seed
+CAN-002961,프론트 도어 인사이드 핸들 assy,seed_variant,bluehands_seed
+CAN-002961,프론트 도어 인사이드 핸들 어셈블리,seed_variant,bluehands_seed
+CAN-002961,프론트도어인사이드핸들어셈블리,seed_variant,bluehands_seed
+CAN-002943,프론트 도어 아웃트사이드 핸들 (양쪽),seed_variant,bluehands_seed
+CAN-002943,프론트 도어 아웃트사이드 핸들 ASSY (양쪽),seed_variant,bluehands_seed
+CAN-002943,프론트 도어 아웃트사이드 핸들 assy (양쪽),seed_variant,bluehands_seed
+CAN-002943,프론트 도어 아웃트사이드 핸들 어셈블리 (양쪽),seed_variant,bluehands_seed
+CAN-002943,프론트 도어 아웃트사이드 핸들 어셈블리 양쪽,seed_variant,bluehands_seed
+CAN-002943,프론트도어아웃트사이드핸들어셈블리(양쪽),seed_variant,bluehands_seed
+CAN-000498,리어 도어 아웃사이드 핸들,seed_variant,bluehands_seed
+CAN-000498,리어 도어 아웃사이드 핸들 ASSY,seed_variant,bluehands_seed
+CAN-000498,리어 도어 아웃사이드 핸들 assy,seed_variant,bluehands_seed
+CAN-000498,리어 도어 아웃사이드 핸들 어셈블리,seed_variant,bluehands_seed
+CAN-000498,리어도어아웃사이드핸들어셈블리,seed_variant,bluehands_seed
+CAN-000838,메인 크래쉬 패드,seed_variant,bluehands_seed
+CAN-000838,메인 크래쉬 패드 ASSY,seed_variant,bluehands_seed
+CAN-000838,메인 크래쉬 패드 assy,seed_variant,bluehands_seed
+CAN-000838,메인 크래쉬 패드 어셈블리,seed_variant,bluehands_seed
+CAN-000838,메인크래쉬패드어셈블리,seed_variant,bluehands_seed
+CAN-000749,리어 패키지 트레이 트림,seed_variant,bluehands_seed
+CAN-000749,리어 패키지 트레이 트림 ASSY,seed_variant,bluehands_seed
+CAN-000749,리어 패키지 트레이 트림 assy,seed_variant,bluehands_seed
+CAN-000749,리어 패키지 트레이 트림 어셈블리,seed_variant,bluehands_seed
+CAN-000749,리어패키지트레이트림어셈블리,seed_variant,bluehands_seed
+CAN-000746,리어 트랜스버스 트림,seed_variant,bluehands_seed
+CAN-000746,리어 트랜스버스 트림 ASSY,seed_variant,bluehands_seed
+CAN-000746,리어 트랜스버스 트림 assy,seed_variant,bluehands_seed
+CAN-000746,리어 트랜스버스 트림 어셈블리,seed_variant,bluehands_seed
+CAN-000746,리어트랜스버스트림어셈블리,seed_variant,bluehands_seed
+CAN-002451,카울 탑 커버 및 패드,seed_variant,bluehands_seed
+CAN-002451,카울 탑 커버 및 패드 ASSY,seed_variant,bluehands_seed
+CAN-002451,카울 탑 커버 및 패드 assy,seed_variant,bluehands_seed
+CAN-002451,카울 탑 커버 및 패드 어셈블리,seed_variant,bluehands_seed
+CAN-002451,카울탑커버및패드어셈블리,seed_variant,bluehands_seed
+CAN-003104,프론트 액슬 너클 (LH),seed_variant,bluehands_seed
+CAN-003104,프론트 액슬 너클 LH,seed_variant,bluehands_seed
+CAN-003104,프론트 액슬 너클(LH),seed_variant,bluehands_seed
+CAN-003104,프론트 액슬 너클(lh),seed_variant,bluehands_seed
+CAN-003104,프론트 액슬 너클(좌),seed_variant,bluehands_seed
+CAN-003104,프론트액슬너클(LH),seed_variant,bluehands_seed
+CAN-003106,프론트액슬너클 (양쪽),seed_variant,bluehands_seed
+CAN-003106,프론트액슬너클 양쪽,seed_variant,bluehands_seed
+CAN-003106,프론트액슬너클(양쪽),seed_variant,bluehands_seed
+CAN-003105,프론트 액슬 너클 (RH),seed_variant,bluehands_seed
+CAN-003105,프론트 액슬 너클 RH,seed_variant,bluehands_seed
+CAN-003105,프론트 액슬 너클(RH),seed_variant,bluehands_seed
+CAN-003105,프론트 액슬 너클(rh),seed_variant,bluehands_seed
+CAN-003105,프론트 액슬 너클(우),seed_variant,bluehands_seed
+CAN-003105,프론트액슬너클(RH),seed_variant,bluehands_seed
+CAN-000382,로워 암 (LH),seed_variant,bluehands_seed
+CAN-000382,로워 암 ASSY (LH),seed_variant,bluehands_seed
+CAN-000382,로워 암 assy (lh),seed_variant,bluehands_seed
+CAN-000382,로워 암 어셈블리 (LH),seed_variant,bluehands_seed
+CAN-000382,로워 암 어셈블리 (좌),seed_variant,bluehands_seed
+CAN-000382,로워 암 어셈블리 LH,seed_variant,bluehands_seed
+CAN-000382,로워암어셈블리(LH),seed_variant,bluehands_seed
+CAN-000384,로워 암 (양쪽),seed_variant,bluehands_seed
+CAN-000384,로워 암 ASSY (양쪽),seed_variant,bluehands_seed
+CAN-000384,로워 암 assy (양쪽),seed_variant,bluehands_seed
+CAN-000384,로워 암 어셈블리 (양쪽),seed_variant,bluehands_seed
+CAN-000384,로워 암 어셈블리 양쪽,seed_variant,bluehands_seed
+CAN-000384,로워암어셈블리(양쪽),seed_variant,bluehands_seed
+CAN-000383,로워 암 (RH),seed_variant,bluehands_seed
+CAN-000383,로워 암 ASSY (RH),seed_variant,bluehands_seed
+CAN-000383,로워 암 assy (rh),seed_variant,bluehands_seed
+CAN-000383,로워 암 어셈블리 (RH),seed_variant,bluehands_seed
+CAN-000383,로워 암 어셈블리 (우),seed_variant,bluehands_seed
+CAN-000383,로워 암 어셈블리 RH,seed_variant,bluehands_seed
+CAN-000383,로워암어셈블리(RH),seed_variant,bluehands_seed
+CAN-001378,스트러트 인슐레이터 (LH),seed_variant,bluehands_seed
+CAN-001378,스트러트 인슐레이터 ASSY (LH),seed_variant,bluehands_seed
+CAN-001378,스트러트 인슐레이터 assy (lh),seed_variant,bluehands_seed
+CAN-001378,스트러트 인슐레이터 어셈블리 (LH),seed_variant,bluehands_seed
+CAN-001378,스트러트 인슐레이터 어셈블리 (좌),seed_variant,bluehands_seed
+CAN-001378,스트러트 인슐레이터 어셈블리 LH,seed_variant,bluehands_seed
+CAN-001378,스트러트인슐레이터어셈블리(LH),seed_variant,bluehands_seed
+CAN-001379,스트러트 인슐레이터 (RH),seed_variant,bluehands_seed
+CAN-001379,스트러트 인슐레이터 ASSY (RH),seed_variant,bluehands_seed
+CAN-001379,스트러트 인슐레이터 assy (rh),seed_variant,bluehands_seed
+CAN-001379,스트러트 인슐레이터 어셈블리 (RH),seed_variant,bluehands_seed
+CAN-001379,스트러트 인슐레이터 어셈블리 (우),seed_variant,bluehands_seed
+CAN-001379,스트러트 인슐레이터 어셈블리 RH,seed_variant,bluehands_seed
+CAN-001379,스트러트인슐레이터어셈블리(RH),seed_variant,bluehands_seed
+CAN-001376,스트러트,seed_variant,bluehands_seed
+CAN-001376,스트러트 ASSY,seed_variant,bluehands_seed
+CAN-001376,스트러트 assy,seed_variant,bluehands_seed
+CAN-001376,스트러트 어셈블리,seed_variant,bluehands_seed
+CAN-001376,스트러트어셈블리,seed_variant,bluehands_seed
+CAN-001377,스트러트 (양쪽),seed_variant,bluehands_seed
+CAN-001377,스트러트 ASSY (양쪽),seed_variant,bluehands_seed
+CAN-001377,스트러트 assy (양쪽),seed_variant,bluehands_seed
+CAN-001377,스트러트 어셈블리 (양쪽),seed_variant,bluehands_seed
+CAN-001377,스트러트 어셈블리 양쪽,seed_variant,bluehands_seed
+CAN-001377,스트러트어셈블리(양쪽),seed_variant,bluehands_seed
+CAN-001375,"스트러트 (RH,프론트쇽업소버)",seed_variant,bluehands_seed
+CAN-001375,"스트러트 ASSY(RH,프론트쇽업소버)",seed_variant,bluehands_seed
+CAN-001375,"스트러트 assy(rh,프론트쇽업소버)",seed_variant,bluehands_seed
+CAN-001375,"스트러트 어셈블리 (RH,프론트쇽업소버)",seed_variant,bluehands_seed
+CAN-001375,스트러트 어셈블리 RH 프론트쇽업소버,seed_variant,bluehands_seed
+CAN-001375,"스트러트 어셈블리(RH,프론트쇽업소버)",seed_variant,bluehands_seed
+CAN-001375,"스트러트어셈블리(RH,프론트쇽업소버)",seed_variant,bluehands_seed
+CAN-001368,스테이빌라이저 바,seed_variant,bluehands_seed
+CAN-001368,스테이빌라이저바,seed_variant,bluehands_seed
+CAN-001369,스테이빌라이저 바 부싱 (양쪽),seed_variant,bluehands_seed
+CAN-001369,스테이빌라이저 바 부싱 양쪽,seed_variant,bluehands_seed
+CAN-001369,스테이빌라이저 바 부싱(양쪽),seed_variant,bluehands_seed
+CAN-001369,스테이빌라이저바부싱(양쪽),seed_variant,bluehands_seed
+CAN-001365,스테이빌라이저링크 (LH),seed_variant,bluehands_seed
+CAN-001365,스테이빌라이저링크ASSY (LH),seed_variant,bluehands_seed
+CAN-001365,스테이빌라이저링크assy (lh),seed_variant,bluehands_seed
+CAN-001365,스테이빌라이저링크어셈블리 (LH),seed_variant,bluehands_seed
+CAN-001365,스테이빌라이저링크어셈블리 (좌),seed_variant,bluehands_seed
+CAN-001365,스테이빌라이저링크어셈블리 LH,seed_variant,bluehands_seed
+CAN-001365,스테이빌라이저링크어셈블리(LH),seed_variant,bluehands_seed
+CAN-001367,스테이빌라이저 링크 (양쪽),seed_variant,bluehands_seed
+CAN-001367,스테이빌라이저 링크 ASSY (양쪽),seed_variant,bluehands_seed
+CAN-001367,스테이빌라이저 링크 assy (양쪽),seed_variant,bluehands_seed
+CAN-001367,스테이빌라이저 링크 어셈블리 (양쪽),seed_variant,bluehands_seed
+CAN-001367,스테이빌라이저 링크 어셈블리 양쪽,seed_variant,bluehands_seed
+CAN-001367,스테이빌라이저링크어셈블리(양쪽),seed_variant,bluehands_seed
+CAN-001366,스테이빌라이저링크 (RH),seed_variant,bluehands_seed
+CAN-001366,스테이빌라이저링크ASSY (RH),seed_variant,bluehands_seed
+CAN-001366,스테이빌라이저링크assy (rh),seed_variant,bluehands_seed
+CAN-001366,스테이빌라이저링크어셈블리 (RH),seed_variant,bluehands_seed
+CAN-001366,스테이빌라이저링크어셈블리 (우),seed_variant,bluehands_seed
+CAN-001366,스테이빌라이저링크어셈블리 RH,seed_variant,bluehands_seed
+CAN-001366,스테이빌라이저링크어셈블리(RH),seed_variant,bluehands_seed
+CAN-000743,리어 크로스멤버 컴플리트,seed_variant,bluehands_seed
+CAN-000743,리어크로스멤버컴플리트,seed_variant,bluehands_seed
+CAN-002617,크로스멤버,seed_variant,bluehands_seed
+CAN-002617,크로스멤버 ASSY,seed_variant,bluehands_seed
+CAN-002617,크로스멤버 assy,seed_variant,bluehands_seed
+CAN-002617,크로스멤버 어셈블리,seed_variant,bluehands_seed
+CAN-002617,크로스멤버어셈블리,seed_variant,bluehands_seed
+CAN-002618,크로스멤버 (엔진미장착상태),seed_variant,bluehands_seed
+CAN-002618,크로스멤버 ASSY(엔진미장착상태),seed_variant,bluehands_seed
+CAN-002618,크로스멤버 assy(엔진미장착상태),seed_variant,bluehands_seed
+CAN-002618,크로스멤버 어셈블리 (엔진미장착상태),seed_variant,bluehands_seed
+CAN-002618,크로스멤버 어셈블리 엔진미장착상태,seed_variant,bluehands_seed
+CAN-002618,크로스멤버 어셈블리(엔진미장착상태),seed_variant,bluehands_seed
+CAN-002618,크로스멤버어셈블리(엔진미장착상태),seed_variant,bluehands_seed
+CAN-002996,프론트 범퍼 오버홀,seed_variant,bluehands_seed
+CAN-002996,프론트범퍼오버홀,seed_variant,bluehands_seed
+CAN-003391,"휀더패널(LH,범퍼탈부착미포함)",seed_variant,bluehands_seed
+CAN-003391,"휀더패널ASSY(LH,범퍼탈부착미포함)",seed_variant,bluehands_seed
+CAN-003391,"휀더패널assy(lh,범퍼탈부착미포함)",seed_variant,bluehands_seed
+CAN-003391,"휀더패널어셈블리 (LH,범퍼탈부착미포함)",seed_variant,bluehands_seed
+CAN-003391,휀더패널어셈블리 LH 범퍼탈부착미포함,seed_variant,bluehands_seed
+CAN-003391,"휀더패널어셈블리(LH,범퍼탈부착미포함)",seed_variant,bluehands_seed
+CAN-002595,"쿼터 외측 패널 (RH,탈부착 미포함)",seed_variant,bluehands_seed
+CAN-002595,"쿼터 외측 패널 ASSY(RH,탈부착 미포함)",seed_variant,bluehands_seed
+CAN-002595,"쿼터 외측 패널 assy(rh,탈부착 미포함)",seed_variant,bluehands_seed
+CAN-002595,"쿼터 외측 패널 어셈블리 (RH,탈부착 미포함)",seed_variant,bluehands_seed
+CAN-002595,쿼터 외측 패널 어셈블리 RH 탈부착 미포함,seed_variant,bluehands_seed
+CAN-002595,"쿼터 외측 패널 어셈블리(RH,탈부착 미포함)",seed_variant,bluehands_seed
+CAN-002595,"쿼터외측패널어셈블리(RH,탈부착미포함)",seed_variant,bluehands_seed
+CAN-000343,"라디에이터서포트패널(범퍼,라디에이터,콘덴셔 미포함)",seed_variant,bluehands_seed
+CAN-000343,"라디에이터서포트패널ASSY(범퍼,라디에이터,콘덴셔 미포함)",seed_variant,bluehands_seed
+CAN-000343,"라디에이터서포트패널assy(범퍼,라디에이터,콘덴셔 미포함)",seed_variant,bluehands_seed
+CAN-000343,"라디에이터서포트패널어셈블리 (범퍼,라디에이터,콘덴셔 미포함)",seed_variant,bluehands_seed
+CAN-000343,라디에이터서포트패널어셈블리 범퍼 라디에이터 콘덴셔 미포함,seed_variant,bluehands_seed
+CAN-000343,"라디에이터서포트패널어셈블리(범퍼,라디에이터,콘덴셔 미포함)",seed_variant,bluehands_seed
+CAN-000343,"라디에이터서포트패널어셈블리(범퍼,라디에이터,콘덴셔미포함)",seed_variant,bluehands_seed
+CAN-003358,후드 판넬,seed_variant,bluehands_seed
+CAN-003358,후드 판넬 ASSY,seed_variant,bluehands_seed
+CAN-003358,후드 판넬 assy,seed_variant,bluehands_seed
+CAN-003358,후드 판넬 어셈블리,seed_variant,bluehands_seed
+CAN-003358,후드판넬어셈블리,seed_variant,bluehands_seed
+CAN-001986,엔진 (탈부착),seed_variant,bluehands_seed
+CAN-001986,엔진 ASSY(탈부착),seed_variant,bluehands_seed
+CAN-001986,엔진 assy(탈부착),seed_variant,bluehands_seed
+CAN-001986,엔진 어셈블리 (탈부착),seed_variant,bluehands_seed
+CAN-001986,엔진 어셈블리 탈부착,seed_variant,bluehands_seed
+CAN-001986,엔진 어셈블리(탈부착),seed_variant,bluehands_seed
+CAN-001986,엔진어셈블리(탈부착),seed_variant,bluehands_seed
+CAN-000470,루프 패널 (탈부착 미포함),seed_variant,bluehands_seed
+CAN-000470,루프 패널 탈부착 미포함,seed_variant,bluehands_seed
+CAN-000470,루프 패널(탈부착 미포함),seed_variant,bluehands_seed
+CAN-000470,루프패널(탈부착미포함),seed_variant,bluehands_seed
+CAN-001274,선루프,seed_variant,bluehands_seed
+CAN-001274,선루프 ASSY,seed_variant,bluehands_seed
+CAN-001274,선루프 assy,seed_variant,bluehands_seed
+CAN-001274,선루프 어셈블리,seed_variant,bluehands_seed
+CAN-001274,선루프어셈블리,seed_variant,bluehands_seed
+CAN-003268,헤드라이닝,seed_variant,bluehands_seed
+CAN-003268,헤드라이닝 ASSY,seed_variant,bluehands_seed
+CAN-003268,헤드라이닝 assy,seed_variant,bluehands_seed
+CAN-003268,헤드라이닝 어셈블리,seed_variant,bluehands_seed
+CAN-003268,헤드라이닝어셈블리,seed_variant,bluehands_seed
+CAN-002709,테일게이트 판넬,seed_variant,bluehands_seed
+CAN-002709,테일게이트 판넬 ASSY,seed_variant,bluehands_seed
+CAN-002709,테일게이트 판넬 assy,seed_variant,bluehands_seed
+CAN-002709,테일게이트 판넬 어셈블리,seed_variant,bluehands_seed
+CAN-002709,테일게이트판넬어셈블리,seed_variant,bluehands_seed
+CAN-002805,트렁크 리드 패널 (사상작업포함),seed_variant,bluehands_seed
+CAN-002805,트렁크 리드 패널 사상작업포함,seed_variant,bluehands_seed
+CAN-002805,트렁크 리드 패널(사상작업포함),seed_variant,bluehands_seed
+CAN-002805,트렁크리드패널(사상작업포함),seed_variant,bluehands_seed
+CAN-002977,프론트도어판넬(LH),seed_variant,bluehands_seed
+CAN-002977,프론트도어판넬ASSY(LH),seed_variant,bluehands_seed
+CAN-002977,프론트도어판넬assy(lh),seed_variant,bluehands_seed
+CAN-002977,프론트도어판넬어셈블리 (LH),seed_variant,bluehands_seed
+CAN-002977,프론트도어판넬어셈블리 LH,seed_variant,bluehands_seed
+CAN-002977,프론트도어판넬어셈블리(LH),seed_variant,bluehands_seed
+CAN-002977,프론트도어판넬어셈블리(좌),seed_variant,bluehands_seed
+CAN-002978,프론트도어판넬(RH),seed_variant,bluehands_seed
+CAN-002978,프론트도어판넬ASSY(RH),seed_variant,bluehands_seed
+CAN-002978,프론트도어판넬assy(rh),seed_variant,bluehands_seed
+CAN-002978,프론트도어판넬어셈블리 (RH),seed_variant,bluehands_seed
+CAN-002978,프론트도어판넬어셈블리 RH,seed_variant,bluehands_seed
+CAN-002978,프론트도어판넬어셈블리(RH),seed_variant,bluehands_seed
+CAN-002978,프론트도어판넬어셈블리(우),seed_variant,bluehands_seed
+CAN-000517,리어도어판넬(LH),seed_variant,bluehands_seed
+CAN-000517,리어도어판넬ASSY(LH),seed_variant,bluehands_seed
+CAN-000517,리어도어판넬assy(lh),seed_variant,bluehands_seed
+CAN-000517,리어도어판넬어셈블리 (LH),seed_variant,bluehands_seed
+CAN-000517,리어도어판넬어셈블리 LH,seed_variant,bluehands_seed
+CAN-000517,리어도어판넬어셈블리(LH),seed_variant,bluehands_seed
+CAN-000517,리어도어판넬어셈블리(좌),seed_variant,bluehands_seed
+CAN-000518,리어도어판넬(RH),seed_variant,bluehands_seed
+CAN-000518,리어도어판넬ASSY(RH),seed_variant,bluehands_seed
+CAN-000518,리어도어판넬assy(rh),seed_variant,bluehands_seed
+CAN-000518,리어도어판넬어셈블리 (RH),seed_variant,bluehands_seed
+CAN-000518,리어도어판넬어셈블리 RH,seed_variant,bluehands_seed
+CAN-000518,리어도어판넬어셈블리(RH),seed_variant,bluehands_seed
+CAN-000518,리어도어판넬어셈블리(우),seed_variant,bluehands_seed
+CAN-002942,프론트 도어 아웃사이드 핸들 (LH),seed_variant,bluehands_seed
+CAN-002942,프론트 도어 아웃사이드 핸들 ASSY(LH),seed_variant,bluehands_seed
+CAN-002942,프론트 도어 아웃사이드 핸들 assy(lh),seed_variant,bluehands_seed
+CAN-002942,프론트 도어 아웃사이드 핸들 어셈블리 (LH),seed_variant,bluehands_seed
+CAN-002942,프론트 도어 아웃사이드 핸들 어셈블리 LH,seed_variant,bluehands_seed
+CAN-002942,프론트 도어 아웃사이드 핸들 어셈블리(LH),seed_variant,bluehands_seed
+CAN-002942,프론트 도어 아웃사이드 핸들 어셈블리(좌),seed_variant,bluehands_seed
+CAN-002942,프론트도어아웃사이드핸들어셈블리(LH),seed_variant,bluehands_seed
+CAN-001297,"센터외측필라(LH,탈부착미포함)",seed_variant,bluehands_seed
+CAN-001297,"센터외측필라ASSY(LH,탈부착미포함)",seed_variant,bluehands_seed
+CAN-001297,"센터외측필라assy(lh,탈부착미포함)",seed_variant,bluehands_seed
+CAN-001297,"센터외측필라어셈블리 (LH,탈부착미포함)",seed_variant,bluehands_seed
+CAN-001297,센터외측필라어셈블리 LH 탈부착미포함,seed_variant,bluehands_seed
+CAN-001297,"센터외측필라어셈블리(LH,탈부착미포함)",seed_variant,bluehands_seed
+CAN-001299,"센터외측필라(RH,탈부착미포함)",seed_variant,bluehands_seed
+CAN-001299,"센터외측필라ASSY(RH,탈부착미포함)",seed_variant,bluehands_seed
+CAN-001299,"센터외측필라assy(rh,탈부착미포함)",seed_variant,bluehands_seed
+CAN-001299,"센터외측필라어셈블리 (RH,탈부착미포함)",seed_variant,bluehands_seed
+CAN-001299,센터외측필라어셈블리 RH 탈부착미포함,seed_variant,bluehands_seed
+CAN-001299,"센터외측필라어셈블리(RH,탈부착미포함)",seed_variant,bluehands_seed
+CAN-000549,리어 범퍼 (오버홀),seed_variant,bluehands_seed
+CAN-000549,리어 범퍼 ASSY(오버홀),seed_variant,bluehands_seed
+CAN-000549,리어 범퍼 assy(오버홀),seed_variant,bluehands_seed
+CAN-000549,리어 범퍼 어셈블리 (오버홀),seed_variant,bluehands_seed
+CAN-000549,리어 범퍼 어셈블리 오버홀,seed_variant,bluehands_seed
+CAN-000549,리어 범퍼 어셈블리(오버홀),seed_variant,bluehands_seed
+CAN-000549,리어범퍼어셈블리(오버홀),seed_variant,bluehands_seed
+CAN-001016,백 패널 (탈부착 미포함),seed_variant,bluehands_seed
+CAN-001016,백 패널 탈부착 미포함,seed_variant,bluehands_seed
+CAN-001016,백 패널(탈부착 미포함),seed_variant,bluehands_seed
+CAN-001016,백패널(탈부착미포함),seed_variant,bluehands_seed
+CAN-001210,"사이드실 내측 패널 (LH,탈부착 미포함)",seed_variant,bluehands_seed
+CAN-001210,사이드실 내측 패널 LH 탈부착 미포함,seed_variant,bluehands_seed
+CAN-001210,"사이드실 내측 패널(LH,탈부착 미포함)",seed_variant,bluehands_seed
+CAN-001210,"사이드실 내측 패널(lh,탈부착 미포함)",seed_variant,bluehands_seed
+CAN-001210,"사이드실내측패널(LH,탈부착미포함)",seed_variant,bluehands_seed
+CAN-001211,"사이드실 내측 패널 (RH,탈부착 미포함)",seed_variant,bluehands_seed
+CAN-001211,사이드실 내측 패널 RH 탈부착 미포함,seed_variant,bluehands_seed
+CAN-001211,"사이드실 내측 패널(RH,탈부착 미포함)",seed_variant,bluehands_seed
+CAN-001211,"사이드실 내측 패널(rh,탈부착 미포함)",seed_variant,bluehands_seed
+CAN-001211,"사이드실내측패널(RH,탈부착미포함)",seed_variant,bluehands_seed
+CAN-001213,"사이드실외측패널 (LH,탈부착미포함)",seed_variant,bluehands_seed
+CAN-001213,사이드실외측패널 LH 탈부착미포함,seed_variant,bluehands_seed
+CAN-001213,"사이드실외측패널(LH,탈부착미포함)",seed_variant,bluehands_seed
+CAN-001213,"사이드실외측패널(lh,탈부착미포함)",seed_variant,bluehands_seed
+CAN-001215,"사이드실외측패널 (RH,탈부착미포함)",seed_variant,bluehands_seed
+CAN-001215,사이드실외측패널 RH 탈부착미포함,seed_variant,bluehands_seed
+CAN-001215,"사이드실외측패널(RH,탈부착미포함)",seed_variant,bluehands_seed
+CAN-001215,"사이드실외측패널(rh,탈부착미포함)",seed_variant,bluehands_seed
+CAN-003155,프론트 필라 외측 패널 (LH),seed_variant,bluehands_seed
+CAN-003155,프론트 필라 외측 패널 ASSY (LH),seed_variant,bluehands_seed
+CAN-003155,프론트 필라 외측 패널 assy (lh),seed_variant,bluehands_seed
+CAN-003155,프론트 필라 외측 패널 어셈블리 (LH),seed_variant,bluehands_seed
+CAN-003155,프론트 필라 외측 패널 어셈블리 (좌),seed_variant,bluehands_seed
+CAN-003155,프론트 필라 외측 패널 어셈블리 LH,seed_variant,bluehands_seed
+CAN-003155,프론트필라외측패널어셈블리(LH),seed_variant,bluehands_seed
+CAN-003157,프론트 필라 외측 패널 (RH),seed_variant,bluehands_seed
+CAN-003157,프론트 필라 외측 패널 ASSY (RH),seed_variant,bluehands_seed
+CAN-003157,프론트 필라 외측 패널 assy (rh),seed_variant,bluehands_seed
+CAN-003157,프론트 필라 외측 패널 어셈블리 (RH),seed_variant,bluehands_seed
+CAN-003157,프론트 필라 외측 패널 어셈블리 (우),seed_variant,bluehands_seed
+CAN-003157,프론트 필라 외측 패널 어셈블리 RH,seed_variant,bluehands_seed
+CAN-003157,프론트필라외측패널어셈블리(RH),seed_variant,bluehands_seed
+CAN-003028,프론트 범퍼 도장（탈거된상태,seed_variant,bluehands_seed
+CAN-003028,프론트 범퍼 도장（탈거된상태),seed_variant,bluehands_seed
+CAN-003028,프론트범퍼도장（탈거된상태),seed_variant,bluehands_seed
+CAN-003390,휀더 패널 도장 (LH),seed_variant,bluehands_seed
+CAN-003390,휀더 패널 도장 LH,seed_variant,bluehands_seed
+CAN-003390,휀더 패널 도장(LH),seed_variant,bluehands_seed
+CAN-003390,휀더 패널 도장(lh),seed_variant,bluehands_seed
+CAN-003390,휀더 패널 도장(좌),seed_variant,bluehands_seed
+CAN-003390,휀더패널도장(LH),seed_variant,bluehands_seed
+CAN-002594,쿼터 외측 패널도장 (LH),seed_variant,bluehands_seed
+CAN-002594,쿼터 외측 패널도장 LH,seed_variant,bluehands_seed
+CAN-002594,쿼터 외측 패널도장(LH),seed_variant,bluehands_seed
+CAN-002594,쿼터 외측 패널도장(lh),seed_variant,bluehands_seed
+CAN-002594,쿼터 외측 패널도장(좌),seed_variant,bluehands_seed
+CAN-002594,쿼터외측패널도장(LH),seed_variant,bluehands_seed
+CAN-003359,후드 패널 도장,seed_variant,bluehands_seed
+CAN-003359,후드패널도장,seed_variant,bluehands_seed
+CAN-000459,루프 패널 도장,seed_variant,bluehands_seed
+CAN-000459,루프패널도장,seed_variant,bluehands_seed
+CAN-000412,루프 사이드 외측 패널도장 (LH),seed_variant,bluehands_seed
+CAN-000412,루프 사이드 외측 패널도장 LH,seed_variant,bluehands_seed
+CAN-000412,루프 사이드 외측 패널도장(LH),seed_variant,bluehands_seed
+CAN-000412,루프 사이드 외측 패널도장(lh),seed_variant,bluehands_seed
+CAN-000412,루프 사이드 외측 패널도장(좌),seed_variant,bluehands_seed
+CAN-000412,루프사이드외측패널도장(LH),seed_variant,bluehands_seed
+CAN-002710,테일 게이트 패널 도장,seed_variant,bluehands_seed
+CAN-002710,테일게이트패널도장,seed_variant,bluehands_seed
+CAN-002806,트렁크 리드 패널 도장 (판금후),seed_variant,bluehands_seed
+CAN-002806,트렁크 리드 패널 도장 판금후,seed_variant,bluehands_seed
+CAN-002806,트렁크 리드 패널 도장(판금후),seed_variant,bluehands_seed
+CAN-002806,트렁크리드패널도장(판금후),seed_variant,bluehands_seed
+CAN-002979,프론트 도어 패널 ASSY도장(LH/탈거된상태）,seed_variant,bluehands_seed
+CAN-002979,프론트 도어 패널 assy도장(lh/탈거된상태）,seed_variant,bluehands_seed
+CAN-002979,프론트 도어 패널 도장(LH/탈거된상태）,seed_variant,bluehands_seed
+CAN-002979,프론트 도어 패널 어셈블리도장 (LH/탈거된상태）,seed_variant,bluehands_seed
+CAN-002979,프론트 도어 패널 어셈블리도장 LH 탈거된상태）,seed_variant,bluehands_seed
+CAN-002979,프론트 도어 패널 어셈블리도장(LH/탈거된상태）,seed_variant,bluehands_seed
+CAN-002979,프론트도어패널어셈블리도장(LH/탈거된상태）,seed_variant,bluehands_seed
+CAN-002980,프론트 도어 패널 ASSY도장(RH/탈거된상태),seed_variant,bluehands_seed
+CAN-002980,프론트 도어 패널 assy도장(rh/탈거된상태),seed_variant,bluehands_seed
+CAN-002980,프론트 도어 패널 도장(RH/탈거된상태),seed_variant,bluehands_seed
+CAN-002980,프론트 도어 패널 어셈블리도장 (RH/탈거된상태),seed_variant,bluehands_seed
+CAN-002980,프론트 도어 패널 어셈블리도장 RH 탈거된상태,seed_variant,bluehands_seed
+CAN-002980,프론트 도어 패널 어셈블리도장(RH/탈거된상태),seed_variant,bluehands_seed
+CAN-002980,프론트도어패널어셈블리도장(RH/탈거된상태),seed_variant,bluehands_seed
+CAN-000519,리어도어패널도장 (LH),seed_variant,bluehands_seed
+CAN-000519,리어도어패널도장 LH,seed_variant,bluehands_seed
+CAN-000519,리어도어패널도장(LH),seed_variant,bluehands_seed
+CAN-000519,리어도어패널도장(lh),seed_variant,bluehands_seed
+CAN-000519,리어도어패널도장(좌),seed_variant,bluehands_seed
+CAN-000520,리어도어패널도장 (RH),seed_variant,bluehands_seed
+CAN-000520,리어도어패널도장 RH,seed_variant,bluehands_seed
+CAN-000520,리어도어패널도장(RH),seed_variant,bluehands_seed
+CAN-000520,리어도어패널도장(rh),seed_variant,bluehands_seed
+CAN-000520,리어도어패널도장(우),seed_variant,bluehands_seed
+CAN-001599,"아웃사이드 리어 뷰 미러 도장 (LH,탈거된상태)",seed_variant,bluehands_seed
+CAN-001599,아웃사이드 리어 뷰 미러 도장 LH 탈거된상태,seed_variant,bluehands_seed
+CAN-001599,"아웃사이드 리어 뷰 미러 도장(LH,탈거된상태)",seed_variant,bluehands_seed
+CAN-001599,"아웃사이드 리어 뷰 미러 도장(lh,탈거된상태)",seed_variant,bluehands_seed
+CAN-001599,"아웃사이드리어뷰미러도장(LH,탈거된상태)",seed_variant,bluehands_seed
+CAN-003156,프론트 필라 외측 패널 ASSY도장(LH),seed_variant,bluehands_seed
+CAN-003156,프론트 필라 외측 패널 assy도장(lh),seed_variant,bluehands_seed
+CAN-003156,프론트 필라 외측 패널 도장(LH),seed_variant,bluehands_seed
+CAN-003156,프론트 필라 외측 패널 어셈블리도장 (LH),seed_variant,bluehands_seed
+CAN-003156,프론트 필라 외측 패널 어셈블리도장 LH,seed_variant,bluehands_seed
+CAN-003156,프론트 필라 외측 패널 어셈블리도장(LH),seed_variant,bluehands_seed
+CAN-003156,프론트 필라 외측 패널 어셈블리도장(좌),seed_variant,bluehands_seed
+CAN-003156,프론트필라외측패널어셈블리도장(LH),seed_variant,bluehands_seed
+CAN-003158,프론트 필라 외측 패널 ASSY 도장(RH),seed_variant,bluehands_seed
+CAN-003158,프론트 필라 외측 패널 assy 도장(rh),seed_variant,bluehands_seed
+CAN-003158,프론트 필라 외측 패널 도장(RH),seed_variant,bluehands_seed
+CAN-003158,프론트 필라 외측 패널 어셈블리 도장 (RH),seed_variant,bluehands_seed
+CAN-003158,프론트 필라 외측 패널 어셈블리 도장 RH,seed_variant,bluehands_seed
+CAN-003158,프론트 필라 외측 패널 어셈블리 도장(RH),seed_variant,bluehands_seed
+CAN-003158,프론트 필라 외측 패널 어셈블리 도장(우),seed_variant,bluehands_seed
+CAN-003158,프론트필라외측패널어셈블리도장(RH),seed_variant,bluehands_seed
+CAN-001298,"센터 외측 필라 ASSY도장(LH,판금후)",seed_variant,bluehands_seed
+CAN-001298,"센터 외측 필라 assy도장(lh,판금후)",seed_variant,bluehands_seed
+CAN-001298,"센터 외측 필라 도장(LH,판금후)",seed_variant,bluehands_seed
+CAN-001298,"센터 외측 필라 어셈블리도장 (LH,판금후)",seed_variant,bluehands_seed
+CAN-001298,센터 외측 필라 어셈블리도장 LH 판금후,seed_variant,bluehands_seed
+CAN-001298,"센터 외측 필라 어셈블리도장(LH,판금후)",seed_variant,bluehands_seed
+CAN-001298,"센터외측필라어셈블리도장(LH,판금후)",seed_variant,bluehands_seed
+CAN-001300,"센터 외측 필라 ASSY도장(RH,판금후)",seed_variant,bluehands_seed
+CAN-001300,"센터 외측 필라 assy도장(rh,판금후)",seed_variant,bluehands_seed
+CAN-001300,"센터 외측 필라 도장(RH,판금후)",seed_variant,bluehands_seed
+CAN-001300,"센터 외측 필라 어셈블리도장 (RH,판금후)",seed_variant,bluehands_seed
+CAN-001300,센터 외측 필라 어셈블리도장 RH 판금후,seed_variant,bluehands_seed
+CAN-001300,"센터 외측 필라 어셈블리도장(RH,판금후)",seed_variant,bluehands_seed
+CAN-001300,"센터외측필라어셈블리도장(RH,판금후)",seed_variant,bluehands_seed
+CAN-000557,리어범퍼 도장 (탈거된 상태),seed_variant,bluehands_seed
+CAN-000557,리어범퍼 도장 탈거된 상태,seed_variant,bluehands_seed
+CAN-000557,리어범퍼도장(탈거된상태),seed_variant,bluehands_seed
+CAN-001019,백 패널 도장 (판금후),seed_variant,bluehands_seed
+CAN-001019,백 패널 도장 판금후,seed_variant,bluehands_seed
+CAN-001019,백 패널 도장(판금후),seed_variant,bluehands_seed
+CAN-001019,백패널도장(판금후),seed_variant,bluehands_seed
+CAN-001212,사이드실 외측 패널도장 (LH),seed_variant,bluehands_seed
+CAN-001212,사이드실 외측 패널도장 LH,seed_variant,bluehands_seed
+CAN-001212,사이드실 외측 패널도장(LH),seed_variant,bluehands_seed
+CAN-001212,사이드실 외측 패널도장(lh),seed_variant,bluehands_seed
+CAN-001212,사이드실 외측 패널도장(좌),seed_variant,bluehands_seed
+CAN-001212,사이드실외측패널도장(LH),seed_variant,bluehands_seed
+CAN-001214,사이드실 외측 패널도장 (RH),seed_variant,bluehands_seed
+CAN-001214,사이드실 외측 패널도장 RH,seed_variant,bluehands_seed
+CAN-001214,사이드실 외측 패널도장(RH),seed_variant,bluehands_seed
+CAN-001214,사이드실 외측 패널도장(rh),seed_variant,bluehands_seed
+CAN-001214,사이드실 외측 패널도장(우),seed_variant,bluehands_seed
+CAN-001214,사이드실외측패널도장(RH),seed_variant,bluehands_seed
