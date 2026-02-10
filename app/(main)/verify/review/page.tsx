@@ -766,7 +766,6 @@ const ReviewPage: React.FC = () => {
                 sessionStorage.removeItem('capturedEstimateImage');
                 sessionStorage.removeItem('pendingOcr');
                 sessionStorage.removeItem('ocrResult');
-                setOcrError(null);
                 router.replace('/verify/camera');
               }}
               className="w-full py-3 rounded-xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 transition-colors"
@@ -779,9 +778,11 @@ const ReviewPage: React.FC = () => {
                 sessionStorage.removeItem('capturedEstimateImage');
                 sessionStorage.removeItem('pendingOcr');
                 sessionStorage.removeItem('ocrResult');
-                setOcrError(null);
                 if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('directInput', 'true');
-                router.push('/verify/review');
+                setCapturedImage(null);
+                setIsOcrLoading(false);
+                setOcrError(null);
+                setWizardStep(2);
               }}
               className="w-full py-3 rounded-xl border border-hyundai-gray-200 text-hyundai-gray-700 text-sm font-medium active:bg-hyundai-gray-50 transition-colors"
             >

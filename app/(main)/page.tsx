@@ -33,7 +33,7 @@ export default async function HomePage() {
           </div>
           <div className="px-1 pb-6 pt-5">
             <h1 className="text-[34px] font-bold text-hyundai-gray-900 leading-tight tracking-tight">
-              지금 견적서
+              지금 받은 견적서
               <br />
               1분만에 검증하기
             </h1>
