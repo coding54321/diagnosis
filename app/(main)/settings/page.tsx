@@ -36,15 +36,6 @@ const SettingsPage: React.FC = () => {
           </div>
 
           <div>
-            <p className="text-sm font-bold text-hyundai-gray-900 px-1 mb-2">데이터</p>
-            <Card variant="default" padding="none">
-              <ToggleRow label="검증 내역 자동 저장" defaultValue={true} />
-              <div className="mx-5 border-b border-hyundai-gray-100" />
-              <ToggleRow label="익명 데이터 기여" defaultValue={true} />
-            </Card>
-          </div>
-
-          <div>
             <p className="text-sm font-bold text-hyundai-gray-900 px-1 mb-2">지원</p>
             <Card variant="default" padding="none">
               <MenuRow
