@@ -7,12 +7,10 @@ import { deleteVerificationHistory, fetchVerificationResult } from '@/lib/supaba
 import { toast } from 'sonner';
 import { Container } from '@/components/layout';
 import { Card } from '@/components/ui';
-import VerificationSummary from '@/components/verification/VerificationSummary';
 import EstimateCard from '@/components/verification/EstimateCard';
-import { formatDate } from '@/lib/utils';
-import { classifyShopType } from '@/lib/verification/shop-classifier';
+import { formatDate, formatPrice } from '@/lib/utils';
 import { copyLink, formatVerificationResultForShare, shareNative } from '@/lib/share';
-import type { VerificationHistory, VerificationResult, ItemVerification, ShopType, CostType } from '@/types';
+import type { VerificationHistory, VerificationResult, ItemVerification, CostType } from '@/types';
 
 interface HistoryDetailContentProps {
   history: VerificationHistory;
@@ -26,8 +24,10 @@ export default function HistoryDetailContent({ history }: HistoryDetailContentPr
   const [result, setResult] = useState<VerificationResult | null>(null);
   const [itemNames, setItemNames] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
-  const [shopType, setShopType] = useState<ShopType>('other');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const [displayShopName, setDisplayShopName] = useState(history.shopName || '');
+  const [registrationNumber, setRegistrationNumber] = useState('');
+  const [displayVehicleLabel, setDisplayVehicleLabel] = useState(history.vehicleLabel || '');
 
   useEffect(() => {
     const load = async () => {
@@ -97,13 +97,28 @@ export default function HistoryDetailContent({ history }: HistoryDetailContentPr
         const totalPartCostAverage = comparableItems.reduce((s, i) => s + (i.breakdown.partCost.average ?? 0), 0);
         const totalLaborCostAverage = comparableItems.reduce((s, i) => s + (i.breakdown.laborCost.average ?? 0), 0);
 
-        const dbShopType = dbResult.estimate?.shop_type;
         const estimateShopName = dbResult.estimate?.shop_name || history.shopName || '';
-        if (dbShopType && ['bluehands', 'autoq', 'gongimnara', 'speedmate', 'other'].includes(dbShopType)) {
-          setShopType(dbShopType as ShopType);
-        } else if (estimateShopName) {
-          setShopType(classifyShopType(estimateShopName));
+        setDisplayShopName(estimateShopName);
+        const estimateVehicle = dbResult.estimate?.vehicle;
+        if (estimateVehicle?.registration_number) {
+          setRegistrationNumber(estimateVehicle.registration_number);
         }
+        const vehicleLabel = [estimateVehicle?.manufacturer, estimateVehicle?.model, estimateVehicle?.variant]
+          .filter(Boolean)
+          .join(' ');
+        if (vehicleLabel) {
+          setDisplayVehicleLabel(vehicleLabel);
+        }
+
+        const rawShopType = dbResult.estimate?.shop_type;
+        const normalizedShopType =
+          rawShopType === 'bluehands' ||
+          rawShopType === 'autoq' ||
+          rawShopType === 'gongimnara' ||
+          rawShopType === 'speedmate' ||
+          rawShopType === 'other'
+            ? rawShopType
+            : 'other';
 
         setResult({
           estimateId: history.estimateId,
@@ -111,7 +126,7 @@ export default function HistoryDetailContent({ history }: HistoryDetailContentPr
           status: dbResult.result.status as VerificationResult['status'],
           items,
           confidence: dbResult.result.confidence || 0,
-          shopType: (dbShopType as ShopType) || classifyShopType(estimateShopName),
+          shopType: normalizedShopType,
           totalPartCost,
           totalLaborCost,
           totalPartCostAverage,
@@ -199,6 +214,9 @@ export default function HistoryDetailContent({ history }: HistoryDetailContentPr
     { key: 'review_needed', label: '확인필요', count: filterCounts.review_needed },
   ];
 
+  const totalItems = result ? result.items.length : itemCounts.appropriate + itemCounts.reviewNeeded;
+  const totalAmount = result?.totalAmount ?? history.totalAmount;
+
   if (isLoading) {
     return (
       <main className="min-h-screen bg-white">
@@ -225,7 +243,7 @@ export default function HistoryDetailContent({ history }: HistoryDetailContentPr
         {/* 헤더 영역 — 흰 배경 */}
         <div className="bg-white">
           <Container>
-            <div className="flex items-center pt-[env(safe-area-inset-top,0px)]">
+            <div className="flex items-center justify-between pt-[env(safe-area-inset-top,0px)]">
               <button
                 type="button"
                 onClick={() => router.back()}
@@ -234,41 +252,52 @@ export default function HistoryDetailContent({ history }: HistoryDetailContentPr
               >
                 <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
               </button>
+              <button
+                type="button"
+                onClick={handleShare}
+                className="h-8 w-8 inline-flex items-center justify-center rounded-full text-base leading-none text-hyundai-gray-600 active:bg-hyundai-gray-100"
+                aria-label="공유하기"
+              >
+                <Share2 className="w-4 h-4" strokeWidth={1.75} />
+              </button>
             </div>
             <div className="px-1 pt-2 pb-4">
               <h1 className="text-[22px] font-bold text-hyundai-gray-900 leading-tight tracking-tight">
                 검증 내역
               </h1>
-              <p className="text-sm text-hyundai-gray-500 mt-1">
-                {formatDate(history.date)}
-                {history.shopName && <span className="ml-1.5">· {history.shopName}</span>}
-              </p>
+              <div className="mt-3 rounded-xl border border-hyundai-gray-100 bg-hyundai-gray-50 px-4 py-3 space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <span className="text-xs font-medium text-hyundai-gray-400 shrink-0 pt-0.5">일시/정비소</span>
+                  <p className="text-sm text-hyundai-gray-700 text-right">
+                    {formatDate(history.date)}
+                    {displayShopName && <span className="ml-1.5">· {displayShopName}</span>}
+                  </p>
+                </div>
+                {(registrationNumber || displayVehicleLabel) && (
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="text-xs font-medium text-hyundai-gray-400 shrink-0 pt-0.5">차량</span>
+                    <p className="text-sm text-hyundai-gray-700 text-right">
+                      {registrationNumber && <span className="font-medium text-hyundai-gray-800">{registrationNumber}</span>}
+                      {registrationNumber && displayVehicleLabel && <span className="mx-1.5 text-hyundai-gray-300">·</span>}
+                      {displayVehicleLabel && <span>{displayVehicleLabel}</span>}
+                    </p>
+                  </div>
+                )}
+                <div className="flex items-start justify-between gap-3">
+                  <span className="text-xs font-medium text-hyundai-gray-400 shrink-0 pt-0.5">요약</span>
+                  <p className="text-sm text-hyundai-gray-800 text-right">
+                    <span>총 {totalItems}개 항목</span>
+                    <span className="mx-1.5 text-hyundai-gray-300">·</span>
+                    <span className="font-semibold text-hyundai-gray-900">{formatPrice(totalAmount)}</span>
+                  </p>
+                </div>
+              </div>
             </div>
           </Container>
         </div>
 
         <Container>
           <div className="pt-5 space-y-5">
-            {/* 검증 요약 */}
-            {result ? (
-              <VerificationSummary
-                totalAmount={result.totalAmount}
-                itemCounts={itemCounts}
-                shopType={result.shopType ?? shopType}
-                costSummary={{
-                  totalPartCost: result.totalPartCost ?? 0,
-                  totalLaborCost: result.totalLaborCost ?? 0,
-                  totalPartCostAverage: result.totalPartCostAverage ?? 0,
-                  totalLaborCostAverage: result.totalLaborCostAverage ?? 0,
-                }}
-              />
-            ) : (
-              <VerificationSummary
-                totalAmount={history.totalAmount}
-                itemCounts={itemCounts}
-              />
-            )}
-
             {/* 항목별 결과 */}
             {result && result.items.length > 0 && (
               <div>

@@ -3,9 +3,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CheckCircle2, AlertCircle, Check, ChevronRight, MapPin, ChevronDown, Pencil, Loader2, Trash2 } from 'lucide-react';
+import { AlertCircle, Check, ChevronRight, ChevronDown, Pencil, Loader2, Trash2 } from 'lucide-react';
 import { Container } from '@/components/layout';
-import { Badge, Input } from '@/components/ui';
+import { Input } from '@/components/ui';
 import {
   updateVehicleMileageAction,
   fetchVehicleByRegistrationNumber,
@@ -38,19 +38,6 @@ export type VehicleRow = {
   fuel_type: string;
   registration_number?: string | null;
   nickname?: string | null;
-};
-
-const statusConfig = {
-  appropriate: {
-    label: '적정',
-    variant: 'success' as const,
-    Icon: CheckCircle2,
-  },
-  review_needed: {
-    label: '확인필요',
-    variant: 'warning' as const,
-    Icon: AlertCircle,
-  },
 };
 
 export function VehicleTabContent({
@@ -591,8 +578,6 @@ export function VehicleTabContent({
             ) : (
               <div className="rounded-2xl bg-hyundai-gray-50 overflow-hidden">
                 {sortedHistory.map((item, index) => {
-                  const config = statusConfig[item.status];
-                  const StatusIcon = config.Icon;
                   return (
                     <React.Fragment key={item.id}>
                       {index > 0 && <div className="mx-5 border-b border-hyundai-gray-100" />}
@@ -602,10 +587,14 @@ export function VehicleTabContent({
                             <span className="text-xs text-hyundai-gray-400">
                               {formatHistoryDate(item.date)}
                             </span>
-                            <Badge variant={config.variant} size="sm" className="flex items-center gap-0.5">
-                              <StatusIcon className="w-2.5 h-2.5" />
-                              {config.label}
-                            </Badge>
+                            {item.shopName && (
+                              <>
+                                <span className="text-xs text-hyundai-gray-300">•</span>
+                                <span className="text-xs text-hyundai-gray-400 truncate">
+                                  {item.shopName}
+                                </span>
+                              </>
+                            )}
                           </div>
                           <div className="flex items-center justify-between gap-2">
                             <p className="text-sm font-medium text-hyundai-gray-900 flex-1 min-w-0 truncate">
@@ -615,12 +604,6 @@ export function VehicleTabContent({
                               {formatPrice(item.totalAmount)}
                             </p>
                           </div>
-                          {item.shopName && (
-                            <div className="flex items-center gap-1 mt-1">
-                              <MapPin className="w-3 h-3 text-hyundai-gray-300 shrink-0" strokeWidth={1.5} />
-                              <span className="text-xs text-hyundai-gray-400 truncate">{item.shopName}</span>
-                            </div>
-                          )}
                         </div>
                       </Link>
                     </React.Fragment>

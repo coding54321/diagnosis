@@ -33,6 +33,8 @@ export default async function HistoryDetailPage({ params }: HistoryDetailPagePro
     items: result.data.items,
     totalAmount: result.data.totalAmount,
     status: result.data.status as VerificationHistory['status'],
+    shopName: result.data.shopName,
+    vehicleLabel: result.data.vehicleLabel,
   };
 
   return <HistoryDetailContent history={history} />;

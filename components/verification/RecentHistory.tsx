@@ -3,8 +3,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CheckCircle2, AlertCircle, ChevronRight, Trash2 } from 'lucide-react';
-import { Card, Badge } from '@/components/ui';
+import { ChevronRight, Trash2 } from 'lucide-react';
+import { Card } from '@/components/ui';
 import { formatShortDate, formatPrice } from '@/lib/utils';
 import { deleteVerificationHistory } from '@/lib/supabase/actions';
 import { toast } from 'sonner';
@@ -14,20 +14,6 @@ export interface RecentHistoryProps {
   items: VerificationHistory[];
   maxItems?: number;
 }
-
-// 2단계 상태: 적정 / 확인필요
-const statusConfig = {
-  appropriate: {
-    label: '적정',
-    variant: 'success' as const,
-    Icon: CheckCircle2,
-  },
-  review_needed: {
-    label: '확인필요',
-    variant: 'warning' as const,
-    Icon: AlertCircle,
-  },
-};
 
 const RecentHistory: React.FC<RecentHistoryProps> = ({ items, maxItems = 3 }) => {
   const router = useRouter();
@@ -65,9 +51,6 @@ const RecentHistory: React.FC<RecentHistoryProps> = ({ items, maxItems = 3 }) =>
   return (
     <Card variant="default" padding="none">
       {displayItems.map((item, index) => {
-        const config = statusConfig[item.status];
-        const Icon = config.Icon;
-
         return (
           <div
             key={item.id}
@@ -83,10 +66,6 @@ const RecentHistory: React.FC<RecentHistoryProps> = ({ items, maxItems = 3 }) =>
                       <span className="text-xs text-hyundai-gray-400">
                         {formatShortDate(item.date)}
                       </span>
-                      <Badge variant={config.variant} size="sm" className="flex items-center gap-1">
-                        <Icon className="w-3 h-3" />
-                        {config.label}
-                      </Badge>
                     </div>
                     <p className="text-sm text-hyundai-gray-900 font-medium mb-0.5">
                       {item.items}

@@ -2,18 +2,11 @@ import React from 'react';
 import Link from 'next/link';
 import { Container } from '@/components/layout';
 import { fetchRecentHistory } from '@/lib/supabase/actions';
-import { ChevronRight, CheckCircle2, AlertCircle } from 'lucide-react';
-import { Badge } from '@/components/ui';
+import { ChevronRight } from 'lucide-react';
 import DirectInputButton from '@/components/verification/DirectInputButton';
 import AlbumPickerCard from '@/components/verification/AlbumPickerCard';
 import { formatPrice } from '@/lib/utils';
 import type { VerificationHistory } from '@/types';
-
-// 2단계 상태: 적정 / 확인필요
-const statusConfig = {
-  appropriate: { label: '적정', variant: 'success' as const, Icon: CheckCircle2 },
-  review_needed: { label: '확인필요', variant: 'warning' as const, Icon: AlertCircle },
-};
 
 export default async function HomePage() {
   const historyResult = await fetchRecentHistory(3);
@@ -80,31 +73,36 @@ export default async function HomePage() {
               </div>
               <div className="rounded-2xl bg-hyundai-gray-50 overflow-hidden">
                 {recentHistory.slice(0, 2).map((item, index) => {
-                  const config = statusConfig[item.status];
-                  const StatusIcon = config.Icon;
                   return (
                     <React.Fragment key={item.id}>
                       {index > 0 && <div className="mx-5 border-b border-hyundai-gray-100" />}
                       <Link href={`/history/${item.id}`}>
-                        <div className="flex items-center justify-between px-5 py-3.5 active:bg-hyundai-gray-100 transition-colors">
-                          <div className="flex-1 min-w-0 mr-3">
-                            <p className="text-sm font-medium text-hyundai-gray-900 truncate">{item.items}</p>
-                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                              <span className="text-xs text-hyundai-gray-400">{formatHistoryDate(item.date)}</span>
-                              <Badge variant={config.variant} size="sm" className="flex items-center gap-0.5">
-                                <StatusIcon className="w-2.5 h-2.5" />
-                                {config.label}
-                              </Badge>
-                              {item.vehicleLabel && (
+                        <div className="px-5 py-3.5 active:bg-hyundai-gray-100 transition-colors">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap min-w-0">
+                            <span className="text-xs text-hyundai-gray-400">{formatHistoryDate(item.date)}</span>
+                            {item.shopName && (
+                              <>
+                                <span className="text-xs text-hyundai-gray-300">•</span>
+                                <span className="text-xs text-hyundai-gray-400 truncate">
+                                  {item.shopName}
+                                </span>
+                              </>
+                            )}
+                            {item.vehicleLabel && (
+                              <>
+                                <span className="text-xs text-hyundai-gray-300">•</span>
                                 <span className="text-xs text-hyundai-gray-500 truncate">
                                   {item.vehicleLabel}
                                 </span>
-                              )}
-                            </div>
+                              </>
+                            )}
                           </div>
-                          <p className="text-sm font-bold text-hyundai-gray-900 shrink-0">
-                            {formatPrice(item.totalAmount)}
-                          </p>
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-sm font-medium text-hyundai-gray-900 flex-1 min-w-0 truncate">{item.items}</p>
+                            <p className="text-sm font-bold text-hyundai-gray-900 shrink-0">
+                              {formatPrice(item.totalAmount)}
+                            </p>
+                          </div>
                         </div>
                       </Link>
                     </React.Fragment>
@@ -121,7 +119,8 @@ export default async function HomePage() {
 
 function formatHistoryDate(date: Date): string {
   const d = new Date(date);
+  const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
-  return `${m}.${day}`;
+  return `${y}.${m}.${day}`;
 }

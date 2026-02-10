@@ -376,6 +376,8 @@ export async function getVerificationHistoryById(
   items: string;
   totalAmount: number;
   status: string;
+  shopName?: string;
+  vehicleLabel?: string;
 } | null> {
   if (!userId || userId === '' || !id) {
     return null;
@@ -401,6 +403,8 @@ export async function getVerificationHistoryById(
     items: data.items_summary || '',
     totalAmount: data.total_amount || 0,
     status: data.status || 'appropriate',
+    shopName: data.shop_name || undefined,
+    vehicleLabel: [data.manufacturer, data.model, data.variant].filter(Boolean).join(' ') || undefined,
   };
 }
 
@@ -636,6 +640,7 @@ export async function getVerificationResult(
       manufacturer?: string;
       year?: number;
       fuel_type?: string;
+      registration_number?: string;
     };
   };
 } | null> {
@@ -673,6 +678,7 @@ export async function getVerificationResult(
       shop_name,
       shop_type,
       vehicles (
+        registration_number,
         model,
         variant,
         mileage,
@@ -701,6 +707,7 @@ export async function getVerificationResult(
         manufacturer: String(vehicle.manufacturer ?? ''),
         year: Number(vehicle.year ?? new Date().getFullYear()),
         fuel_type: String(vehicle.fuel_type ?? ''),
+        registration_number: vehicle.registration_number != null ? String(vehicle.registration_number) : undefined,
       } : undefined,
     } : undefined,
   };

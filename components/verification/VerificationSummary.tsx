@@ -26,6 +26,11 @@ export interface VerificationSummaryProps {
   vehicleConditions?: VehicleConditions;
   shopType?: ShopType;
   costSummary?: CostSummary;
+  metaInfo?: {
+    shopName?: string;
+    vehicleLabel?: string;
+  };
+  showStatusCounts?: boolean;
 }
 
 const VerificationSummary: React.FC<VerificationSummaryProps> = ({
@@ -33,6 +38,8 @@ const VerificationSummary: React.FC<VerificationSummaryProps> = ({
   itemCounts,
   vehicleConditions,
   shopType,
+  metaInfo,
+  showStatusCounts = true,
 }) => {
   const totalItems = itemCounts.appropriate + itemCounts.reviewNeeded;
 
@@ -47,6 +54,7 @@ const VerificationSummary: React.FC<VerificationSummaryProps> = ({
   if (vehicleConditions?.mileage) {
     conditions.push(`${vehicleConditions.mileage.toLocaleString('ko-KR')}km`);
   }
+  const metaTexts = [metaInfo?.shopName, metaInfo?.vehicleLabel].filter(Boolean) as string[];
 
   return (
     <div className="bg-white rounded-2xl border border-hyundai-gray-100 px-5 py-5">
@@ -62,30 +70,42 @@ const VerificationSummary: React.FC<VerificationSummaryProps> = ({
           {shopType && <span className="ml-1">· {getShopTypeLabel(shopType)}</span>}
         </p>
       )}
+      {metaTexts.length > 0 && (
+        <p className="text-xs text-hyundai-gray-500 mb-3">
+          {metaTexts.map((meta, idx) => (
+            <React.Fragment key={meta}>
+              <span className={idx === 0 ? 'text-hyundai-gray-700 font-medium' : ''}>{meta}</span>
+              {idx < metaTexts.length - 1 && <span className="mx-1">·</span>}
+            </React.Fragment>
+          ))}
+        </p>
+      )}
 
       {/* 총 금액 · 항목 수 */}
       <p className="text-2xl font-bold text-hyundai-gray-900 tracking-tight">
         {formatPrice(totalAmount)}
       </p>
-      <p className="text-xs text-hyundai-gray-400 mt-0.5 mb-4">
+      <p className={`text-xs text-hyundai-gray-400 mt-0.5 ${showStatusCounts ? 'mb-4' : 'mb-0'}`}>
         총 {totalItems}개 항목
       </p>
 
       {/* 적정 / 확인필요 */}
-      <div className="flex gap-1.5">
-        {itemCounts.appropriate > 0 && (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-green-50 text-[11px] font-medium text-green-600">
-            <CheckCircle2 className="w-3 h-3" />
-            적정 {itemCounts.appropriate}
-          </span>
-        )}
-        {itemCounts.reviewNeeded > 0 && (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-[11px] font-medium text-amber-600">
-            <AlertCircle className="w-3 h-3" />
-            확인필요 {itemCounts.reviewNeeded}
-          </span>
-        )}
-      </div>
+      {showStatusCounts && (
+        <div className="flex gap-1.5">
+          {itemCounts.appropriate > 0 && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-green-50 text-[11px] font-medium text-green-600">
+              <CheckCircle2 className="w-3 h-3" />
+              적정 {itemCounts.appropriate}
+            </span>
+          )}
+          {itemCounts.reviewNeeded > 0 && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-[11px] font-medium text-amber-600">
+              <AlertCircle className="w-3 h-3" />
+              확인필요 {itemCounts.reviewNeeded}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 };
