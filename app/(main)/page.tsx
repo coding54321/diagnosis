@@ -24,7 +24,7 @@ export default async function HomePage() {
     : [];
 
   return (
-    <main className="min-h-[100dvh] bg-white pt-[env(safe-area-inset-top,0px)]">
+    <main className="flex-1 bg-white pt-[env(safe-area-inset-top,0px)]">
       <Container>
         <div className="pb-8">
           {/* 브랜드 + 히어로 카피 */}

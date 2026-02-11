@@ -3,9 +3,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, Check, ChevronRight, ChevronDown, Pencil, Loader2, Trash2 } from 'lucide-react';
+import { AlertCircle, Check, ChevronRight, ChevronDown, Pencil, Loader2, Trash2, Plus } from 'lucide-react';
 import { Container } from '@/components/layout';
 import { Input } from '@/components/ui';
+import VehicleAddSheet from './VehicleAddSheet';
 import {
   updateVehicleMileageAction,
   fetchVehicleByRegistrationNumber,
@@ -58,6 +59,7 @@ export function VehicleTabContent({
   const [sortBy, setSortBy] = useState<HistorySortBy>('latest');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showAddSheet, setShowAddSheet] = useState(false);
 
   // --- 인라인 등록 폼 state ---
   const [regStep, setRegStep] = useState<RegStep>('input');
@@ -214,7 +216,7 @@ export function VehicleTabContent({
   // ============================
   if (vehicles.length === 0) {
     return (
-      <main className="min-h-[calc(100vh-52px)] bg-white">
+      <main className="flex-1 bg-white">
         <Container>
           <div className="pt-8 pb-6 px-1">
             <h2 className="text-[22px] font-bold text-hyundai-gray-900 leading-tight">차량을 등록해주세요</h2>
@@ -226,7 +228,7 @@ export function VehicleTabContent({
             {regStep === 'input' && (
               <div className="space-y-3">
                 <label className="block">
-                  <span className="text-sm font-medium text-hyundai-gray-700 mb-2 block">차량등록번호(번호판)</span>
+                  <span className="text-sm font-medium text-hyundai-gray-700 mb-2 block">차량번호(번호판)</span>
                   <Input
                     placeholder="예: 12가3456"
                     value={vehicleNumber}
@@ -424,7 +426,7 @@ export function VehicleTabContent({
         </div>
       )}
 
-      <main className="min-h-[calc(100vh-52px)] bg-white">
+      <main className="flex-1 bg-white">
         <Container>
           <div className="pb-8">
           {/* 상단: 차량 선택 드롭다운 */}
@@ -446,13 +448,14 @@ export function VehicleTabContent({
                 </select>
                 <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-hyundai-gray-400 pointer-events-none" strokeWidth={2} />
               </div>
-              <Link
-                href="/vehicle/edit"
+              <button
+                type="button"
+                onClick={() => setShowAddSheet(true)}
                 className="text-xs text-hyundai-gray-400 font-medium shrink-0 flex items-center gap-0.5"
               >
                 차량 추가
-                <ChevronRight className="w-3.5 h-3.5" />
-              </Link>
+                <Plus className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
 
@@ -615,6 +618,7 @@ export function VehicleTabContent({
         </div>
       </Container>
     </main>
+    <VehicleAddSheet isOpen={showAddSheet} onClose={() => setShowAddSheet(false)} />
     </>
   );
 }

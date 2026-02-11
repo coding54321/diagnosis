@@ -219,7 +219,7 @@ export default function HistoryDetailContent({ history }: HistoryDetailContentPr
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-white">
+      <main className="flex-1 bg-white">
         <div className="flex items-center px-4 pt-[env(safe-area-inset-top,0px)]">
           <button
             type="button"
@@ -239,7 +239,7 @@ export default function HistoryDetailContent({ history }: HistoryDetailContentPr
 
   return (
     <>
-      <main className="min-h-screen bg-hyundai-gray-50 pb-32">
+      <main className="flex-1 bg-hyundai-gray-50 pb-32">
         {/* 헤더 영역 — 흰 배경 */}
         <div className="bg-white">
           <Container>

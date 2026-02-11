@@ -76,11 +76,11 @@ export default async function MainLayout({
   const initialUser = await getCurrentUser();
 
   return (
-    <>
+    <div className="flex flex-col min-h-[100dvh]">
       <AuthProvider initialUser={initialUser}>
-        {children}
+        <div className="flex-1 flex flex-col">{children}</div>
       </AuthProvider>
       <ConditionalBottomNav items={navItems} />
-    </>
+    </div>
   );
 }

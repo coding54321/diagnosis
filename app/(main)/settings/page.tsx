@@ -7,7 +7,7 @@ import { Card } from '@/components/ui';
 
 const SettingsPage: React.FC = () => {
   return (
-    <main className="min-h-[calc(100vh-52px)] bg-hyundai-gray-50">
+    <main className="flex-1 bg-hyundai-gray-50">
       <div className="bg-white pb-1">
         <Container>
           <div className="pt-6 pb-5 px-1">
