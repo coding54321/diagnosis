@@ -1,0 +1,7 @@
+job_id,job_name_raw,job_name_norm,system_type,component_group,position_main,position_side,quantity_type,work_type,note
+BH_0020,아웃사이드리어뷰미러어셈블리(LH),아웃사이드 리어 뷰 미러 어셈블리 LH,BODY,MIRROR,SIDE,LH,1EA,REPLACE,블루핸즈 표 20번
+BH_0021,아웃사이드리어뷰미러어셈블리(RH),아웃사이드 리어 뷰 미러 어셈블리 RH,BODY,MIRROR,SIDE,RH,1EA,REPLACE,블루핸즈 표 21번
+BH_0022,아웃사이드 리어 뷰 리모트 컨트롤 미러 어셈블리,아웃사이드 리어 뷰 리모트 컨트롤 미러 어셈블리,BODY,MIRROR,SIDE,BOTH,1EA,REPLACE,전동 사이드미러 완조립
+BH_0023,아웃사이드 리어 뷰 리모트 컨트롤 미러(RH),아웃사이드 리어 뷰 리모트 컨트롤 미러 RH,BODY,MIRROR,SIDE,RH,1EA,REPLACE,전동 사이드미러 우측
+BH_0024,아웃사이드 리어 뷰 미러 및 홀더 어셈블리 (LH),아웃사이드 리어 뷰 미러 및 홀더 어셈블리 LH,BODY,MIRROR,SIDE,LH,1EA,REPLACE,홀더 포함 운전석
+BH_0025,아웃사이드 리어 뷰 미러 및 홀더 어셈블리 (RH),아웃사이드 리어 뷰 미러 및 홀더 어셈블리 RH,BODY,MIRROR,SIDE,RH,1EA,REPLACE,홀더 포함 조수석

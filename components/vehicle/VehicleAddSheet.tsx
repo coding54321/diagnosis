@@ -8,6 +8,7 @@ import {
   saveVehicle,
   fetchVehicleByRegistrationNumber,
   verifyVehicleOwnerAction,
+  findExistingUserVehicleByRegistrationNumber,
 } from '@/lib/supabase/actions';
 
 type RegStep = 'input' | 'checking' | 'owner' | 'confirmed';
@@ -120,6 +121,18 @@ export default function VehicleAddSheet({ isOpen, onClose }: VehicleAddSheetProp
     if (finalMileage <= 0) { setCheckError('주행거리를 입력해 주세요.'); return; }
     setIsSubmitting(true);
     try {
+      const normalizedNumber = vehicleNumber.replace(/\s|-/g, '').trim();
+      if (normalizedNumber) {
+        const existing = await findExistingUserVehicleByRegistrationNumber(normalizedNumber);
+        if (existing.success && existing.data) {
+          alert('이 번호 차량은 이미 추가되어 있어요. 해당 차량으로 이동할게요.');
+          onClose();
+          router.push(`/vehicle?vehicleId=${existing.data.id}`);
+          router.refresh();
+          return;
+        }
+      }
+
       const result = await saveVehicle(
         {
           manufacturer: vehicleInfo.manufacturer,

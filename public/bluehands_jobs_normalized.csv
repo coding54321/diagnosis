@@ -1,0 +1,161 @@
+﻿job_id,job_name_raw,job_name_norm,system_type,area,component_group,position_side,axle_or_row,quantity_type,work_type,labor_category
+BH_0001,워터펌프어셈블리 및 가스켓(텐션조정포함),워터 펌프 어셈블리 및 가스켓 (텐션조정포함),ENGINE,ENGINE_BAY,PUMP,N/A,N/A,N/A,ADJUST,FUNCTIONAL
+BH_0002,라디에이터 어셈블리,라디에이터 어셈블리,ENGINE,ENGINE_BAY,RADIATOR,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0003,블로워 어셈블리,블로워 어셈블리,HVAC,UNDERBODY,HVAC,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0004,라디에이터 상부 호스,라디에이터 상부 호스,ENGINE,ENGINE_BAY,RADIATOR,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0005,라디에이터 하부 호스,라디에이터 하부 호스,ENGINE,ENGINE_BAY,RADIATOR,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0006,리어 머플러 어셈블리(LH),리어 머플러 어셈블리 (LH),EXHAUST,REAR,EXHAUST,LH,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0007,엔진 언더 커버(LH OR 한개),엔진 언더 커버 (LH OR 한개),ENGINE,ENGINE_BAY,N/A,LH,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0008,프론트 머드 가드,프론트 머드 가드,BODY,FRONT,N/A,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0009,연료 탱크 어셈블리,연료 탱크 어셈블리,FUEL,N/A,TANK,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0010,스로틀 바디 카본 청소,스로틀 바디 카본 청소,ENGINE,ENGINE_BAY,N/A,N/A,N/A,N/A,CLEANING,FUNCTIONAL
+BH_0011,클러치 릴리스 실린더 어셈블리,클러치 릴리스 실린더 어셈블리,ELECTRICAL,N/A,TRANSMISSION,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0012,파워 스티어링 오일 펌프 어셈블리,파워 스티어링 오일 펌프 어셈블리,STEERING,N/A,PUMP,N/A,N/A,N/A,REPLACE,MAINTENANCE
+BH_0013,파워 스티어링 오일 압력 호스 어셈블리,파워 스티어링 오일 압력 호스 어셈블리,STEERING,N/A,N/A,N/A,N/A,N/A,REPLACE,MAINTENANCE
+BH_0014,파워 스티어링 기어 및 링키지 어셈블리,파워 스티어링 기어 및 링키지 어셈블리,STEERING,N/A,N/A,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0015,파워 스티어링 및 링키지(크로스멤버 탈착후),파워 스티어링 및 링키지 (크로스멤버 탈착후),SUSPENSION,UNDERBODY,SUSP_ARM,N/A,N/A,N/A,REMOVE_INSTALL,FUNCTIONAL
+BH_0016,라디에이터 및 콘덴서,라디에이터 및 콘덴서,HVAC,ENGINE_BAY,RADIATOR,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0017,라디에이터 그릴 어셈블리,라디에이터 그릴 어셈블리,ENGINE,ENGINE_BAY,RADIATOR,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0018,프런트 휠 가드 어셈블리 (양쪽),프런트 휠 가드 어셈블리 (양쪽),BODY,N/A,TIRE_WHEEL,BOTH,N/A,BOTH_SIDE,REPLACE,FUNCTIONAL
+BH_0019,백 패널 몰딩 어셈블리,백 패널 몰딩 어셈블리,BODY,N/A,N/A,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0020,아웃사이드리어뷰미러어셈블리(LH),아웃사이드 리어 뷰미러어셈블리 (LH),BODY,REAR,MIRROR,LH,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0021,아웃사이드리어뷰미러어셈블리(RH),아웃사이드 리어 뷰미러어셈블리 (RH),BODY,REAR,MIRROR,RH,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0022,아웃사이드 리어 뷰 리모트 컨트롤 미러 어셈블리,아웃사이드 리어 뷰 리모트 컨트롤 미러 어셈블리,BODY,REAR,MIRROR,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0023,아웃사이드 리어 뷰 리모트 컨트롤 미러(RH),아웃사이드 리어 뷰 리모트 컨트롤 미러 (RH),BODY,REAR,MIRROR,RH,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0024,아웃사이드 리어 뷰 미러 및 홀더 어셈블리 (LH),아웃사이드 리어 뷰 미러 및 홀더 어셈블리 (LH),BODY,REAR,MIRROR,LH,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0025,아웃사이드 리어 뷰 미러 및 홀더 어셈블리 (RH),아웃사이드 리어 뷰 미러 및 홀더 어셈블리 (RH),BODY,REAR,MIRROR,RH,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0026,헤드 램프 어셈블리(LH),헤드 램프 어셈블리 (LH),ELECTRICAL,N/A,LAMP,LH,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0027,헤드 램프 어셈블리 (양쪽),헤드 램프 어셈블리 (양쪽),ELECTRICAL,N/A,LAMP,BOTH,N/A,BOTH_SIDE,REPLACE,FUNCTIONAL
+BH_0028,헤드 램프 어셈블리(RH),헤드 램프 어셈블리 (RH),ELECTRICAL,N/A,LAMP,RH,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0029,프론트포그램프어셈블리 (LH),프론트 포그 램프어셈블리 (LH),ELECTRICAL,FRONT,LAMP,LH,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0030,프론트 포그 램프 어셈블리 (양쪽),프론트 포그 램프 어셈블리 (양쪽),ELECTRICAL,FRONT,LAMP,BOTH,N/A,BOTH_SIDE,REPLACE,FUNCTIONAL
+BH_0031,프론트포그램프어셈블리 (RH),프론트 포그 램프어셈블리 (RH),ELECTRICAL,FRONT,LAMP,RH,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0032,리어컴비네이션램프어셈블리 (LH),리어 콤비네이션램프어셈블리 (LH),ELECTRICAL,REAR,LAMP,LH,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0033,리어 콤비네이션 램프 어셈블리 (양쪽),리어 콤비네이션 램프 어셈블리 (양쪽),ELECTRICAL,REAR,LAMP,BOTH,N/A,BOTH_SIDE,REPLACE,FUNCTIONAL
+BH_0034,리어컴비네이션램프어셈블리 (RH),리어 콤비네이션램프어셈블리 (RH),ELECTRICAL,REAR,LAMP,RH,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0035,리어컴비네이션램프어셈블리 (LH),리어 콤비네이션램프어셈블리 (LH),ELECTRICAL,REAR,LAMP,LH,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0036,리어 콤비네이션 인사이드 램프 어셈블리 (양쪽),리어 콤비네이션 인사이드 램프 어셈블리 (양쪽),ELECTRICAL,REAR,LAMP,BOTH,N/A,BOTH_SIDE,REPLACE,FUNCTIONAL
+BH_0037,리어컴비네이션아웃사이드램프어셈블리 (RH),리어 콤비네이션아웃사이드램프어셈블리 (RH),ELECTRICAL,REAR,LAMP,RH,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0038,클락 스프링 어셈블리(에어백 포함),클락 스프링 어셈블리 (에어백 포함),ELECTRICAL,N/A,AIRBAG,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0039,스톱 램프 스위치 어셈블리,스톱 램프 스위치 어셈블리,ELECTRICAL,N/A,LAMP,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0040,밧데리-트랜스미터,밧데리-트랜스미터,ELECTRICAL,N/A,BATTERY,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0041,PIC TX 어셈블리,PIC TX 어셈블리,ELECTRICAL,N/A,N/A,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0042,에어백 컨트롤 모듈,에어백 컨트롤 모듈,ELECTRICAL,N/A,AIRBAG,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0043,혼 어셈블리 (LH),혼 어셈블리 (LH),ELECTRICAL,N/A,N/A,LH,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0044,콘덴서 어셈블리 (**),콘덴서 어셈블리 (**),HVAC,N/A,CONDENSER,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0045,컴프레셔 어셈블리(**),컴프레셔 어셈블리 (**),HVAC,N/A,HVAC,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0046,디스차지 호스 및 O-링(**),디스차지 호스 및 O-링 (**),HVAC,N/A,N/A,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0047,윈드실드 와셔 모터 및 펌프 어셈블리,윈드실드 와셔 모터 및 펌프 어셈블리,ELECTRICAL,N/A,PUMP,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0048,윈드실드 와셔 리저버 어셈블리,윈드실드 와셔 리저버 어셈블리,ELECTRICAL,N/A,GLASS,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0049,리어쇼크업소버어셈블리(LH),리어 쇼크 업소버 어셈블리 (LH),SUSPENSION,REAR,SUSP_ARM,LH,REAR_AXLE,N/A,REPLACE,FUNCTIONAL
+BH_0050,리어쇼크업소버어셈블리(RH),리어 쇼크 업소버 어셈블리 (RH),SUSPENSION,REAR,SUSP_ARM,RH,REAR_AXLE,N/A,REPLACE,FUNCTIONAL
+BH_0051,에어컨 배출 및 충전,에어컨 배출 및 충전,HVAC,N/A,HVAC,N/A,N/A,N/A,REFILL,FUNCTIONAL
+BH_0052,"에어컨 가스 충전(신냉매,완충)","에어컨 가스 충전 (신냉매, 완충)",HVAC,N/A,HVAC,N/A,N/A,N/A,REFILL,MAINTENANCE
+BH_0053,수동 변속기 오일,수동 변속기 오일,ELECTRICAL,N/A,N/A,N/A,N/A,N/A,REPLACE,MAINTENANCE
+BH_0054,전구,전구,ELECTRICAL,N/A,N/A,N/A,N/A,N/A,REPLACE,MAINTENANCE
+BH_0055,해드 램프 벌브 (한쪽),해드 램프 벌브 (한쪽),ELECTRICAL,N/A,LAMP,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0056,스파크 플러그 어셈블리 (전체),스파크 플러그 어셈블리 (전체),ENGINE,N/A,N/A,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0057,엔진 오일/휠터,엔진 오일 / 필터,ENGINE,ENGINE_BAY,N/A,N/A,N/A,N/A,REPLACE,MAINTENANCE
+BH_0058,엔진오일/필터/에어크리너,엔진 오일 / 필터 / 에어 클리너,ENGINE,ENGINE_BAY,N/A,N/A,N/A,N/A,REPLACE,MAINTENANCE
+BH_0059,부동액 (냉각수),부동액 (냉각수),ELECTRICAL,N/A,N/A,N/A,N/A,N/A,REPLACE,MAINTENANCE
+BH_0060,에어 클리너 필터,에어 클리너 필터,ELECTRICAL,N/A,N/A,N/A,N/A,N/A,REPLACE,MAINTENANCE
+BH_0061,LPI 필터,LPI 필터,FUEL,N/A,N/A,N/A,N/A,N/A,REPLACE,MAINTENANCE
+BH_0062,베터리 어셈블리,베터리 어셈블리,ELECTRICAL,N/A,N/A,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0063,오토 트랜스액슬 오일,오토 트랜스액슬 오일,ELECTRICAL,UNDERBODY,SUSP_ARM,N/A,N/A,N/A,REPLACE,MAINTENANCE
+BH_0064,오토미션 오일 (장비 사용),오토미션 오일 (장비 사용),ELECTRICAL,N/A,N/A,N/A,N/A,N/A,REPLACE,MAINTENANCE
+BH_0065,프론트브레이크디스크(LH),프론트 브레이크 디스크 (LH),BRAKE,FRONT,BRAKE_DISC,LH,FRONT_AXLE,N/A,REPLACE,FUNCTIONAL
+BH_0066,프론트 브레이크 디스크(양쪽),프론트 브레이크 디스크 (양쪽),BRAKE,FRONT,BRAKE_DISC,BOTH,FRONT_AXLE,BOTH_SIDE,REPLACE,FUNCTIONAL
+BH_0067,프론트브레이크디스크(RH),프론트 브레이크 디스크 (RH),BRAKE,FRONT,BRAKE_DISC,RH,FRONT_AXLE,N/A,REPLACE,FUNCTIONAL
+BH_0068,파워 스티어링 오일 및 공기빼기,파워 스티어링 오일 및 공기빼기,STEERING,N/A,N/A,N/A,N/A,N/A,REPLACE,MAINTENANCE
+BH_0069,파워 스티어링 오일 (장비사용),파워 스티어링 오일 (장비사용),STEERING,N/A,N/A,N/A,N/A,N/A,REPLACE,MAINTENANCE
+BH_0070,프론트 디스크 브레이크 패드 키트(LH),프론트 디스크 브레이크 패드 키트 (LH),BRAKE,FRONT,BRAKE_PAD,LH,FRONT_AXLE,N/A,REPLACE,FUNCTIONAL
+BH_0071,프론트 디스크 브레이크 패드 키드(양쪽),프론트 디스크 브레이크 패드 키트 (양쪽),BRAKE,FRONT,BRAKE_PAD,BOTH,FRONT_AXLE,BOTH_SIDE,REPLACE,FUNCTIONAL
+BH_0072,리어 디스크브레이크패드 어셈블리 (양쪽),리어 디스크 브레이크 패드 어셈블리 (양쪽),BRAKE,REAR,BRAKE_PAD,BOTH,REAR_AXLE,BOTH_SIDE,REPLACE,FUNCTIONAL
+BH_0073,브레이크 오일 및 공기 빼기,브레이크 오일 및 공기 빼기,BRAKE,N/A,N/A,N/A,N/A,N/A,REPLACE,MAINTENANCE
+BH_0074,에어컨휠터,에어컨 필터,HVAC,N/A,HVAC,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0075,연료 필러 도어 어셈블리,연료 필러 도어 어셈블리,FUEL,SIDE,DOOR,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0076,휠 밸런스(2휠),휠 밸런스 (2휠),SUSPENSION,N/A,TIRE_WHEEL,N/A,N/A,2EA,REPLACE,MAINTENANCE
+BH_0077,휠 얼라인먼트 조정(2휠),휠 얼라인먼트 조정 (2휠),SUSPENSION,N/A,TIRE_WHEEL,N/A,N/A,2EA,ADJUST,MAINTENANCE
+BH_0078,휠 얼라인먼트 조정(4휠),휠 얼라인먼트 조정 (4휠),SUSPENSION,N/A,TIRE_WHEEL,N/A,N/A,4EA,ADJUST,MAINTENANCE
+BH_0079,휠 얼라인먼트 인스펙션,휠 얼라인먼트 인스펙션,SUSPENSION,N/A,TIRE_WHEEL,N/A,N/A,N/A,INSPECTION,MAINTENANCE
+BH_0080,타이어 펑크 수리,타이어 펑크 수리,SUSPENSION,N/A,TIRE_WHEEL,N/A,N/A,N/A,REPAIR,MAINTENANCE
+BH_0081,타이어 및 휠 어셈블리 (1휠),타이어 및 휠 어셈블리 (1휠),SUSPENSION,N/A,TIRE_WHEEL,N/A,N/A,1EA,REPLACE,FUNCTIONAL
+BH_0082,타이어 어셈블리 및 휠 어셈블리 (2휠),타이어 어셈블리 및 휠 어셈블리 (2휠),SUSPENSION,N/A,TIRE_WHEEL,N/A,N/A,2EA,REPLACE,FUNCTIONAL
+BH_0083,후드 래취 어셈블리,후드 래취 어셈블리,BODY,N/A,HOOD,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0084,프론트 도어 래취 어셈블리 (LH),프론트 도어 래취 어셈블리 (LH),BODY,FRONT,DOOR,LH,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0085,프론트 도어 인사이드 핸들 어셈블리,프론트 도어 인사이드 핸들 어셈블리,BODY,FRONT,DOOR,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0086,프론트 도어 아웃트사이드 핸들 어셈블리 (양쪽),프론트 도어 아웃트사이드 핸들 어셈블리 (양쪽),BODY,FRONT,DOOR,BOTH,N/A,BOTH_SIDE,REPLACE,FUNCTIONAL
+BH_0087,리어 도어 아웃사이드 핸들 어셈블리,리어 도어 아웃사이드 핸들 어셈블리,BODY,REAR,DOOR,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0088,메인 크래쉬 패드 어셈블리,메인 크래쉬 패드 어셈블리,BODY,INTERIOR,N/A,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0089,리어 패키지 트레이 트림 어셈블리,리어 패키지 트레이 트림 어셈블리,BODY,INTERIOR,N/A,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0090,리어 트랜스버스 트림 어셈블리,리어 트랜스버스 트림 어셈블리,BODY,INTERIOR,N/A,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0091,카울 탑 커버 및 패드 어셈블리,카울 탑 커버 및 패드 어셈블리,BODY,N/A,N/A,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0092,프론트 액슬 너클(LH),프론트 액슬 너클 (LH),SUSPENSION,UNDERBODY,SUSP_ARM,LH,FRONT_AXLE,N/A,REPLACE,FUNCTIONAL
+BH_0093,프론트액슬너클(양쪽),프론트 액슬 너클 (양쪽),SUSPENSION,UNDERBODY,SUSP_ARM,BOTH,FRONT_AXLE,BOTH_SIDE,REPLACE,FUNCTIONAL
+BH_0094,프론트 액슬 너클(RH),프론트 액슬 너클 (RH),SUSPENSION,UNDERBODY,SUSP_ARM,RH,FRONT_AXLE,N/A,REPLACE,FUNCTIONAL
+BH_0095,로워 암 어셈블리 (LH),로워 암 어셈블리 (LH),SUSPENSION,UNDERBODY,SUSP_ARM,LH,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0096,로워 암 어셈블리 (양쪽),로워 암 어셈블리 (양쪽),SUSPENSION,UNDERBODY,SUSP_ARM,BOTH,N/A,BOTH_SIDE,REPLACE,FUNCTIONAL
+BH_0097,로워 암 어셈블리 (RH),로워 암 어셈블리 (RH),SUSPENSION,UNDERBODY,SUSP_ARM,RH,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0098,스트러트 인슐레이터 어셈블리 (LH),스트러트 인슐레이터 어셈블리 (LH),SUSPENSION,UNDERBODY,SUSP_ARM,LH,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0099,스트러트 인슐레이터 어셈블리 (RH),스트러트 인슐레이터 어셈블리 (RH),SUSPENSION,UNDERBODY,SUSP_ARM,RH,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0100,스트러트 어셈블리,스트러트 어셈블리,SUSPENSION,UNDERBODY,SUSP_ARM,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0101,스트러트 어셈블리 (양쪽),스트러트 어셈블리 (양쪽),SUSPENSION,UNDERBODY,SUSP_ARM,BOTH,N/A,BOTH_SIDE,REPLACE,FUNCTIONAL
+BH_0102,"스트러트 어셈블리(RH,프론트쇽업소버)","스트러트 어셈블리 (RH, 프론트쇽업소버)",SUSPENSION,UNDERBODY,SUSP_ARM,RH,FRONT_AXLE,N/A,REPLACE,FUNCTIONAL
+BH_0103,스테이빌라이저 바,스테이빌라이저 바,SUSPENSION,UNDERBODY,SUSP_ARM,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0104,스테이빌라이저 바 부싱(양쪽),스테이빌라이저 바 부싱 (양쪽),SUSPENSION,UNDERBODY,SUSP_ARM,BOTH,N/A,BOTH_SIDE,REPLACE,FUNCTIONAL
+BH_0105,스테이빌라이저링크어셈블리 (LH),스테이빌라이저 링크 어셈블리 (LH),SUSPENSION,UNDERBODY,SUSP_ARM,LH,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0106,스테이빌라이저 링크 어셈블리 (양쪽),스테이빌라이저 링크 어셈블리 (양쪽),SUSPENSION,UNDERBODY,SUSP_ARM,BOTH,N/A,BOTH_SIDE,REPLACE,FUNCTIONAL
+BH_0107,스테이빌라이저링크어셈블리 (RH),스테이빌라이저 링크 어셈블리 (RH),SUSPENSION,UNDERBODY,SUSP_ARM,RH,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0108,리어 크로스멤버 컴플리트,리어 크로스멤버 컴플리트,SUSPENSION,UNDERBODY,SUSP_ARM,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0109,크로스멤버 어셈블리,크로스멤버 어셈블리,SUSPENSION,UNDERBODY,SUSP_ARM,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0110,크로스멤버 어셈블리(엔진미장착상태),크로스멤버 어셈블리 (엔진미장착상태),SUSPENSION,ENGINE_BAY,SUSP_ARM,N/A,N/A,N/A,REPLACE,FUNCTIONAL
+BH_0111,프론트 범퍼 오버홀,프론트 범퍼 오버홀,BODY,FRONT,BUMPER,N/A,N/A,N/A,OVERHAUL,BODY_PAINT
+BH_0112,"휀더패널어셈블리(LH,범퍼탈부착미포함)","휀더 패널 어셈블리 (LH, 범퍼탈부착미포함)",BODY,SIDE,BUMPER,LH,N/A,N/A,REPAIR,BODY_PAINT
+BH_0113,"쿼터 외측 패널 어셈블리(RH,탈부착 미포함)","쿼터 외측 패널 어셈블리 (RH, 탈부착 미포함)",BODY,N/A,N/A,RH,N/A,N/A,REPAIR,BODY_PAINT
+BH_0114,"라디에이터서포트패널어셈블리(범퍼,라디에이터,콘덴셔 미포함)","라디에이터 서포트 패널 어셈블리 (범퍼, 라디에이터, 콘덴셔 미포함)",ENGINE,ENGINE_BAY,BUMPER,N/A,N/A,N/A,REPAIR,BODY_PAINT
+BH_0115,후드 판넬 어셈블리,후드 판넬 어셈블리,BODY,N/A,HOOD,N/A,N/A,N/A,REPAIR,BODY_PAINT
+BH_0116,크로스멤버 어셈블리,크로스멤버 어셈블리,SUSPENSION,UNDERBODY,SUSP_ARM,N/A,N/A,N/A,REPAIR,BODY_PAINT
+BH_0117,엔진 어셈블리(탈부착),엔진 어셈블리 (탈부착),ENGINE,ENGINE_BAY,N/A,N/A,N/A,N/A,REPAIR,BODY_PAINT
+BH_0118,루프 패널(탈부착 미포함),루프 패널 (탈부착 미포함),BODY,ROOF,N/A,N/A,N/A,N/A,REPAIR,BODY_PAINT
+BH_0119,선루프 어셈블리,선루프 어셈블리,BODY,ROOF,N/A,N/A,N/A,N/A,REPAIR,BODY_PAINT
+BH_0120,헤드라이닝 어셈블리,헤드라이닝 어셈블리,BODY,INTERIOR,N/A,N/A,N/A,N/A,REPAIR,BODY_PAINT
+BH_0121,테일게이트 판넬 어셈블리,테일게이트 판넬 어셈블리,BODY,N/A,TRUNK,N/A,N/A,N/A,REPAIR,BODY_PAINT
+BH_0122,트렁크 리드 패널(사상작업포함),트렁크 리드 패널 (사상작업포함),BODY,N/A,TRUNK,N/A,N/A,N/A,REPAIR,BODY_PAINT
+BH_0123,프론트도어판넬어셈블리(LH),프론트 도어판넬어셈블리 (LH),BODY,FRONT,DOOR,LH,N/A,N/A,REPAIR,BODY_PAINT
+BH_0124,프론트도어판넬어셈블리(RH),프론트 도어판넬어셈블리 (RH),BODY,FRONT,DOOR,RH,N/A,N/A,REPAIR,BODY_PAINT
+BH_0125,리어도어판넬어셈블리(LH),리어 도어판넬어셈블리 (LH),BODY,REAR,DOOR,LH,N/A,N/A,REPAIR,BODY_PAINT
+BH_0126,리어도어판넬어셈블리(RH),리어 도어판넬어셈블리 (RH),BODY,REAR,DOOR,RH,N/A,N/A,REPAIR,BODY_PAINT
+BH_0127,프론트 도어 아웃사이드 핸들 어셈블리(LH),프론트 도어 아웃사이드 핸들 어셈블리 (LH),BODY,FRONT,DOOR,LH,N/A,N/A,REPAIR,BODY_PAINT
+BH_0128,아웃사이드 리어 뷰 리모트 컨트롤 미러 어셈블리,아웃사이드 리어 뷰 리모트 컨트롤 미러 어셈블리,BODY,REAR,MIRROR,N/A,N/A,N/A,REPAIR,BODY_PAINT
+BH_0129,"센터외측필라어셈블리(LH,탈부착미포함)","센터 외측 필라 어셈블리 (LH, 탈부착미포함)",BODY,SIDE,N/A,LH,N/A,N/A,REPAIR,BODY_PAINT
+BH_0130,"센터외측필라어셈블리(RH,탈부착미포함)","센터 외측 필라 어셈블리 (RH, 탈부착미포함)",BODY,SIDE,N/A,RH,N/A,N/A,REPAIR,BODY_PAINT
+BH_0131,메인 크래쉬 패드 어셈블리,메인 크래쉬 패드 어셈블리,BODY,INTERIOR,N/A,N/A,N/A,N/A,REPAIR,BODY_PAINT
+BH_0132,리어 범퍼 어셈블리(오버홀),리어 범퍼 어셈블리 (오버홀),BODY,REAR,BUMPER,N/A,N/A,N/A,OVERHAUL,BODY_PAINT
+BH_0133,백 패널(탈부착 미포함),백 패널 (탈부착 미포함),BODY,N/A,N/A,N/A,N/A,N/A,REPAIR,BODY_PAINT
+BH_0134,"사이드실 내측 패널(LH,탈부착 미포함)","사이드실 내측 패널 (LH, 탈부착 미포함)",SUSPENSION,SIDE,N/A,LH,N/A,N/A,REPAIR,BODY_PAINT
+BH_0135,"사이드실 내측 패널(RH,탈부착 미포함)","사이드실 내측 패널 (RH, 탈부착 미포함)",SUSPENSION,SIDE,N/A,RH,N/A,N/A,REPAIR,BODY_PAINT
+BH_0136,"사이드실외측패널(LH,탈부착미포함)","사이드실 외측 패널 (LH, 탈부착미포함)",SUSPENSION,SIDE,N/A,LH,N/A,N/A,REPAIR,BODY_PAINT
+BH_0137,"사이드실외측패널(RH,탈부착미포함)","사이드실 외측 패널 (RH, 탈부착미포함)",SUSPENSION,SIDE,N/A,RH,N/A,N/A,REPAIR,BODY_PAINT
+BH_0138,프론트 필라 외측 패널 어셈블리 (LH),프론트 필라 외측 패널 어셈블리 (LH),BODY,FRONT,N/A,LH,N/A,N/A,REPAIR,BODY_PAINT
+BH_0139,프론트 필라 외측 패널 어셈블리 (RH),프론트 필라 외측 패널 어셈블리 (RH),BODY,FRONT,N/A,RH,N/A,N/A,REPAIR,BODY_PAINT
+BH_0140,프론트 범퍼 도장（탈거된상태),프론트 범퍼 도장（탈거된상태),BODY,FRONT,BUMPER,N/A,N/A,N/A,PAINT,BODY_PAINT
+BH_0141,휀더 패널 도장(LH),휀더 패널 도장 (LH),BODY,SIDE,FENDER,LH,N/A,N/A,PAINT,BODY_PAINT
+BH_0142,쿼터 외측 패널도장(LH),쿼터 외측 패널도장 (LH),BODY,N/A,N/A,LH,N/A,N/A,PAINT,BODY_PAINT
+BH_0143,후드 패널 도장,후드 패널 도장,BODY,N/A,HOOD,N/A,N/A,N/A,PAINT,BODY_PAINT
+BH_0144,루프 패널 도장,루프 패널 도장,BODY,ROOF,N/A,N/A,N/A,N/A,PAINT,BODY_PAINT
+BH_0145,루프 사이드 외측 패널도장(LH),루프 사이드 외측 패널도장 (LH),BODY,ROOF,N/A,LH,N/A,N/A,PAINT,BODY_PAINT
+BH_0146,테일 게이트 패널 도장,테일 게이트 패널 도장,BODY,N/A,N/A,N/A,N/A,N/A,PAINT,BODY_PAINT
+BH_0147,트렁크 리드 패널 도장(판금후),트렁크 리드 패널 도장 (판금후),BODY,N/A,TRUNK,N/A,N/A,N/A,PAINT,BODY_PAINT
+BH_0148,프론트 도어 패널 어셈블리도장(LH/탈거된상태）,프론트 도어 패널 어셈블리도장 (LH/탈거된상태）,BODY,FRONT,DOOR,LH,N/A,N/A,PAINT,BODY_PAINT
+BH_0149,프론트 도어 패널 어셈블리도장(RH/탈거된상태),프론트 도어 패널 어셈블리도장 (RH/탈거된상태),BODY,FRONT,DOOR,RH,N/A,N/A,PAINT,BODY_PAINT
+BH_0150,리어도어패널도장(LH),리어 도어패널도장 (LH),BODY,REAR,DOOR,LH,N/A,N/A,PAINT,BODY_PAINT
+BH_0151,리어도어패널도장(RH),리어 도어패널도장 (RH),BODY,REAR,DOOR,RH,N/A,N/A,PAINT,BODY_PAINT
+BH_0152,"아웃사이드 리어 뷰 미러 도장(LH,탈거된상태)","아웃사이드 리어 뷰 미러 도장 (LH, 탈거된상태)",BODY,REAR,MIRROR,LH,N/A,N/A,PAINT,BODY_PAINT
+BH_0153,프론트 필라 외측 패널 어셈블리도장(LH),프론트 필라 외측 패널 어셈블리도장 (LH),BODY,FRONT,N/A,LH,N/A,N/A,PAINT,BODY_PAINT
+BH_0154,프론트 필라 외측 패널 어셈블리 도장(RH),프론트 필라 외측 패널 어셈블리 도장 (RH),BODY,FRONT,N/A,RH,N/A,N/A,PAINT,BODY_PAINT
+BH_0155,"센터 외측 필라 어셈블리도장(LH,판금후)","센터 외측 필라 어셈블리도장 (LH, 판금후)",BODY,SIDE,N/A,LH,N/A,N/A,PAINT,BODY_PAINT
+BH_0156,"센터 외측 필라 어셈블리도장(RH,판금후)","센터 외측 필라 어셈블리도장 (RH, 판금후)",BODY,SIDE,N/A,RH,N/A,N/A,PAINT,BODY_PAINT
+BH_0157,리어범퍼 도장 (탈거된 상태),리어 범퍼 도장 (탈거된 상태),BODY,REAR,BUMPER,N/A,N/A,N/A,PAINT,BODY_PAINT
+BH_0158,백 패널 도장(판금후),백 패널 도장 (판금후),BODY,N/A,N/A,N/A,N/A,N/A,PAINT,BODY_PAINT
+BH_0159,사이드실 외측 패널도장(LH),사이드실 외측 패널도장 (LH),SUSPENSION,SIDE,N/A,LH,N/A,N/A,PAINT,BODY_PAINT
+BH_0160,사이드실 외측 패널도장(RH),사이드실 외측 패널도장 (RH),SUSPENSION,SIDE,N/A,RH,N/A,N/A,PAINT,BODY_PAINT

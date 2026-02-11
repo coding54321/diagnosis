@@ -35,3 +35,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# generated SQL (재생성: npx tsx scripts/generate-maintenance-job-master-sql.ts)
+scripts/maintenance_job_master_insert.sql

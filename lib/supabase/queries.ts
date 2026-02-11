@@ -217,6 +217,33 @@ export async function getVehicleLookupByRegistrationNumber(
   };
 }
 
+/**
+ * 현재 사용자(vehicle.user_id) 기준으로 차량등록번호로 이미 저장된 차량이 있는지 조회
+ */
+export async function getUserVehicleByRegistrationNumber(
+  userId: string,
+  registrationNumber: string
+): Promise<Vehicle | null> {
+  if (!userId || !registrationNumber) return null;
+  const supabase = await createServerClient();
+  const key = normalizeRegistrationNumber(registrationNumber);
+  if (!key) return null;
+
+  const { data, error } = await supabase
+    .from('vehicles')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('registration_number', key)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error fetching user vehicle by registration_number:', error);
+    return null;
+  }
+
+  return data;
+}
+
 /** 소유주명 비교용 정규화: trim + 연속 공백 하나로 */
 function normalizeOwnerName(name: string): string {
   return name.replace(/\s+/g, ' ').trim();

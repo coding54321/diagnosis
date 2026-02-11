@@ -22,6 +22,7 @@ import {
   updateEstimateImageUrl,
   saveVerificationResult,
   getVerificationResult,
+  getUserVehicleByRegistrationNumber,
 } from './queries';
 import { uploadEstimateImage as uploadImage, base64ToFile } from './storage';
 
@@ -66,6 +67,26 @@ export async function verifyVehicleOwnerAction(registrationNumber: string, owner
   } catch (error) {
     console.error('Error in verifyVehicleOwnerAction:', error);
     return { success: false, error: '소유주 검증 중 오류가 발생했습니다.' };
+  }
+}
+
+/**
+ * 현재 사용자 기준으로, 같은 차량번호가 이미 등록되어 있는지 확인
+ * 있으면 해당 Vehicle을 반환
+ */
+export async function findExistingUserVehicleByRegistrationNumber(
+  registrationNumber: string
+) {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.id) {
+      return { success: false, data: null, error: '사용자 인증 정보가 없습니다.' };
+    }
+    const existing = await getUserVehicleByRegistrationNumber(user.id, registrationNumber);
+    return { success: true, data: existing, error: null };
+  } catch (error) {
+    console.error('Error in findExistingUserVehicleByRegistrationNumber:', error);
+    return { success: false, data: null, error: '기존 차량 조회 중 오류가 발생했습니다.' };
   }
 }
 
