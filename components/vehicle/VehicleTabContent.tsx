@@ -534,11 +534,11 @@ export function VehicleTabContent({
             </div>
           )}
 
-          {/* 정비이력 */}
+          {/* 검증이력 */}
           <div className="mt-6">
             <div className="flex items-center justify-between px-1 mb-3">
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-hyundai-gray-900">정비이력</h3>
+                <h3 className="text-sm font-bold text-hyundai-gray-900">검증이력</h3>
                 {history.length > 0 && (
                   <span className="text-xs text-hyundai-gray-400">
                     {history.length}건 · 누적 {formatCompact(totalSpent)}
@@ -575,8 +575,15 @@ export function VehicleTabContent({
 
             {history.length === 0 ? (
               <div className="rounded-2xl bg-hyundai-gray-50 p-5">
-                <p className="text-sm text-hyundai-gray-400 text-center">이 차량의 정비 이력이 없어요</p>
+                <p className="text-sm text-hyundai-gray-400 text-center">이 차량의 검증 이력이 없어요</p>
                 <p className="text-xs text-hyundai-gray-300 mt-1 text-center">견적서를 검증하면 이력이 쌓여요</p>
+                <Link
+                  href="/verify/camera"
+                  className="mt-3 text-sm font-medium text-hyundai-blue-600 flex items-center justify-center gap-0.5"
+                >
+                  견적서 검증하기
+                  <ChevronRight className="w-4 h-4" />
+                </Link>
               </div>
             ) : (
               <div className="rounded-2xl bg-hyundai-gray-50 overflow-hidden">
