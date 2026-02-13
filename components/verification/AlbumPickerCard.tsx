@@ -61,9 +61,9 @@ export default function AlbumPickerCard() {
       <button
         type="button"
         onClick={handleClick}
-        className="h-[180px] w-full rounded-2xl bg-hyundai-gray-50 p-5 active:bg-hyundai-gray-100 transition-colors flex items-end text-left"
+        className="h-[160px] w-full rounded-2xl bg-hyundai-gray-100 p-5 active:bg-hyundai-gray-200 transition-colors flex flex-col justify-end text-left touch-manipulation"
       >
-        <p className="text-[22px] font-bold leading-[1.2] tracking-tight text-hyundai-gray-700">
+        <p className="text-[20px] font-bold leading-[1.25] tracking-tight text-hyundai-gray-900">
           앨범에서
           <br />
           가져오기
