@@ -58,7 +58,6 @@ const VerificationSummary: React.FC<VerificationSummaryProps> = ({
 
   return (
     <div className="bg-white rounded-2xl border border-hyundai-gray-100 px-5 py-5">
-      {/* 검증 조건 · 정비소 */}
       {conditions.length > 0 && (
         <p className="text-xs text-hyundai-gray-500 mb-3">
           {conditions.map((cond, idx) => (
@@ -81,7 +80,6 @@ const VerificationSummary: React.FC<VerificationSummaryProps> = ({
         </p>
       )}
 
-      {/* 총 금액 · 항목 수 */}
       <p className="text-2xl font-bold text-hyundai-gray-900 tracking-tight">
         {formatPrice(totalAmount)}
       </p>
@@ -89,7 +87,6 @@ const VerificationSummary: React.FC<VerificationSummaryProps> = ({
         총 {totalItems}개 항목
       </p>
 
-      {/* 적정 / 확인필요 */}
       {showStatusCounts && (
         <div className="flex gap-1.5">
           {itemCounts.appropriate > 0 && (

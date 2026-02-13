@@ -23,16 +23,11 @@ const PriceChart: React.FC<PriceChartProps> = ({
   const userPosition = range > 0 ? Math.max(0, Math.min(100, ((userPrice - min) / range) * 100)) : 50;
   const medianPosition = range > 0 ? ((median - min) / range) * 100 : 50;
 
-  const diffPercent = median > 0 ? Math.round(((userPrice - median) / median) * 100) : 0;
-
   return (
     <Card variant="default" padding="none" className={className}>
       <div className="px-5 py-4">
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4">
           <p className="text-sm font-medium text-hyundai-gray-900">가격 분포</p>
-          <span className="text-xs text-hyundai-gray-400">
-            유사 사례 {sampleCount}건
-          </span>
         </div>
 
         {/* 분포 바 */}
@@ -64,30 +59,6 @@ const PriceChart: React.FC<PriceChartProps> = ({
             <span>{formatPrice(min)}</span>
             <span>{formatPrice(max)}</span>
           </div>
-        </div>
-      </div>
-
-      <div className="mx-5 border-b border-hyundai-gray-100" />
-
-      {/* 내 견적 vs 평균 비교 */}
-      <div className="px-5 py-3.5">
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-hyundai-gray-400">내 견적</span>
-          <span className="text-sm font-bold text-hyundai-gray-900">{formatPrice(userPrice)}</span>
-        </div>
-        <div className="flex items-center justify-between mt-1">
-          <span className="text-xs text-hyundai-gray-400">평균 대비</span>
-          <span
-            className={`text-xs font-medium ${
-              diffPercent > 0
-                ? 'text-red-400'
-                : diffPercent < 0
-                ? 'text-green-500'
-                : 'text-hyundai-gray-600'
-            }`}
-          >
-            {diffPercent > 0 ? '+' : ''}{diffPercent}%
-          </span>
         </div>
       </div>
     </Card>

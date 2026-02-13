@@ -222,6 +222,7 @@ const ReviewPage: React.FC = () => {
           id: `ocr-item-${index}`,
           name: item.name,
           normalizedName: item.normalizedName,
+          masterJobId: item.masterJobId,
           partCost: item.partCost || 0,
           laborCost: item.laborCost || 0,
           totalCost: item.totalCost || (item.partCost || 0) + (item.laborCost || 0),
@@ -612,6 +613,7 @@ const ReviewPage: React.FC = () => {
         totalAmount: estimate.totalAmount,
         items: estimate.items.map((item) => ({
           name: item.name,
+          masterJobId: item.masterJobId,
           partCost: item.partCost,
           laborCost: item.laborCost,
           totalCost: item.totalCost,
@@ -649,6 +651,7 @@ const ReviewPage: React.FC = () => {
         id: item.id,
         name: item.name,
         normalizedName: estimate.items[index]?.normalizedName,
+        masterJobId: estimate.items[index]?.masterJobId || item.master_job_id || undefined,
         partCost: item.part_cost,
         laborCost: item.labor_cost,
         totalCost: item.total_cost,
@@ -1192,10 +1195,13 @@ const ReviewPage: React.FC = () => {
 
       {/* 정비 항목 리스트 */}
       <div className="mb-4">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-2">
           <h3 className="text-base font-bold text-hyundai-gray-900">정비 항목</h3>
           <span className="text-sm text-hyundai-gray-400">{items.length}건</span>
         </div>
+        {items.length > 0 && (
+          <p className="text-xs text-hyundai-gray-400 mb-3">항목을 눌러 수정할 수 있어요</p>
+        )}
         <Card variant="default" padding="none">
           {items.length === 0 ? (
             <div className="px-4 py-8 text-center">
@@ -1228,18 +1234,23 @@ const ReviewPage: React.FC = () => {
                       });
                       openSheet('item');
                     }}
-                    className="w-full px-4 py-4 active:bg-hyundai-gray-50 transition-colors text-left"
+                    className="w-full px-4 py-4 active:bg-hyundai-gray-50 transition-colors text-left group"
                   >
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="text-sm font-medium text-hyundai-gray-900">{item.name}</p>
-                      <p className="text-sm font-bold text-hyundai-gray-900 shrink-0 ml-3">
-                        {formatPrice(item.totalCost)}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-hyundai-gray-400">
-                      <span>부품 {formatPrice(item.partCost)}</span>
-                      <span className="text-hyundai-gray-200">|</span>
-                      <span>공임 {formatPrice(item.laborCost)}</span>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-sm font-medium text-hyundai-gray-900 truncate">{item.name}</p>
+                          <p className="text-sm font-bold text-hyundai-gray-900 shrink-0 ml-3">
+                            {formatPrice(item.totalCost)}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-hyundai-gray-400">
+                          <span>부품 {formatPrice(item.partCost)}</span>
+                          <span className="text-hyundai-gray-200">|</span>
+                          <span>공임 {formatPrice(item.laborCost)}</span>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-hyundai-gray-300 shrink-0" strokeWidth={1.5} />
                     </div>
                   </button>
                 </React.Fragment>
@@ -1586,6 +1597,7 @@ const ReviewPage: React.FC = () => {
                       id: `manual-${Date.now()}`,
                       name: editItemForm.name || '정비 항목',
                       normalizedName: '',
+                      masterJobId: undefined,
                       partCost: editItemForm.partCost,
                       laborCost: editItemForm.laborCost,
                       totalCost,

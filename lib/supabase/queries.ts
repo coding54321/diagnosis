@@ -492,6 +492,7 @@ export async function saveEstimate(
     imageUrl?: string;
     items: Array<{
       name: string;
+      masterJobId?: string;
       partCost: number;
       laborCost: number;
       totalCost: number;
@@ -524,6 +525,7 @@ export async function saveEstimate(
   const itemsToInsert: EstimateItemInsert[] = estimate.items.map((item, index) => ({
     estimate_id: estimateData.id,
     name: item.name,
+    master_job_id: item.masterJobId || null,
     part_cost: item.partCost,
     labor_cost: item.laborCost,
     total_cost: item.totalCost,
@@ -567,6 +569,34 @@ export async function updateEstimateImageUrl(
   }
 
   return true;
+}
+
+/**
+ * 견적서에 연결된 차량 지정 (저장 시 내 차와 연결)
+ */
+export async function updateEstimateVehicleId(
+  estimateId: string,
+  userId: string,
+  vehicleId: string
+): Promise<{ success: boolean; error: string | null }> {
+  if (!estimateId || !userId || !vehicleId) {
+    return { success: false, error: '잘못된 요청입니다.' };
+  }
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from('estimates')
+    .update({
+      vehicle_id: vehicleId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', estimateId)
+    .eq('user_id', userId);
+
+  if (error) {
+    console.error('Error updating estimate vehicle_id:', error);
+    return { success: false, error: error.message };
+  }
+  return { success: true, error: null };
 }
 
 /**
@@ -660,6 +690,7 @@ export async function getVerificationResult(
   estimate?: {
     shop_name?: string;
     shop_type?: string | null;
+    shop_region_sido?: string;
     vehicle?: {
       model: string;
       variant?: string;
@@ -718,6 +749,14 @@ export async function getVerificationResult(
     .single();
 
   const vehicle = estimateData?.vehicles as Record<string, unknown> | null;
+
+  // 정비소 위치 기반 시/도 조회 (공통 비교 조건 표시용)
+  let shopRegionSido: string | null = null;
+  const shopName = estimateData?.shop_name?.trim();
+  if (shopName) {
+    shopRegionSido = await getShopRegionByShopName(supabase, shopName);
+  }
+
   return {
     result: resultData,
     items: (itemsData || []).map((item: any) => ({
@@ -727,6 +766,7 @@ export async function getVerificationResult(
     estimate: estimateData ? {
       shop_name: estimateData.shop_name ?? undefined,
       shop_type: estimateData.shop_type ?? undefined,
+      shop_region_sido: shopRegionSido ?? undefined,
       vehicle: vehicle ? {
         model: String(vehicle.model ?? ''),
         variant: vehicle.variant != null ? String(vehicle.variant) : undefined,
@@ -738,4 +778,25 @@ export async function getVerificationResult(
       } : undefined,
     } : undefined,
   };
+}
+
+/**
+ * 정비소명으로 시/도 조회 (national_repair_shops 매칭)
+ * 공통 비교 조건·지역 필터 표시용
+ */
+async function getShopRegionByShopName(
+  supabase: Awaited<ReturnType<typeof createServerClient>>,
+  shopName: string
+): Promise<string | null> {
+  if (!shopName || shopName.length < 2) return null;
+  const { data, error } = await supabase
+    .from('national_repair_shops')
+    .select('sido')
+    .not('sido', 'is', null)
+    .ilike('inspofc_nm', `%${shopName}%`)
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data?.sido) return null;
+  return data.sido;
 }

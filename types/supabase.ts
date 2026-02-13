@@ -22,6 +22,9 @@ export type Database = {
           estimate_id: string | null
           id: string
           labor_cost: number
+          mapping_confidence: number | null
+          mapping_method: string | null
+          master_job_id: string | null
           name: string
           part_cost: number
           total_cost: number
@@ -33,6 +36,9 @@ export type Database = {
           estimate_id?: string | null
           id?: string
           labor_cost?: number
+          mapping_confidence?: number | null
+          mapping_method?: string | null
+          master_job_id?: string | null
           name: string
           part_cost?: number
           total_cost: number
@@ -44,6 +50,9 @@ export type Database = {
           estimate_id?: string | null
           id?: string
           labor_cost?: number
+          mapping_confidence?: number | null
+          mapping_method?: string | null
+          master_job_id?: string | null
           name?: string
           part_cost?: number
           total_cost?: number
@@ -220,6 +229,7 @@ export type Database = {
           rdnmadr: string | null
           reference_date: string | null
           shop_type: string | null
+          sido: string | null
           updated_at: string | null
         }
         Insert: {
@@ -236,6 +246,7 @@ export type Database = {
           rdnmadr?: string | null
           reference_date?: string | null
           shop_type?: string | null
+          sido?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -252,6 +263,7 @@ export type Database = {
           rdnmadr?: string | null
           reference_date?: string | null
           shop_type?: string | null
+          sido?: string | null
           updated_at?: string | null
         }
         Relationships: []

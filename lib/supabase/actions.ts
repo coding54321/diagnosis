@@ -20,6 +20,7 @@ import {
   deleteVerificationResultById,
   saveEstimate,
   updateEstimateImageUrl,
+  updateEstimateVehicleId,
   saveVerificationResult,
   getVerificationResult,
   getUserVehicleByRegistrationNumber,
@@ -87,6 +88,26 @@ export async function findExistingUserVehicleByRegistrationNumber(
   } catch (error) {
     console.error('Error in findExistingUserVehicleByRegistrationNumber:', error);
     return { success: false, data: null, error: '기존 차량 조회 중 오류가 발생했습니다.' };
+  }
+}
+
+/**
+ * 현재 로그인 사용자 표시 이름 (소유주명 표시용)
+ * user_metadata.name 또는 full_name 반환, 없으면 null
+ */
+export async function getCurrentUserDisplayName(): Promise<{ success: true; name: string | null } | { success: false; name: null }> {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.user_metadata) {
+      return { success: true, name: null };
+    }
+    const meta = user.user_metadata as Record<string, unknown>;
+    const name = typeof meta.name === 'string' && meta.name.trim() ? meta.name.trim() : null;
+    const fullName = typeof meta.full_name === 'string' && meta.full_name.trim() ? meta.full_name.trim() : null;
+    const displayName = name || fullName || null;
+    return { success: true, name: displayName };
+  } catch {
+    return { success: true, name: null };
   }
 }
 
@@ -295,6 +316,7 @@ export async function createEstimate(data: {
   imageUrl?: string;
   items: Array<{
     name: string;
+    masterJobId?: string;
     partCost: number;
     laborCost: number;
     totalCost: number;
@@ -401,5 +423,99 @@ export async function fetchVerificationResult(estimateId: string) {
   } catch (error) {
     console.error('Error in fetchVerificationResult:', error);
     return { success: false, error: '검증 결과를 불러오는데 실패했습니다.', data: null };
+  }
+}
+
+/** 검증 결과 저장 시 사용할 차량 정보 (견적 비교에 사용한 차량) */
+export type VehicleInfoForSave = {
+  manufacturer: string;
+  model: string;
+  variant?: string;
+  year: number;
+  mileage: number;
+  fuelType: string;
+  registrationNumber?: string;
+};
+
+/**
+ * 검증 결과를 내 차에 저장 (견적을 차량에 연결 후 내 차 탭에서 보이도록)
+ * - 등록된 차량 없음: 견적의 차량 정보로 새 차량 생성 후 연결
+ * - 등록된 차량 있음: 이번 견적의 차량과 동일한 차량이 있으면 그 차에 연결, 없으면 새 차량 생성 후 연결
+ */
+export async function saveVerificationToMyCar(
+  estimateId: string,
+  vehicleInfo: VehicleInfoForSave
+): Promise<{ success: boolean; vehicleId?: string; error?: string }> {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.id) {
+      return { success: false, error: '로그인한 후 저장할 수 있어요.' };
+    }
+
+    const { getVehicles } = await import('./queries');
+    const vehicles = await getVehicles(user.id);
+
+    const regNorm = vehicleInfo.registrationNumber?.replace(/\s|-/g, '').trim() || '';
+
+    let targetVehicleId: string;
+
+    if (vehicles.length === 0) {
+      const { data: newVehicle, error: createErr } = await createVehicle(user.id, {
+        manufacturer: vehicleInfo.manufacturer,
+        model: vehicleInfo.model,
+        variant: vehicleInfo.variant ?? null,
+        year: vehicleInfo.year,
+        mileage: vehicleInfo.mileage,
+        fuel_type: vehicleInfo.fuelType,
+        registration_number: regNorm || null,
+      });
+      if (createErr || !newVehicle) {
+        return { success: false, error: createErr || '차량 등록에 실패했어요.' };
+      }
+      targetVehicleId = newVehicle.id;
+    } else {
+      const matched =
+        regNorm &&
+        vehicles.find(
+          (v) => v.registration_number && v.registration_number.replace(/\s|-/g, '') === regNorm
+        );
+      if (matched) {
+        targetVehicleId = matched.id;
+      } else {
+        const sameCar = vehicles.find(
+          (v) =>
+            v.model === vehicleInfo.model &&
+            String(v.variant ?? '') === String(vehicleInfo.variant ?? '') &&
+            v.year === vehicleInfo.year
+        );
+        if (sameCar) {
+          targetVehicleId = sameCar.id;
+        } else {
+          const { data: newVehicle, error: createErr } = await createVehicle(user.id, {
+            manufacturer: vehicleInfo.manufacturer,
+            model: vehicleInfo.model,
+            variant: vehicleInfo.variant ?? null,
+            year: vehicleInfo.year,
+            mileage: vehicleInfo.mileage,
+            fuel_type: vehicleInfo.fuelType,
+            registration_number: regNorm || null,
+          });
+          if (createErr || !newVehicle) {
+            return { success: false, error: createErr || '차량 등록에 실패했어요.' };
+          }
+          targetVehicleId = newVehicle.id;
+        }
+      }
+    }
+
+    const updateResult = await updateEstimateVehicleId(estimateId, user.id, targetVehicleId);
+    if (!updateResult.success) {
+      return { success: false, error: updateResult.error ?? '저장에 실패했어요.' };
+    }
+
+    return { success: true, vehicleId: targetVehicleId };
+  } catch (error) {
+    console.error('Error in saveVerificationToMyCar:', error);
+    return { success: false, error: '저장 중 오류가 났어요.' };
   }
 }

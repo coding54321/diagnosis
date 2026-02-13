@@ -19,6 +19,7 @@ export interface EstimateItem {
   id: string;
   name: string; // 정비 항목명 (견적서 원문 - 사용자 표시용)
   normalizedName?: string; // 블루핸즈 표준 작업명 (가격 비교용)
+  masterJobId?: string; // 정비항목 마스터 ID (예: BH_0057)
   partCost: number; // 부품비
   laborCost: number; // 공임비
   totalCost: number; // 총액

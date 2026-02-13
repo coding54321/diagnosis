@@ -150,6 +150,55 @@ export const mockRecentHistory: VerificationHistory[] = [
   },
 ];
 
+// 비슷한차 정비결과 (항목 상세 바텀시트용)
+export interface SimilarRepairCase {
+  id: string;
+  year: number;
+  mileage: string;
+  variant: string;
+  totalCost: number;
+  partCost: number;
+  laborCost: number;
+  shopType: string;
+}
+
+/** 항목 ID별 비슷한차 정비결과 목업 */
+export const mockSimilarRepairCases: Record<string, SimilarRepairCase[]> = {
+  'item-1': [
+    { id: 'sr-1', year: 2022, mileage: '3만km', variant: '1.6 터보 프리미엄', totalCost: 145000, partCost: 108000, laborCost: 37000, shopType: '블루핸즈' },
+    { id: 'sr-2', year: 2021, mileage: '4만km', variant: '1.6 터보 모던', totalCost: 158000, partCost: 118000, laborCost: 40000, shopType: '블루핸즈' },
+    { id: 'sr-3', year: 2023, mileage: '2만km', variant: '1.6 터보 프리미엄', totalCost: 140000, partCost: 105000, laborCost: 35000, shopType: '오토큐' },
+    { id: 'sr-4', year: 2022, mileage: '5만km', variant: '2.0 프리미엄', totalCost: 170000, partCost: 125000, laborCost: 45000, shopType: '블루핸즈' },
+    { id: 'sr-5', year: 2021, mileage: '6만km', variant: '1.6 터보 모던', totalCost: 162000, partCost: 120000, laborCost: 42000, shopType: '공임나라' },
+    { id: 'sr-6', year: 2023, mileage: '1만km', variant: '1.6 터보 인스퍼레이션', totalCost: 138000, partCost: 103000, laborCost: 35000, shopType: '블루핸즈' },
+    { id: 'sr-7', year: 2022, mileage: '4만km', variant: '2.0 모던', totalCost: 155000, partCost: 115000, laborCost: 40000, shopType: '오토큐' },
+    { id: 'sr-8', year: 2021, mileage: '7만km', variant: '1.6 터보 프리미엄', totalCost: 175000, partCost: 128000, laborCost: 47000, shopType: '블루핸즈' },
+  ],
+  'item-2': [
+    { id: 'sr-9', year: 2022, mileage: '3만km', variant: '1.6 터보 프리미엄', totalCost: 22000, partCost: 0, laborCost: 22000, shopType: '블루핸즈' },
+    { id: 'sr-10', year: 2021, mileage: '5만km', variant: '1.6 터보 모던', totalCost: 25000, partCost: 0, laborCost: 25000, shopType: '블루핸즈' },
+    { id: 'sr-11', year: 2023, mileage: '2만km', variant: '2.0 프리미엄', totalCost: 20000, partCost: 0, laborCost: 20000, shopType: '오토큐' },
+    { id: 'sr-12', year: 2022, mileage: '4만km', variant: '1.6 터보 모던', totalCost: 28000, partCost: 0, laborCost: 28000, shopType: '공임나라' },
+    { id: 'sr-13', year: 2021, mileage: '6만km', variant: '1.6 터보 프리미엄', totalCost: 26000, partCost: 0, laborCost: 26000, shopType: '블루핸즈' },
+  ],
+};
+
+/** itemId에 맞는 비슷한차 정비결과를 반환 (없으면 기본 데이터) */
+export function getSimilarRepairCases(itemId: string): SimilarRepairCase[] {
+  if (mockSimilarRepairCases[itemId]) {
+    return mockSimilarRepairCases[itemId];
+  }
+  // 기본 폴백 데이터
+  return [
+    { id: 'sr-f1', year: 2022, mileage: '3만km', variant: '1.6 터보 프리미엄', totalCost: 120000, partCost: 85000, laborCost: 35000, shopType: '블루핸즈' },
+    { id: 'sr-f2', year: 2021, mileage: '5만km', variant: '1.6 터보 모던', totalCost: 135000, partCost: 95000, laborCost: 40000, shopType: '블루핸즈' },
+    { id: 'sr-f3', year: 2023, mileage: '2만km', variant: '2.0 프리미엄', totalCost: 115000, partCost: 80000, laborCost: 35000, shopType: '오토큐' },
+    { id: 'sr-f4', year: 2022, mileage: '4만km', variant: '1.6 터보 모던', totalCost: 140000, partCost: 98000, laborCost: 42000, shopType: '공임나라' },
+    { id: 'sr-f5', year: 2021, mileage: '6만km', variant: '2.0 모던', totalCost: 128000, partCost: 90000, laborCost: 38000, shopType: '블루핸즈' },
+    { id: 'sr-f6', year: 2023, mileage: '1만km', variant: '1.6 터보 인스퍼레이션', totalCost: 110000, partCost: 78000, laborCost: 32000, shopType: '블루핸즈' },
+  ];
+}
+
 // 정비 항목 카테고리
 export const maintenanceCategories = [
   '엔진 계통',

@@ -1,6 +1,7 @@
 'use server';
 
 import OpenAI from 'openai';
+import { findMasterJobByName, getJobMasterPromptText } from '@/lib/data/job-master';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -18,6 +19,7 @@ export interface OCRResult {
     items: Array<{
       name: string; // 견적서 원문 그대로 (사용자 표시용)
       normalizedName?: string; // 블루핸즈 표준 작업명 (가격 비교용)
+      masterJobId?: string; // 정비항목 마스터 ID (BH_0001 ...)
       partCost?: number;
       laborCost?: number;
       totalCost?: number;
@@ -200,6 +202,7 @@ function inferCategory(itemName: string): string {
 function normalizeOCRItems(rawItems: any[]): Array<{
   name: string;
   normalizedName?: string;
+  masterJobId?: string;
   partCost: number;
   laborCost: number;
   totalCost: number;
@@ -208,6 +211,7 @@ function normalizeOCRItems(rawItems: any[]): Array<{
   const normalized: Array<{
     name: string;
     normalizedName?: string;
+    masterJobId?: string;
     partCost: number;
     laborCost: number;
     totalCost: number;
@@ -222,6 +226,7 @@ function normalizeOCRItems(rawItems: any[]): Array<{
     const item = rawItems[i];
     const name = (item.name || '').trim();
     const normalizedName = typeof item.normalizedName === 'string' ? item.normalizedName.trim() : undefined;
+    const masterJobId = typeof item.masterJobId === 'string' ? item.masterJobId.trim() : undefined;
 
     let matchedWorkIndex = -1;
     if (item.partCost && (!item.laborCost || item.laborCost === 0)) {
@@ -247,9 +252,16 @@ function normalizeOCRItems(rawItems: any[]): Array<{
       const laborCost = workItem.laborCost || 0;
       const totalCost = partCost + laborCost;
       const category = inferCategory(combinedName);
+      const combinedNormalizedName =
+        normalizedName || (workItem.normalizedName as string | undefined) || combinedName;
+      const resolvedMasterJobId =
+        masterJobId ||
+        (typeof workItem.masterJobId === 'string' ? workItem.masterJobId.trim() : undefined) ||
+        findMasterJobByName(combinedNormalizedName)?.jobId;
       normalized.push({
         name: combinedName,
-        normalizedName: normalizedName || (workItem.normalizedName as string | undefined),
+        normalizedName: combinedNormalizedName,
+        masterJobId: resolvedMasterJobId,
         partCost,
         laborCost,
         totalCost,
@@ -262,9 +274,13 @@ function normalizeOCRItems(rawItems: any[]): Array<{
       const laborCost = item.laborCost ?? 0;
       const totalCost = item.totalCost ?? (partCost + laborCost);
       const category = item.category || inferCategory(name);
+      const fallbackNormalizedName = normalizedName || name || '정비 항목';
+      const resolvedMasterJobId =
+        masterJobId || findMasterJobByName(fallbackNormalizedName)?.jobId;
       normalized.push({
         name: name || '정비 항목',
-        normalizedName,
+        normalizedName: fallbackNormalizedName,
+        masterJobId: resolvedMasterJobId,
         partCost,
         laborCost,
         totalCost,
@@ -276,6 +292,8 @@ function normalizeOCRItems(rawItems: any[]): Array<{
 
   return normalized;
 }
+
+const JOB_MASTER_PROMPT_TEXT = getJobMasterPromptText();
 
 const ESTIMATE_TEXT_SYSTEM_PROMPT = `당신은 한국 자동차 정비 견적서 텍스트를 분석하는 전문가입니다.
 
@@ -294,6 +312,7 @@ const ESTIMATE_TEXT_SYSTEM_PROMPT = `당신은 한국 자동차 정비 견적서
 7. **items**: 정비 항목 배열 (각 항목마다 반드시 두 개의 이름 포함)
    - **name**: 견적서에 적힌 그대로의 작업/부품명 (사용자에게 그대로 보여줄 원문)
    - **normalizedName**: 블루핸즈 표준 정비표에 맞는 작업명 (가격 비교용). 예: "엔진오일/필터/에어크리너", "프론트 디스크 브레이크 패드 키드(양쪽)", "엔진 오일/휠터"
+   - **masterJobId**: 아래 마스터 목록의 job_id 중 가장 유사한 1개를 반드시 선택 (예: "BH_0057")
    - partCost: 부품비 (없으면 0)
    - laborCost: 공임비 (없으면 0)
    - totalCost: partCost + laborCost
@@ -305,7 +324,11 @@ const ESTIMATE_TEXT_SYSTEM_PROMPT = `당신은 한국 자동차 정비 견적서
 ## 중요
 - name은 반드시 견적서 원문 그대로 두세요 (사용자가 본 문서와 동일해야 함).
 - normalizedName은 블루핸즈/현대·기아 정비표에 쓰이는 표준 작업명으로 매핑해주세요.
+- masterJobId는 반드시 채우세요. 애매해도 가장 가까운 항목 1개를 선택하세요.
 - 숫자는 텍스트에 나온 그대로 추출하세요.
+
+## 정비항목 마스터 목록
+${JOB_MASTER_PROMPT_TEXT}
 
 ## JSON 응답 형식
 {
@@ -317,7 +340,7 @@ const ESTIMATE_TEXT_SYSTEM_PROMPT = `당신은 한국 자동차 정비 견적서
   "registrationNumber": "차량번호",
   "vehicleModel": "차종",
   "mileage": 숫자,
-  "items": [{"name": "견적서 원문 그대로", "normalizedName": "블루핸즈 표준 작업명", "partCost": 0, "laborCost": 0, "totalCost": 0, "category": "카테고리"}],
+  "items": [{"name": "견적서 원문 그대로", "normalizedName": "블루핸즈 표준 작업명", "masterJobId": "BH_0001", "partCost": 0, "laborCost": 0, "totalCost": 0, "category": "카테고리"}],
   "totalAmount": 숫자,
   "vatIncluded": true,
   "vatAmount": 숫자,
@@ -344,7 +367,7 @@ export async function analyzeEstimateFromText(ocrText: string): Promise<OCRResul
         { role: 'system', content: ESTIMATE_TEXT_SYSTEM_PROMPT },
         {
           role: 'user',
-          content: `아래 견적서 텍스트를 분석해 JSON으로 추출해주세요.\n\n각 정비 항목에는 name(견적서 원문 그대로)과 normalizedName(블루핸즈 표준 작업명)을 모두 포함해주세요.\n\n---\n\n${trimmed.slice(0, 12000)}`,
+          content: `아래 견적서 텍스트를 분석해 JSON으로 추출해주세요.\n\n각 정비 항목에는 name(견적서 원문 그대로), normalizedName(블루핸즈 표준 작업명), masterJobId(BH_XXXX)를 모두 포함해주세요. masterJobId는 마스터 목록 중 가장 가까운 항목 1개를 반드시 선택해주세요.\n\n---\n\n${trimmed.slice(0, 12000)}`,
         },
       ],
       response_format: { type: 'json_object' },
@@ -379,6 +402,7 @@ export async function analyzeEstimateFromText(ocrText: string): Promise<OCRResul
         items: normalizedItems.map((item) => ({
           name: item.name,
           normalizedName: item.normalizedName,
+          masterJobId: item.masterJobId,
           partCost: item.partCost,
           laborCost: item.laborCost,
           totalCost: item.totalCost,
@@ -461,6 +485,7 @@ export async function analyzeEstimateImage(
 7. **items**: 정비 항목 배열 (각 항목마다 두 개의 이름 포함)
    - name: 견적서에 적힌 그대로의 작업/부품명 (사용자 표시용)
    - normalizedName: 블루핸즈 표준 정비표에 맞는 작업명 (가격 비교용). 예: "엔진오일/필터/에어크리너", "프론트 디스크 브레이크 패드 키드(양쪽)"
+   - masterJobId: 아래 정비항목 마스터 목록의 job_id 중 가장 유사한 1개 (예: "BH_0057")
    - partCost: 부품비 (없으면 0)
    - laborCost: 공임비 (없으면 0)
    - totalCost: partCost + laborCost
@@ -480,10 +505,14 @@ export async function analyzeEstimateImage(
 ## 중요
 - name은 견적서/이미지에 보인 항목명 그대로 두세요 (사용자 표시용).
 - normalizedName은 블루핸즈/현대·기아 표준 정비표 작업명으로 매핑해주세요.
+- masterJobId는 반드시 채우세요. 확신이 낮아도 가장 가까운 항목 1개를 선택하세요.
 - 문서 양식은 다양할 수 있음 (표 구조가 다를 수 있음)
 - 이미지에 보이는 숫자를 정확히 읽어주세요
 - 부품비와 공임비가 분리되어 있으면 각각 추출
 - 합계만 있으면 totalCost에 넣고 partCost=0, laborCost=0
+
+## 정비항목 마스터 목록
+${JOB_MASTER_PROMPT_TEXT}
 
 ## JSON 응답 형식
 {
@@ -495,7 +524,7 @@ export async function analyzeEstimateImage(
   "registrationNumber": "차량번호",
   "vehicleModel": "차종",
   "mileage": 숫자,
-  "items": [{"name": "견적서 원문 그대로", "normalizedName": "블루핸즈 표준 작업명", "partCost": 0, "laborCost": 0, "totalCost": 0, "category": "카테고리"}],
+  "items": [{"name": "견적서 원문 그대로", "normalizedName": "블루핸즈 표준 작업명", "masterJobId": "BH_0001", "partCost": 0, "laborCost": 0, "totalCost": 0, "category": "카테고리"}],
   "totalAmount": 숫자,
   "vatIncluded": true,
   "vatAmount": 숫자,
@@ -610,6 +639,7 @@ JSON 형식으로만 응답해주세요.`,
         items: normalizedItems.map((item) => ({
           name: item.name,
           normalizedName: item.normalizedName,
+          masterJobId: item.masterJobId,
           partCost: item.partCost,
           laborCost: item.laborCost,
           totalCost: item.totalCost,

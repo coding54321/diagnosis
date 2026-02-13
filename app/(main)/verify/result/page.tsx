@@ -3,14 +3,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, Share2, ArrowLeft } from 'lucide-react';
-import { Container } from '@/components/layout';
-import { Card } from '@/components/ui';
-import VerificationSummary from '@/components/verification/VerificationSummary';
 import EstimateCard from '@/components/verification/EstimateCard';
-import MileageEditModal from '@/components/verification/MileageEditModal';
 import { mockVerificationResult, mockVehicle } from '@/lib/mockData';
-import { fetchVerificationResult } from '@/lib/supabase/actions';
-import { VerificationEngine } from '@/lib/verification/engine';
+import { fetchVerificationResult, getCurrentUserDisplayName, saveVerificationToMyCar } from '@/lib/supabase/actions';
 import { classifyShopType } from '@/lib/verification/shop-classifier';
 import { parseFrtCsv } from '@/lib/data/frt-standards';
 import { copyLink, formatVerificationResultForShare, shareNative } from '@/lib/share';
@@ -51,10 +46,19 @@ const VerificationResultPage: React.FC = () => {
   const [fullVehicleInfo, setFullVehicleInfo] = useState<FullVehicleInfo | null>(null);
   const [registrationNumber, setRegistrationNumber] = useState<string>('');
   const [estimateItems, setEstimateItems] = useState<EstimateItem[]>([]);
-  const [mileageModalOpen, setMileageModalOpen] = useState(false);
-  const [isReVerifying, setIsReVerifying] = useState(false);
   const [shopType, setShopType] = useState<ShopType>('other');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const [ownerDisplayName, setOwnerDisplayName] = useState<string | null>(null);
+  /** 정비소 위치 기반 시/도 (공통 비교 조건 표시용) */
+  const [shopRegionSido, setShopRegionSido] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // 소유주 표시명 (검증 결과 문구용)
+  useEffect(() => {
+    getCurrentUserDisplayName().then((res) => {
+      if (res.success && res.name) setOwnerDisplayName(res.name);
+    });
+  }, []);
 
   // FRT CSV 로드
   useEffect(() => {
@@ -78,6 +82,7 @@ const VerificationResultPage: React.FC = () => {
 
       if (id) {
         setEstimateId(id);
+        setShopRegionSido(null);
 
         const verificationResult = await fetchVerificationResult(id);
         if (verificationResult.success && verificationResult.data) {
@@ -166,6 +171,9 @@ const VerificationResultPage: React.FC = () => {
             totalLaborCostAverage,
           });
 
+          const regionSido = (dbResult.estimate as { shop_region_sido?: string } | undefined)?.shop_region_sido;
+          if (regionSido) setShopRegionSido(regionSido);
+
           const v = dbResult.estimate?.vehicle as (FullVehicleInfo & { fuel_type?: string }) | undefined;
           if (v) {
             setFullVehicleInfo({
@@ -212,6 +220,7 @@ const VerificationResultPage: React.FC = () => {
               totalCost: ei?.total_cost ?? 0,
               category: ei?.category || '기타',
               normalizedName: ei?.normalized_name ?? ei?.normalizedName,
+              masterJobId: ei?.master_job_id ?? ei?.masterJobId,
             };
           });
           setEstimateItems(itemsForEngine);
@@ -252,71 +261,6 @@ const VerificationResultPage: React.FC = () => {
 
     loadVerificationResult();
   }, []);
-
-  const handleMileageConfirm = async (newMileage: number) => {
-    if (!result || !fullVehicleInfo) return;
-    setMileageModalOpen(false);
-
-    const updatedVehicle: FullVehicleInfo = {
-      ...fullVehicleInfo,
-      mileage: newMileage,
-    };
-    setFullVehicleInfo(updatedVehicle);
-    setVehicleConditions((prev) => ({ ...prev, mileage: newMileage }));
-
-    if (estimateItems.length === 0) {
-      toast.success('주행거리가 수정되었어요.');
-      return;
-    }
-
-    setIsReVerifying(true);
-    try {
-      const engineResult = await VerificationEngine.verifyEstimate(
-        estimateItems,
-        result.totalAmount,
-        {
-          manufacturer: updatedVehicle.manufacturer,
-          model: updatedVehicle.model,
-          variant: updatedVehicle.variant,
-          year: updatedVehicle.year,
-          mileage: updatedVehicle.mileage,
-        },
-        shopType
-      );
-
-      const newItems: ItemVerification[] = engineResult.items.map((item) => ({
-        itemId: item.itemId,
-        status: item.status,
-        userPrice: item.userPrice,
-        averagePrice: item.averagePrice,
-        priceRange: item.priceRange,
-        sampleCount: item.sampleCount,
-        breakdown: item.breakdown,
-        costType: item.costType,
-        guide: item.guide,
-        isFreeRepair: item.isFreeRepair,
-      }));
-
-      setResult({
-        estimateId: result.estimateId,
-        totalAmount: result.totalAmount,
-        status: engineResult.status,
-        items: newItems,
-        confidence: engineResult.confidence,
-        shopType: engineResult.shopType,
-        totalPartCost: engineResult.totalPartCost,
-        totalLaborCost: engineResult.totalLaborCost,
-        totalPartCostAverage: engineResult.totalPartCostAverage,
-        totalLaborCostAverage: engineResult.totalLaborCostAverage,
-      });
-      toast.success('주행거리 반영해 검증 결과를 다시 산출했어요.');
-    } catch (e) {
-      console.error('Re-verify failed:', e);
-      toast.error('검증을 다시 실행하는 중 오류가 발생했어요.');
-    } finally {
-      setIsReVerifying(false);
-    }
-  };
 
   // 필터링된 항목
   const filteredAndSortedItems = useMemo(() => {
@@ -391,9 +335,40 @@ const VerificationResultPage: React.FC = () => {
       const copied = await copyLink(shareData.url);
       if (copied) toast.success('링크를 복사했어요.');
       else toast.error('링크 복사에 실패했어요.');
-    } catch (e) {
-      console.error('Share failed:', e);
+    } catch (err) {
+      console.error('Share failed:', err);
       toast.error('공유 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleSave = async () => {
+    if (!estimateId || !result) return;
+    const info = fullVehicleInfo;
+    if (!info) {
+      toast.error('차량 정보가 없어 저장할 수 없어요.');
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const res = await saveVerificationToMyCar(estimateId, {
+        manufacturer: info.manufacturer,
+        model: info.model,
+        variant: info.variant,
+        year: info.year,
+        mileage: info.mileage,
+        fuelType: info.fuelType,
+        registrationNumber: registrationNumber || undefined,
+      });
+      if (res.success && res.vehicleId) {
+        toast.success('내 차에 저장했어요.');
+        router.push(`/vehicle?vehicleId=${res.vehicleId}`);
+      } else {
+        toast.error(res.error ?? '저장에 실패했어요.');
+      }
+    } catch {
+      toast.error('저장 중 오류가 발생했어요.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -416,143 +391,159 @@ const VerificationResultPage: React.FC = () => {
 
   return (
     <>
-      <main className="min-h-screen bg-hyundai-gray-50 pb-32">
-        <div className="bg-white">
-          <Container>
-            <div className="flex items-center pt-[env(safe-area-inset-top,0px)]">
+      <main className="min-h-screen bg-hyundai-gray-50 flex flex-col">
+        {/* 상단: 흰색 배경, 뒤로가기 + 제목·설명 + 차량 요약 */}
+        <div className="bg-white shrink-0">
+          <div className="px-5 pt-[env(safe-area-inset-top,0px)]">
+            <div className="flex items-center justify-between min-h-[48px]">
               <button
                 type="button"
                 onClick={() => router.back()}
-                className="h-12 flex items-center text-hyundai-gray-700 active:opacity-70"
+                className="min-h-[44px] min-w-[44px] -ml-4 flex items-center justify-center text-hyundai-gray-700 active:opacity-70 rounded-lg touch-manipulation"
                 aria-label="뒤로가기"
               >
                 <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
               </button>
+              <button
+                type="button"
+                onClick={handleShare}
+                className="min-h-[44px] min-w-[44px] -mr-4 flex items-center justify-center text-hyundai-gray-700 active:opacity-70 rounded-lg touch-manipulation"
+                aria-label="공유하기"
+              >
+                <Share2 className="w-5 h-5" strokeWidth={1.5} />
+              </button>
             </div>
-            <div className="px-1 pt-2 pb-4">
+            <div className="pt-2 pb-4">
               <h1 className="text-[22px] font-bold text-hyundai-gray-900 leading-tight tracking-tight">
                 검증 결과
               </h1>
-              {registrationNumber && (
-                <p className="text-sm text-hyundai-gray-500 mt-1">
-                  {formatRegistrationDisplay(registrationNumber)}
-                </p>
-              )}
-            </div>
-
-            {/* 차량·주행거리 한 줄 요약 */}
-            {(vehicleLabel || fullVehicleInfo?.year || currentMileage > 0) && (
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-hyundai-gray-500 pb-4">
-                {vehicleLabel && <span className="text-hyundai-gray-900 font-medium">{vehicleLabel}</span>}
-                {fullVehicleInfo?.year && <span>{fullVehicleInfo.year}년형</span>}
-                {currentMileage > 0 && (
-                  <span>
-                    {mileageDisplay}
-                    <button
-                      type="button"
-                      onClick={() => setMileageModalOpen(true)}
-                      className="ml-1.5 text-hyundai-primary font-medium active:opacity-80"
-                    >
-                      수정
-                    </button>
-                  </span>
-                )}
-              </div>
-            )}
-          </Container>
-        </div>
-
-        <Container>
-          <div className="pt-5 space-y-5">
-            <VerificationSummary
-              totalAmount={result.totalAmount}
-              itemCounts={itemCounts}
-              vehicleConditions={vehicleConditions}
-              shopType={result.shopType ?? shopType}
-              costSummary={{
-                totalPartCost: result.totalPartCost ?? 0,
-                totalLaborCost: result.totalLaborCost ?? 0,
-                totalPartCostAverage: result.totalPartCostAverage ?? 0,
-                totalLaborCostAverage: result.totalLaborCostAverage ?? 0,
-              }}
-            />
-
-            <div>
-              <div className="flex items-center justify-between px-0 mb-2">
-                <p className="text-xs text-hyundai-gray-500 font-medium">항목별 결과</p>
-                <span className="text-[11px] text-hyundai-gray-400">{filteredAndSortedItems.length}건</span>
-              </div>
-
-              {/* 필터 칩 */}
-              <div className="flex gap-1.5 mb-3 overflow-x-auto scrollbar-hide">
-                {filters.map((filter) =>
-                  (filter.key === 'all' || filter.count > 0) ? (
-                    <button
-                      key={filter.key}
-                      type="button"
-                      onClick={() => setActiveFilter(filter.key)}
-                      className={`shrink-0 px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors ${
-                        activeFilter === filter.key
-                          ? 'bg-hyundai-gray-900 text-white'
-                          : 'bg-hyundai-gray-100 text-hyundai-gray-500 active:bg-hyundai-gray-200'
-                      }`}
-                    >
-                      {filter.label} {filter.count}
-                    </button>
-                  ) : null
-                )}
-              </div>
-
-              <Card variant="default" padding="none">
-                {filteredAndSortedItems.length > 0 ? (
-                  filteredAndSortedItems.map((item, index) => (
-                    <React.Fragment key={item.itemId}>
-                      {index > 0 && <div className="mx-5 border-b border-hyundai-gray-100" />}
-                      <EstimateCard
-                        itemId={item.itemId}
-                        itemName={itemNames[item.itemId] || '항목명'}
-                        totalCost={item.userPrice}
-                        status={item.status}
-                        priceRange={item.priceRange}
-                        userPrice={item.userPrice}
-                        costType={item.costType}
-                        guide={item.guide}
-                        breakdown={item.breakdown}
-                        isFreeRepair={item.isFreeRepair}
-                      />
-                    </React.Fragment>
-                  ))
-                ) : (
-                  <div className="py-8 text-center">
-                    <p className="text-sm text-hyundai-gray-400">해당하는 항목이 없습니다.</p>
-                  </div>
-                )}
-              </Card>
+              <p className="text-sm text-hyundai-gray-400 mt-3">
+                {ownerDisplayName ? `${ownerDisplayName}님의 차량과 유사한 조건의 실제 정비이력으로 검증했어요!` : '내 차량과 유사한 조건의 실제 정비이력으로 검증했어요!'}
+              </p>
             </div>
           </div>
-        </Container>
 
-        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-hyundai-gray-100 pb-[env(safe-area-inset-bottom,0px)]">
-          <div className="max-w-lg mx-auto px-4 py-3">
+          <div className="px-5 pb-5">
+
+          {/* 차량 정보·공통 비교 조건: 요약 카드 (차량, 연식, 주행거리, 정비지역) */}
+          {(vehicleLabel || (fullVehicleInfo?.year != null && fullVehicleInfo.year > 0) || currentMileage > 0 || shopRegionSido) && (
+            <div className="p-4 bg-hyundai-gray-50 rounded-2xl">
+              {vehicleLabel && (
+                <div className={`flex items-center justify-between text-sm ${(fullVehicleInfo?.year != null && fullVehicleInfo.year > 0) || currentMileage > 0 || shopRegionSido ? 'mb-2' : ''}`}>
+                  <span className="text-hyundai-gray-500">차량</span>
+                  <span className="font-medium text-hyundai-gray-900">{vehicleLabel}</span>
+                </div>
+              )}
+              {fullVehicleInfo?.year != null && fullVehicleInfo.year > 0 && (
+                <div className={`flex items-center justify-between text-sm ${currentMileage > 0 || shopRegionSido ? 'mb-2' : ''}`}>
+                  <span className="text-hyundai-gray-500">연식</span>
+                  <span className="font-medium text-hyundai-gray-900">{fullVehicleInfo.year}년형</span>
+                </div>
+              )}
+              {currentMileage > 0 && (
+                <div className={`flex items-center justify-between text-sm ${shopRegionSido ? 'mb-2' : ''}`}>
+                  <span className="text-hyundai-gray-500">주행거리</span>
+                  <span className="font-medium text-hyundai-gray-900">{mileageDisplay}</span>
+                </div>
+              )}
+              {shopRegionSido && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-hyundai-gray-500">정비지역</span>
+                  <span className="font-medium text-hyundai-gray-900">{shopRegionSido}</span>
+                </div>
+              )}
+            </div>
+          )}
+          </div>
+        </div>
+
+        {/* 항목별 결과 — 토스 스타일. flex-1로 남는 영역까지 흰 배경 채워서 회색 노출 방지 */}
+        <div className="flex-1 min-h-0 bg-white pt-1 pb-36">
+          <div className="px-5">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-sm text-hyundai-primary font-medium tabular-nums">{filterCounts.all}건</span>
+            </div>
+            <h2 className="text-[18px] font-bold text-hyundai-gray-900 leading-tight mb-4">
+              항목별 결과
+            </h2>
+            {filteredAndSortedItems.length > 0 && (
+              <p className="text-xs text-hyundai-gray-400 mb-4">항목을 눌러 자세히 볼 수 있어요</p>
+            )}
+
+            <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide overscroll-x-contain">
+              {filters.map((filter) =>
+                (filter.key === 'all' || filter.count > 0) ? (
+                  <button
+                    key={filter.key}
+                    type="button"
+                    onClick={() => setActiveFilter(filter.key)}
+                    className={`shrink-0 min-h-[36px] px-3.5 py-2 rounded-lg text-sm font-medium transition-colors touch-manipulation ${
+                      activeFilter === filter.key
+                        ? 'bg-hyundai-gray-900 text-white'
+                        : 'bg-hyundai-gray-100 text-hyundai-gray-600 active:bg-hyundai-gray-200'
+                    }`}
+                  >
+                    {filter.label} {filter.count}
+                  </button>
+                ) : null
+              )}
+            </div>
+          </div>
+
+          {/* 리스트: 카드 없이 구분선·여백만 (토스 리스트 스타일) */}
+          <div className="px-5">
+            {filteredAndSortedItems.length > 0 ? (
+              <div>
+                {filteredAndSortedItems.map((item, index) => (
+                  <React.Fragment key={item.itemId}>
+                    {index > 0 && <div className="border-b border-hyundai-gray-100" />}
+                    <EstimateCard
+                      itemId={item.itemId}
+                      itemName={itemNames[item.itemId] || '항목명'}
+                      totalCost={item.userPrice}
+                      status={item.status}
+                      priceRange={item.priceRange}
+                      userPrice={item.userPrice}
+                      costType={item.costType}
+                      guide={item.guide}
+                      breakdown={item.breakdown}
+                      isFreeRepair={item.isFreeRepair}
+                    />
+                  </React.Fragment>
+                ))}
+              </div>
+            ) : (
+              <div className="py-12 text-center">
+                <p className="text-sm text-hyundai-gray-500">해당하는 항목이 없습니다.</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-hyundai-gray-100">
+          <div className="max-w-lg mx-auto px-5 py-4 pb-[calc(env(safe-area-inset-bottom)+16px)] flex gap-3">
             <button
-              onClick={handleShare}
-              className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-hyundai-gray-900 text-xs font-medium text-white active:bg-hyundai-gray-800"
+              type="button"
+              onClick={handleSave}
+              disabled={isSaving}
+              className="flex-1 py-4 rounded-2xl bg-hyundai-gray-900 text-white text-base font-semibold active:bg-hyundai-gray-800 disabled:opacity-60 transition-colors touch-manipulation flex items-center justify-center gap-2"
             >
-              <Share2 className="w-3.5 h-3.5" strokeWidth={1.5} />
-              공유하기
+              {isSaving ? (
+                <Loader2 className="w-5 h-5 animate-spin" strokeWidth={1.5} />
+              ) : (
+                '저장'
+              )}
+            </button>
+            <button
+              type="button"
+              className="flex-1 py-4 rounded-2xl bg-hyundai-gray-100 text-hyundai-gray-900 text-base font-semibold active:bg-hyundai-gray-200 transition-colors touch-manipulation"
+            >
+              다른 정비소 추천받기
             </button>
           </div>
         </div>
       </main>
 
-      <MileageEditModal
-        isOpen={mileageModalOpen}
-        onClose={() => setMileageModalOpen(false)}
-        currentMileage={currentMileage}
-        recentMileage={currentMileage > 0 ? currentMileage : undefined}
-        onConfirm={handleMileageConfirm}
-        isLoading={isReVerifying}
-      />
     </>
   );
 };

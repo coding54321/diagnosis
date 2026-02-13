@@ -20,6 +20,7 @@ import type {
 } from '@/types';
 import { lookupWpcPrice, findVehicleCode } from '@/lib/data/wpc-reference-parts';
 import { lookupFrt } from '@/lib/data/frt-standards';
+import { getJobMasterById } from '@/lib/data/job-master';
 import { generateGuide } from './guide-messages';
 import { isOfficialShop } from './shop-classifier';
 
@@ -147,7 +148,8 @@ export class VerificationEngine {
       };
     }
 
-    const lookupName = item.normalizedName?.trim() || item.name;
+    const masterItem = item.masterJobId ? getJobMasterById(item.masterJobId) : undefined;
+    const lookupName = masterItem?.name || item.normalizedName?.trim() || item.name;
     const costType = determineCostType(item);
 
     // 차종 코드 조회
