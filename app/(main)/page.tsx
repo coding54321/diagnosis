@@ -23,7 +23,7 @@ export default async function HomePage() {
     : [];
 
   return (
-    <main className="flex-1 min-h-screen bg-white flex flex-col">
+    <main className="flex-1 bg-white flex flex-col">
       <div className="flex-1 max-w-lg mx-auto w-full px-5 pt-[env(safe-area-inset-top,0px)] pb-8 animate-fade-in-up">
         {/* 상단: 브랜드 + 알림 · 히어로 */}
         <div className="pt-6 pb-5">

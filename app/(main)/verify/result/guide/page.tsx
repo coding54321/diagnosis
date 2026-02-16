@@ -80,7 +80,7 @@ const QuestionGuidePage: React.FC = () => {
     <>
       <Header title="정비사 상담 가이드" showBackButton onBack={() => router.back()} />
       
-      <main className="min-h-screen bg-hyundai-gray-50 pb-20">
+      <main className="min-h-screen bg-hyundai-gray-50">
         <Container>
           <div className="py-6 space-y-6 animate-fade-in-up">
             <div className="mb-4">

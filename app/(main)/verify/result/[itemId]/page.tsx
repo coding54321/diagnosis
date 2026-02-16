@@ -271,7 +271,7 @@ const ItemDetailPage: React.FC = () => {
 
   return (
     <>
-      <main className="min-h-screen bg-hyundai-gray-50 flex flex-col pb-20">
+      <main className="min-h-screen bg-hyundai-gray-50 flex flex-col">
         {/* 상단: 흰색 — 뒤로가기 + 제목 */}
         <div className="bg-white shrink-0">
           <div className="px-5 pt-[env(safe-area-inset-top,0px)]">
@@ -298,7 +298,7 @@ const ItemDetailPage: React.FC = () => {
         </div>
 
         {/* 요약 + 차트 + 버튼 + 질문 — 흰색 영역이 남는 공간 채워서 회색 노출 방지 */}
-        <div className="flex-1 min-h-0 bg-white" style={{ minHeight: 'calc(100dvh - 220px)' }}>
+        <div className="flex-1 min-h-0 bg-white">
           <div className="px-5 pt-3 pb-5 animate-fade-in-up">
             {/* 요약 블록: 라벨(좌) / 값(우) */}
             <div className="p-4 bg-hyundai-gray-50 rounded-2xl">

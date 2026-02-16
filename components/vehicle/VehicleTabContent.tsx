@@ -229,7 +229,7 @@ export function VehicleTabContent({
   // ============================
   if (vehicles.length === 0) {
     return (
-      <main className="flex-1 min-h-screen bg-white">
+      <main className="flex-1 bg-white">
         <div className="max-w-lg mx-auto w-full px-5 pt-7 pb-10">
           <div className="mb-4">
             <p className="text-xs font-semibold text-hyundai-gray-400">마이페이지</p>
@@ -451,7 +451,7 @@ export function VehicleTabContent({
         </div>
       )}
 
-      <main className="flex-1 min-h-screen bg-hyundai-gray-50 flex flex-col">
+      <main className="flex-1 bg-hyundai-gray-50 flex flex-col">
         <div className="flex-1 min-h-0 bg-white max-w-lg mx-auto w-full">
           <div className="px-5 pt-6 pb-5 animate-fade-in-up">
             <p className="text-xs font-semibold text-hyundai-gray-400 mb-4">마이페이지</p>

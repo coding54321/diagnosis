@@ -220,9 +220,9 @@ const ManualInputPage: React.FC = () => {
 
   return (
     <>
-      <main className="min-h-screen bg-white pb-36">
+      <main className="min-h-screen bg-white flex flex-col">
         {/* 뒤로가기 헤더 */}
-        <div className="flex items-center px-4 pt-[env(safe-area-inset-top,0px)]">
+        <div className="flex items-center px-4 pt-[env(safe-area-inset-top,0px)] shrink-0">
           <button
             type="button"
             onClick={() => router.back()}
@@ -233,7 +233,7 @@ const ManualInputPage: React.FC = () => {
           </button>
         </div>
 
-        <Container>
+        <Container className="flex-1 pb-36">
           <div className="px-1 pt-4 pb-6">
             <h1 className="text-[22px] font-bold text-hyundai-gray-900 leading-tight tracking-tight">
               직접 입력
