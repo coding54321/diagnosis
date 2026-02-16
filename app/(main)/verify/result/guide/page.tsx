@@ -82,7 +82,7 @@ const QuestionGuidePage: React.FC = () => {
       
       <main className="min-h-screen bg-hyundai-gray-50 pb-20">
         <Container>
-          <div className="py-6 space-y-6">
+          <div className="py-6 space-y-6 animate-fade-in-up">
             <div className="mb-4">
               <div className="flex items-center gap-2 mb-2">
                 <MessageCircle className="w-6 h-6 text-hyundai-gray-600" />

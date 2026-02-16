@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, Share2, ArrowLeft } from 'lucide-react';
+import Skeleton from '@/components/ui/Skeleton';
 import EstimateCard from '@/components/verification/EstimateCard';
 import { mockVerificationResult, mockVehicle } from '@/lib/mockData';
 import { fetchVerificationResult, getCurrentUserDisplayName, saveVerificationToMyCar } from '@/lib/supabase/actions';
@@ -310,8 +311,44 @@ const VerificationResultPage: React.FC = () => {
             <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
           </button>
         </div>
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-6 h-6 animate-spin text-hyundai-gray-300" strokeWidth={1.5} />
+        {/* 스켈레톤: 요약 헤더 + 아이템 리스트 */}
+        <div className="px-5 pt-4 pb-6">
+          {/* 상태 배지 */}
+          <Skeleton className="w-20 h-7 rounded-full mb-3" />
+          {/* 제목 */}
+          <Skeleton className="w-48 h-7 mb-2" />
+          {/* 부제 */}
+          <Skeleton className="w-32 h-4 mb-6" />
+          {/* 요약 카드 */}
+          <div className="p-5 bg-hyundai-gray-50 rounded-2xl space-y-3">
+            <div className="flex items-center justify-between">
+              <Skeleton className="w-16 h-4" />
+              <Skeleton className="w-24 h-5" />
+            </div>
+            <div className="flex items-center justify-between">
+              <Skeleton className="w-16 h-4" />
+              <Skeleton className="w-24 h-5" />
+            </div>
+          </div>
+        </div>
+        {/* 필터 칩 */}
+        <div className="px-5 flex gap-2 mb-4">
+          <Skeleton className="w-14 h-8 rounded-full" />
+          <Skeleton className="w-14 h-8 rounded-full" />
+          <Skeleton className="w-14 h-8 rounded-full" />
+          <Skeleton className="w-20 h-8 rounded-full" />
+        </div>
+        {/* 아이템 리스트 */}
+        <div className="px-5 space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="p-4 bg-white rounded-2xl space-y-2">
+              <Skeleton className="w-32 h-4" />
+              <div className="flex items-center justify-between">
+                <Skeleton className="w-20 h-5" />
+                <Skeleton className="w-24 h-5" />
+              </div>
+            </div>
+          ))}
         </div>
       </main>
     );
@@ -361,7 +398,7 @@ const VerificationResultPage: React.FC = () => {
       });
       if (res.success && res.vehicleId) {
         toast.success('내 차에 저장했어요.');
-        router.push(`/vehicle?vehicleId=${res.vehicleId}`);
+        router.replace(`/vehicle?vehicleId=${res.vehicleId}`);
       } else {
         toast.error(res.error ?? '저장에 실패했어요.');
       }
@@ -423,7 +460,7 @@ const VerificationResultPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="px-5 pb-5">
+          <div className="px-5 pb-5 animate-fade-in-up">
 
           {/* 차량 정보·공통 비교 조건: 요약 카드 (차량, 연식, 주행거리, 정비지역) */}
           {(vehicleLabel || (fullVehicleInfo?.year != null && fullVehicleInfo.year > 0) || currentMileage > 0 || shopRegionSido) && (
@@ -526,7 +563,7 @@ const VerificationResultPage: React.FC = () => {
               type="button"
               onClick={handleSave}
               disabled={isSaving}
-              className="flex-1 py-4 rounded-2xl bg-hyundai-gray-900 text-white text-base font-semibold active:bg-hyundai-gray-800 disabled:opacity-60 transition-colors touch-manipulation flex items-center justify-center gap-2"
+              className="flex-1 py-4 rounded-2xl bg-hyundai-blue-500 text-white text-base font-semibold active:bg-hyundai-blue-600 disabled:opacity-60 transition-colors touch-manipulation flex items-center justify-center gap-2"
             >
               {isSaving ? (
                 <Loader2 className="w-5 h-5 animate-spin" strokeWidth={1.5} />

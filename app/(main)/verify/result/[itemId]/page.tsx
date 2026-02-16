@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { CheckCircle2, AlertCircle, Loader2, ArrowLeft, Car, MessageCircleQuestion, Info } from 'lucide-react';
+import { CheckCircle2, AlertCircle, ArrowLeft, Car, MessageCircleQuestion, Info } from 'lucide-react';
+import Skeleton from '@/components/ui/Skeleton';
 import { BottomSheet } from '@/components/ui';
 import PriceChart from '@/components/verification/PriceChart';
 import CostComparisonChart, { getCostStatus } from '@/components/verification/CostComparisonChart';
@@ -85,7 +86,6 @@ const ItemDetailPage: React.FC = () => {
   const [result, setResult] = useState<VerificationResult | null>(null);
   const [itemNames, setItemNames] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
-  const [showPartInfo, setShowPartInfo] = useState(false);
   const [showSimilarSheet, setShowSimilarSheet] = useState(false);
 
   const similarCases = useMemo(() => getSimilarRepairCases(itemId), [itemId]);
@@ -195,8 +195,29 @@ const ItemDetailPage: React.FC = () => {
             </button>
           </div>
         </div>
-        <div className="flex-1 flex items-center justify-center py-20">
-          <Loader2 className="w-6 h-6 animate-spin text-hyundai-gray-300" strokeWidth={1.5} />
+        {/* 스켈레톤: 상태 배지 + 제목 + 가격 블록 + 차트 영역 */}
+        <div className="flex-1 bg-white px-5 pt-4 pb-6">
+          {/* 상태 배지 */}
+          <Skeleton className="w-16 h-6 rounded-full mb-2" />
+          {/* 항목명 */}
+          <Skeleton className="w-40 h-7 mb-5" />
+          {/* 가격 요약 카드 */}
+          <div className="p-4 bg-hyundai-gray-50 rounded-2xl space-y-3 mb-6">
+            <div className="flex items-center justify-between">
+              <Skeleton className="w-16 h-4" />
+              <Skeleton className="w-24 h-5" />
+            </div>
+            <div className="flex items-center justify-between">
+              <Skeleton className="w-20 h-4" />
+              <Skeleton className="w-24 h-5" />
+            </div>
+            <div className="flex items-center justify-between">
+              <Skeleton className="w-16 h-4" />
+              <Skeleton className="w-20 h-5" />
+            </div>
+          </div>
+          {/* 차트 영역 */}
+          <Skeleton className="w-full h-[200px] rounded-2xl" />
         </div>
       </main>
     );
@@ -278,7 +299,7 @@ const ItemDetailPage: React.FC = () => {
 
         {/* 요약 + 차트 + 버튼 + 질문 — 흰색 영역이 남는 공간 채워서 회색 노출 방지 */}
         <div className="flex-1 min-h-0 bg-white" style={{ minHeight: 'calc(100dvh - 220px)' }}>
-          <div className="px-5 pt-3 pb-5">
+          <div className="px-5 pt-3 pb-5 animate-fade-in-up">
             {/* 요약 블록: 라벨(좌) / 값(우) */}
             <div className="p-4 bg-hyundai-gray-50 rounded-2xl">
               <div className="flex items-center justify-between text-sm mb-3">
@@ -403,14 +424,17 @@ const ItemDetailPage: React.FC = () => {
         onClose={() => setShowSimilarSheet(false)}
         title="비슷한차 정비결과"
       >
-        <div className="mb-3">
-          <p className="text-xs text-hyundai-gray-400 flex items-center gap-1">
-            <AlertCircle className="w-3 h-3" strokeWidth={1.5} />
-            주행거리 짧은 순
-          </p>
+        {/* 내 견적 기준 — 스크롤 시 상단 고정 */}
+        <div className="sticky top-0 z-10 bg-white pb-3">
+          <div className="p-3 bg-hyundai-blue-50 rounded-xl flex items-center justify-between">
+            <span className="text-xs font-medium text-hyundai-blue-600">내 견적</span>
+            <span className="text-sm font-bold text-hyundai-blue-700 tabular-nums">{formatPrice(item.userPrice)}</span>
+          </div>
         </div>
 
-        <div className="space-y-3">
+        <p className="text-xs text-hyundai-gray-400 mb-3">주행거리 짧은 순 · {similarCases.length}건</p>
+
+        <div className="space-y-2">
           {similarCases.map((c) => (
             <SimilarCaseCard key={c.id} caseData={c} userPrice={item.userPrice} costType={item.costType} />
           ))}
@@ -420,43 +444,31 @@ const ItemDetailPage: React.FC = () => {
   );
 };
 
-function SimilarCaseCard({ caseData, userPrice, costType }: { caseData: SimilarRepairCase; userPrice: number; costType: 'part' | 'labor' | 'combined' }) {
+function SimilarCaseCard({ caseData, costType }: { caseData: SimilarRepairCase; userPrice: number; costType: 'part' | 'labor' | 'combined' }) {
   const colorClass = shopTypeColors[caseData.shopType] || 'bg-hyundai-gray-100 text-hyundai-gray-700';
-  const diff = caseData.totalCost - userPrice;
-  const priceColor = diff > 0 ? 'text-red-500' : diff < 0 ? 'text-blue-600' : 'text-hyundai-gray-900';
   const showBreakdown = costType === 'combined' && (caseData.partCost > 0 || caseData.laborCost > 0);
 
   return (
-    <div className="py-4 border-b border-hyundai-gray-100 last:border-b-0">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-hyundai-gray-50 flex items-center justify-center shrink-0">
-          <Car className="w-5 h-5 text-hyundai-gray-400" strokeWidth={1.5} />
-        </div>
+    <div className="py-3 border-b border-hyundai-gray-100 last:border-b-0">
+      <div className="flex items-center justify-between">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-hyundai-gray-900">{caseData.year}년형</span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm font-medium text-hyundai-gray-900">{caseData.year}년형</span>
             <span className="text-xs text-hyundai-gray-400">{caseData.mileage}</span>
-          </div>
-          <div className="flex items-center gap-1.5 mt-0.5">
-            <span className="text-xs text-hyundai-gray-500 truncate">{caseData.variant}</span>
-            <span className={`text-[10px] px-2 py-0.5 rounded-lg font-medium shrink-0 ${colorClass}`}>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0 ${colorClass}`}>
               {caseData.shopType}
             </span>
           </div>
+          {showBreakdown && (
+            <p className="text-[11px] text-hyundai-gray-400 mt-0.5">
+              부품 {formatPrice(caseData.partCost)} · 공임 {formatPrice(caseData.laborCost)}
+            </p>
+          )}
         </div>
-        <div className="text-right shrink-0">
-          <p className={`text-sm font-bold tabular-nums ${priceColor}`}>
-            {formatPrice(caseData.totalCost)}
-          </p>
-        </div>
+        <span className="text-sm font-bold tabular-nums text-hyundai-gray-900 shrink-0 ml-3">
+          {formatPrice(caseData.totalCost)}
+        </span>
       </div>
-      {showBreakdown && (
-        <div className="flex items-center gap-3 mt-2 pl-[52px]">
-          <span className="text-[11px] text-hyundai-gray-400">부품 {formatPrice(caseData.partCost)}</span>
-          <span className="text-hyundai-gray-200">·</span>
-          <span className="text-[11px] text-hyundai-gray-400">공임 {formatPrice(caseData.laborCost)}</span>
-        </div>
-      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { fetchRecentHistory } from '@/lib/supabase/actions';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Bell } from 'lucide-react';
 import DirectInputButton from '@/components/verification/DirectInputButton';
 import AlbumPickerCard from '@/components/verification/AlbumPickerCard';
 import { formatPrice } from '@/lib/utils';
@@ -24,10 +24,19 @@ export default async function HomePage() {
 
   return (
     <main className="flex-1 min-h-screen bg-white flex flex-col">
-      <div className="flex-1 max-w-lg mx-auto w-full px-5 pt-[env(safe-area-inset-top,0px)] pb-8">
-        {/* 상단: 브랜드 + 히어로 */}
+      <div className="flex-1 max-w-lg mx-auto w-full px-5 pt-[env(safe-area-inset-top,0px)] pb-8 animate-fade-in-up">
+        {/* 상단: 브랜드 + 알림 · 히어로 */}
         <div className="pt-6 pb-5">
-          <p className="text-lg font-bold tracking-tight text-hyundai-primary">카비</p>
+          <div className="flex items-center justify-between">
+            <p className="text-lg font-bold tracking-tight text-hyundai-primary">카비</p>
+            <Link
+              href="/notifications"
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center -mr-2 text-hyundai-gray-700 active:opacity-70 rounded-lg touch-manipulation"
+              aria-label="알림"
+            >
+              <Bell className="w-5 h-5" strokeWidth={1.5} />
+            </Link>
+          </div>
           <h1 className="text-[28px] font-bold text-hyundai-gray-900 leading-tight tracking-tight mt-6">
             지금 받은 견적서
             <br />

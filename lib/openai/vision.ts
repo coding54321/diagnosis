@@ -30,7 +30,7 @@ export interface OCRResult {
     vatAmount?: number;
   };
   confidence?: number;
-  status?: 'NOT_ESTIMATE' | 'POOR_QUALITY' | 'PARTIAL' | 'COMPLETE';
+  status?: 'POOR_QUALITY' | 'PARTIAL' | 'COMPLETE';
   warnings?: string[];
   error?: string;
 }
@@ -332,8 +332,6 @@ ${JOB_MASTER_PROMPT_TEXT}
 
 ## JSON 응답 형식
 {
-  "isEstimate": true,
-  "confidence": 0.9,
   "shopName": "정비소명",
   "shopAddress": "정비소 주소",
   "date": "YYYY-MM-DD",
@@ -376,16 +374,6 @@ export async function analyzeEstimateFromText(ocrText: string): Promise<OCRResul
     const content = response.choices[0]?.message?.content;
     if (!content) return { success: false, error: 'OpenAI 응답이 비어 있습니다.' };
     const parsed = JSON.parse(content);
-    const hasValidItems = parsed.items && parsed.items.length > 0;
-    if (!parsed.isEstimate && !hasValidItems) {
-      return {
-        success: false,
-        status: 'NOT_ESTIMATE',
-        confidence: parsed.confidence || 0,
-        warnings: parsed.warnings || [],
-        error: '견적서가 아닌 것으로 보입니다.',
-      };
-    }
     const normalizedItems = normalizeOCRItems(parsed.items || []);
     const hasMissingFields =
       !parsed.shopName || !parsed.items || parsed.items.length === 0 || !parsed.totalAmount;
@@ -467,12 +455,6 @@ export async function analyzeEstimateImage(
           role: 'system',
           content: `당신은 한국 자동차 정비 문서를 분석하는 OCR 전문가입니다.
 
-## 문서 유형
-다음 중 하나라도 해당하면 isEstimate: true로 판정:
-- 자동차점검·정비명세서, 견적서, 정비명세서
-- 정비 항목과 금액이 포함된 자동차 관련 문서
-- 블루핸즈, 오토큐, 공임나라 등 정비소 문서
-
 ## 추출할 정보
 
 1. **shopName**: 정비소/업체 이름 (대표자 이름 제외)
@@ -516,8 +498,6 @@ ${JOB_MASTER_PROMPT_TEXT}
 
 ## JSON 응답 형식
 {
-  "isEstimate": true,
-  "confidence": 0.9,
   "shopName": "정비소명",
   "shopAddress": "정비소 주소",
   "date": "YYYY-MM-DD",
@@ -580,30 +560,6 @@ JSON 형식으로만 응답해주세요.`,
     console.log('[SERVER] JSON 파싱 시작...');
     const parsed = JSON.parse(content);
     console.log('[SERVER] JSON 파싱 성공:', JSON.stringify(parsed, null, 2).substring(0, 500) + '...');
-
-    // 에러 케이스 검증 - 더 유연하게 처리
-    // isEstimate가 false여도 items가 있으면 유효한 문서로 처리
-    const hasValidItems = parsed.items && parsed.items.length > 0;
-
-    if (!parsed.isEstimate && !hasValidItems) {
-      return {
-        success: false,
-        status: 'NOT_ESTIMATE',
-        confidence: parsed.confidence || 0,
-        warnings: parsed.warnings || [],
-        error: '견적서가 아닌 것으로 보입니다.',
-      };
-    }
-
-    if ((parsed.confidence || 0) < 0.3 && !hasValidItems) {
-      return {
-        success: false,
-        status: 'NOT_ESTIMATE',
-        confidence: parsed.confidence || 0,
-        warnings: parsed.warnings || [],
-        error: '인식 신뢰도가 낮습니다. 더 선명한 이미지로 다시 시도해주세요.',
-      };
-    }
 
     if (parsed.quality?.imageQuality < 0.5) {
       return {

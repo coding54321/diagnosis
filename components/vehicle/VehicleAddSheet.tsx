@@ -182,7 +182,7 @@ export default function VehicleAddSheet({ isOpen, onClose }: VehicleAddSheetProp
         {/* 핸들 + 닫기 */}
         <div className="flex items-center justify-between px-5 pt-3 pb-1">
           <div className="w-8" />
-          <div className="w-10 h-1 rounded-full bg-hyundai-gray-200" />
+          <div className="w-10 h-1 rounded-full bg-hyundai-blue-300" />
           <button
             type="button"
             onClick={handleClose}
@@ -229,7 +229,7 @@ export default function VehicleAddSheet({ isOpen, onClose }: VehicleAddSheetProp
                   type="button"
                   onClick={handleCheckVehicle}
                   disabled={!vehicleNumber.trim()}
-                  className="w-full py-3.5 rounded-2xl bg-hyundai-gray-900 text-white text-sm font-medium active:bg-hyundai-gray-800 disabled:opacity-40 disabled:pointer-events-none"
+                  className="w-full py-3.5 rounded-2xl bg-hyundai-blue-500 text-white text-sm font-medium active:bg-hyundai-blue-600 disabled:opacity-40 disabled:pointer-events-none"
                 >
                   차량 조회
                 </button>
@@ -247,7 +247,7 @@ export default function VehicleAddSheet({ isOpen, onClose }: VehicleAddSheetProp
             {/* Step 2: 소유주 확인 */}
             {regStep === 'owner' && vehicleInfo && (
               <div className="space-y-4">
-                <div className="p-4 bg-semantic-success-light rounded-2xl">
+                <div className="p-4 bg-hyundai-gray-50 rounded-xl">
                   <div className="flex items-start gap-2">
                     <div className="w-5 h-5 rounded-full bg-semantic-success-main flex items-center justify-center shrink-0 mt-0.5">
                       <Check className="w-3 h-3 text-white" />
@@ -296,7 +296,7 @@ export default function VehicleAddSheet({ isOpen, onClose }: VehicleAddSheetProp
             {/* Step 3: 확정 — 별칭·주행거리 + 저장 */}
             {regStep === 'confirmed' && vehicleInfo && (
               <div className="space-y-4">
-                <div className="p-4 bg-semantic-success-light rounded-2xl">
+                <div className="p-4 bg-hyundai-gray-50 rounded-xl">
                   <div className="flex items-start gap-2">
                     <div className="w-5 h-5 rounded-full bg-semantic-success-main flex items-center justify-center shrink-0 mt-0.5">
                       <Check className="w-3 h-3 text-white" />

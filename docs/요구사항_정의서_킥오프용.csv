@@ -1,0 +1,46 @@
+요구사항ID	LV1	LV2	LV3	요구사항명	상태 변화(생성/수정되는 테이블·필드)	최소 Acceptance Criteria (3개)	우선순위(상,중,하)
+FR_AUTH_001	인증/세션	익명 세션 생성		익명 세션 생성 및 사용자 컨텍스트 확립	없음 (세션/쿠키만 생성, DB 변경 없음)	"1. 앱 진입 시 자동으로 UUID가 발급되고 세션이 생성되어야 함
+2. 토큰 만료 시 자동으로 갱신되어 사용자 경험이 끊기지 않아야 함
+3. 모든 API 요청에 토큰이 자동으로 첨부되어야 함"	상
+FR_VEH_001	차량 관리	차량 등록		차량 등록(Create)	vehicles 테이블 INSERT (user_id, registration_number, manufacturer, model, variant, year, mileage, fuel_type, nickname)	"1. 차량번호 조회가 정확히 동작해야 함
+2. 소유주 확인이 정확히 동작해야 함
+3. 차량 정보가 정상적으로 vehicles 테이블에 저장되어야 함"	상
+FR_VEH_002	차량 관리	차량 정보 수정		차량 정보 수정(Update)	vehicles 테이블 UPDATE (mileage, nickname) WHERE id = 차량ID AND user_id = 현재사용자UUID	"1. 차량 정보 수정이 정상적으로 저장되어야 함
+2. 수정 후 변경사항이 즉시 반영되어야 함
+3. 본인 소유 차량만 수정할 수 있어야 함"	중
+FR_VEH_003	차량 관리	차량 삭제		차량 삭제(Delete)	vehicles 테이블 DELETE WHERE id = 차량ID AND user_id = 현재사용자UUID	"1. 삭제 확인 모달이 표시되어야 함
+2. 차량 정보가 정상적으로 삭제되어야 함
+3. 본인 소유 차량만 삭제할 수 있어야 함"	하
+FR_VERIFY_001	견적서 입력 및 검증	견적서 입력	카메라 촬영 기반	견적서 데이터 입력(카메라 촬영 기반)	vehicles 테이블 INSERT (차량 정보) + estimates 테이블 INSERT (견적서 정보) + estimate_items 테이블 INSERT (정비 항목들)	"1. 카메라 촬영이 정상적으로 동작해야 함
+2. OCR이 정확히 텍스트를 추출해야 함 (정확도 80% 이상)
+3. 검증 엔진이 정상적으로 실행되어야 함"	상
+FR_VERIFY_002	견적서 입력 및 검증	견적서 입력	앨범 선택 기반	견적서 데이터 입력(앨범 선택 기반)	vehicles 테이블 INSERT (차량 정보) + estimates 테이블 INSERT (견적서 정보) + estimate_items 테이블 INSERT (정비 항목들)	"1. 앨범에서 이미지 선택이 정상적으로 동작해야 함
+2. OCR이 정확히 텍스트를 추출해야 함 (정확도 80% 이상)
+3. 검증 엔진이 정상적으로 실행되어야 함"	중
+FR_VERIFY_003	견적서 입력 및 검증	견적서 입력	수기 입력 기반	견적서 데이터 입력(수기 입력 기반)	vehicles 테이블 INSERT (차량 정보) + estimates 테이블 INSERT (견적서 정보) + estimate_items 테이블 INSERT (정비 항목들)	"1. 차량 정보 및 정비 항목 입력이 정상적으로 저장되어야 함
+2. 검증 엔진이 정상적으로 실행되어야 함
+3. 입력한 데이터가 정확히 검증 엔진에 전달되어야 함"	중
+FR_VERIFY_004	견적서 입력 및 검증	검증 실행		검증 실행 및 결과 저장(결과 산출 + 이력 생성 포함)	verification_results 테이블 INSERT (항목별 검증 결과) + verification_history 테이블 INSERT (user_id, estimate_id, date, items, total_amount, status, shop_name, vehicle_label)	"1. 동일 조건의 실제 정비 데이터가 정확히 조회되어야 함
+2. 가격 비교 및 판정이 정확해야 함 (통계 계산 오차 5% 이내)
+3. verification_results와 verification_history 모두 정상적으로 저장되어야 하며, 이력 생성 실패 시 verification_results는 롤백하거나 재시도해야 함"	상
+FR_HISTORY_001	검증 이력/열람	검증 이력 열람		저장된 검증 이력 열람(목록+상세+차량별 필터 포함)	없음 (조회만 수행)	"1. 검증 이력 목록이 정확히 표시되어야 함 (본인 데이터만)
+2. 차량별 필터링이 정상적으로 동작해야 함
+3. 필터 및 정렬 기능이 정상적으로 동작해야 함"	중
+FR_SHARE_001	공유	검증 결과 공유		검증 결과 공유(링크/네이티브 공유)	없음 (링크 생성/복사만 수행)	"1. 링크 복사가 정상적으로 동작해야 함
+2. 네이티브 공유가 정상적으로 동작해야 함
+3. 공유된 링크로 접근 시 해당 검증 결과가 정확히 표시되어야 함"	하
+FR_PROFILE_001	프로필 관리	프로필 관리		프로필 관리(조회/수정)	없음 (현재는 조회만, 향후 user_metadata UPDATE 예정)	"1. 사용자 정보가 정확히 표시되어야 함 (익명 사용자 포함)
+2. 프로필 수정이 정상적으로 저장되어야 함 (향후 구현)
+3. 수정 후 변경사항이 즉시 반영되어야 함"	중
+FR_SUPPORT_001	고객센터	고객센터 문의		고객센터 문의 제출	support_inquiries 테이블 INSERT (또는 이메일 발송)	"1. 문의 양식이 정상적으로 제출되어야 함
+2. 제출 완료 확인이 표시되어야 함
+3. 문의 내용이 정확히 전달되어야 함"	하
+FR_SETTING_001	설정	알림 설정		알림 수신 설정 변경	user_settings 테이블 UPDATE/INSERT (user_id, maintenance_notification, verification_notification, marketing_notification)	"1. 알림 설정이 정상적으로 저장되어야 함
+2. 토글 변경 시 즉시 반영되어야 함
+3. 저장된 설정이 앱 재시작 후에도 유지되어야 함"	중
+SEC_001	보안	데이터 접근제어		데이터 접근제어(RLS 정책 적용)	없음 (정책 설정만, 데이터 변경 없음)	"1. RLS 정책이 모든 테이블에 정확히 적용되어야 함
+2. 사용자는 본인의 데이터만 접근할 수 있어야 함
+3. 다른 사용자의 데이터에 접근 시도 시 에러가 발생해야 함"	상
+NFR_001	비기능 요구사항	이미지 최적화		이미지 최적화(업로드 리사이즈/압축 등)	없음 (이미지 처리만, DB 변경 없음)	"1. 이미지 업로드 시 자동으로 리사이징 및 압축이 적용되어야 함
+2. 이미지 로딩 성능이 개선되어야 함 (로딩 시간 30% 이상 감소)
+3. 이미지 품질이 사용자 경험에 지장을 주지 않아야 함"	중

@@ -12,7 +12,8 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, helperText, fullWidth = false, className, id, icon, ...props }, ref) => {
-    const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
+    const autoId = React.useId();
+    const inputId = id ?? autoId;
 
     return (
       <div className={cn('flex flex-col', fullWidth && 'w-full')}>

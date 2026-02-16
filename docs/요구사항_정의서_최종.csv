@@ -1,0 +1,116 @@
+요구사항ID	LV1	LV2	LV3	요구사항명	상세 요구사항 정의	산출물/상태변화	권한/주체	실패 기준	결정 사항	우선순위(상,중,하)
+FR_AUTH_001	인증/세션	익명 세션 생성		익명 세션 생성 및 사용자 컨텍스트 확립	"- Step1) 앱 진입 시 쿠키에 세션 토큰 존재 여부 확인
+ - Step1-1) 세션 토큰이 있으면 JWT 토큰 유효성 검증
+ - Step1-2) 토큰이 유효하면 기존 사용자 정보 조회 (getUser)
+ - Step2) 세션이 없거나 토큰이 만료된 경우, Supabase Auth의 signInAnonymously() 자동 호출
+ - Step3) Supabase가 자동으로 UUID v4 형식 생성 (예: 123e4567-e89b-12d3-a456-426614174000)
+ - Step4) JWT Access Token 및 Refresh Token 발급
+ - Step5) 쿠키에 토큰 저장 (httpOnly, secure, sameSite 속성)
+ - Step6) AuthProvider에서 user 객체 설정 (user.id = UUID, user.is_anonymous = true)
+ - Step7) 모든 API 요청 시 Authorization 헤더에 Bearer 토큰 자동 첨부
+ - Step8) 토큰 만료 시 Refresh Token으로 자동 갱신 후 쿠키 업데이트"	쿠키에 JWT 토큰 저장, AuthProvider에 user 객체 설정 (DB 변경 없음)	모든 사용자 (앱 진입 시 자동 실행)	signInAnonymously 실패 시 재시도(최대 3회), 재시도 실패 시 에러 메시지 표시 및 앱 사용 불가		상
+FR_VEH_001	차량 관리	차량 등록		차량 등록(Create)	"- Step1) 내 차 탭(/vehicle)에서 '차량 등록' 버튼 클릭
+ - Step2) 차량번호 입력 (예: 12가3456)
+ - Step3) '차량 조회' 버튼 클릭 시 차량 정보 조회 API 호출
+ - Step3-1) 조회된 차량 정보 표시 (제조사, 모델, 연식, 연료타입)
+ - Step4) 소유주 이름 입력 (차량등록증 기준)
+ - Step5) '소유주 확인' 버튼 클릭 시 소유주 확인 API 호출
+ - Step6) 별칭 입력 (선택사항)
+ - Step7) 주행거리 입력 (km)
+ - Step8) '차량 등록' 버튼 클릭 시 vehicles 테이블에 INSERT (user_id, registration_number, manufacturer, model, variant, year, mileage, fuel_type, nickname)
+ - Step9) 저장 성공 시 내 차 탭으로 리다이렉트"	vehicles 테이블 INSERT (user_id, registration_number, manufacturer, model, variant, year, mileage, fuel_type, nickname)	인증된 사용자 (익명 사용자 포함, user_id 필수)	차량 정보 조회 실패 시 에러 메시지 표시, 소유주 확인 실패 시 에러 메시지 표시, INSERT 실패 시 롤백 및 에러 메시지 표시		상
+FR_VEH_002	차량 관리	차량 정보 수정		차량 정보 수정(Update)	"- Step1) 내 차 탭에서 차량 카드의 수정 버튼 클릭
+ - Step2) 차량 정보 수정 폼 표시 (주행거리, 별칭)
+ - Step3) 수정 내용 입력
+ - Step4) '저장' 버튼 클릭 시 vehicles 테이블에서 해당 차량 조회 (user_id로 필터링)
+ - Step5) UPDATE 쿼리 실행 (mileage, nickname 수정)
+ - Step6) 저장 성공 시 차량 정보 업데이트 및 화면 반영"	vehicles 테이블 UPDATE (mileage, nickname 필드 수정)	차량 소유자 (user_id로 필터링하여 본인 차량만 수정 가능)	차량 조회 실패 시 에러 메시지 표시, UPDATE 실패 시 롤백 및 에러 메시지 표시, 권한 없음(다른 사용자 차량) 시 403 에러		중
+FR_VEH_003	차량 관리	차량 삭제		차량 삭제(Delete)	"- Step1) 내 차 탭에서 차량 카드의 삭제 버튼 클릭
+ - Step2) 삭제 확인 모달 표시
+ - Step3) 확인 버튼 클릭 시 vehicles 테이블에서 해당 차량 조회 (user_id로 필터링)
+ - Step4) DELETE 쿼리 실행
+ - Step5) 삭제 성공 시 차량 목록에서 제거"	vehicles 테이블 DELETE (해당 차량 레코드 삭제)	차량 소유자 (user_id로 필터링하여 본인 차량만 삭제 가능)	차량 조회 실패 시 에러 메시지 표시, DELETE 실패 시 롤백 및 에러 메시지 표시, 권한 없음(다른 사용자 차량) 시 403 에러	차량 삭제 시 연관 검증 이력(verification_history)은 CASCADE 삭제 (verification_history의 vehicle_id 외래키 CASCADE 설정)	하
+FR_VERIFY_001	견적서 입력 및 검증	견적서 입력	카메라 촬영 기반	견적서 데이터 입력(카메라 촬영 기반)	"- Step1) 메인 페이지에서 '견적서 촬영하기' 카드 클릭
+ - Step2) 카메라 권한 요청 (브라우저/앱 권한)
+ - Step3) 카메라 뷰파인더 화면 표시
+ - Step4) 촬영 버튼 클릭 시 사진 캡처
+ - Step5) 미리보기 화면 표시 (재촬영 가능)
+ - Step6) '이 사진 사용' 버튼 클릭 시 이미지를 sessionStorage에 임시 저장
+ - Step7) 견적서 확인 화면(/verify/review)으로 이동
+ - Step8) 이미지 로드 및 OCR API 호출 (Upstage OCR 또는 OpenAI Vision)
+ - Step9) 추출된 텍스트에서 차량 정보 및 정비 항목 파싱
+ - Step10) 파싱된 정보를 화면에 표시 (차량 정보, 정비 항목 리스트)
+ - Step11) 사용자가 정보 수정 가능 (차량 정보, 항목 추가/삭제/수정)
+ - Step12) '검증하기' 버튼 클릭 시 차량 정보 및 견적서 저장 (vehicles, estimates 테이블)
+ - Step13) 검증 엔진 실행 (FR_VERIFY_004)
+ - Step14) 검증 결과 화면(/verify/result)으로 이동"	vehicles 테이블 INSERT (신규 차량인 경우), estimates 테이블 INSERT (견적서 정보), sessionStorage에 이미지 임시 저장	모든 사용자 (익명 사용자 포함)	카메라 권한 거부 시 안내 메시지 표시, OCR API 실패 시 재시도(최대 2회) 또는 수기 입력으로 전환 안내, 파싱 실패 시 사용자 수정 화면으로 이동, 저장 실패 시 롤백 및 에러 메시지 표시		상
+FR_VERIFY_002	견적서 입력 및 검증	견적서 입력	앨범 선택 기반	견적서 데이터 입력(앨범 선택 기반)	"- Step1) 메인 페이지에서 '앨범에서 선택' 카드 클릭
+ - Step2) 파일 선택 다이얼로그 표시 (이미지 파일만, 최대 10MB)
+ - Step3) 선택한 이미지 미리보기 표시
+ - Step4) '이 사진 사용' 버튼 클릭 시 이미지를 sessionStorage에 임시 저장
+ - Step5) 견적서 확인 화면(/verify/review)으로 이동
+ - Step6) 이미지 로드 및 OCR API 호출 (Upstage OCR 또는 OpenAI Vision)
+ - Step7) 추출된 텍스트에서 차량 정보 및 정비 항목 파싱
+ - Step8) 파싱된 정보를 화면에 표시 (차량 정보, 정비 항목 리스트)
+ - Step9) 사용자가 정보 수정 가능 (차량 정보, 항목 추가/삭제/수정)
+ - Step10) '검증하기' 버튼 클릭 시 차량 정보 및 견적서 저장 (vehicles, estimates 테이블)
+ - Step11) 검증 엔진 실행 (FR_VERIFY_004)
+ - Step12) 검증 결과 화면(/verify/result)으로 이동"	vehicles 테이블 INSERT (신규 차량인 경우), estimates 테이블 INSERT (견적서 정보), sessionStorage에 이미지 임시 저장	모든 사용자 (익명 사용자 포함)	파일 크기 초과 시 에러 메시지 표시, OCR API 실패 시 재시도(최대 2회) 또는 수기 입력으로 전환 안내, 파싱 실패 시 사용자 수정 화면으로 이동, 저장 실패 시 롤백 및 에러 메시지 표시		중
+FR_VERIFY_003	견적서 입력 및 검증	견적서 입력	수기 입력 기반	견적서 데이터 입력(수기 입력 기반)	"- Step1) 메인 페이지에서 '직접 입력' 버튼 클릭
+ - Step2) 차량 정보 입력 (제조사, 모델, 연식, 주행거리, 연료타입)
+ - Step3) 정비 항목 추가 (항목명, 부품비, 공임비)
+ - Step4) '검증하기' 버튼 클릭 시 차량 정보 저장 (saveVehicle → vehicles 테이블)
+ - Step5) 견적서 정보 저장 (createEstimate → estimates 테이블)
+ - Step6) sessionStorage에 currentEstimateId 저장
+ - Step7) 검증 엔진 실행 (FR_VERIFY_004)
+ - Step8) 검증 결과 화면(/verify/result)으로 이동"	vehicles 테이블 INSERT (신규 차량인 경우), estimates 테이블 INSERT (견적서 정보), sessionStorage에 currentEstimateId 저장	모든 사용자 (익명 사용자 포함)	필수 입력값 누락 시 검증 에러 표시, 저장 실패 시 롤백 및 에러 메시지 표시, 검증 엔진 실행 실패 시 에러 메시지 표시 및 재시도 가능		중
+FR_VERIFY_004	견적서 입력 및 검증	검증 실행		검증 실행 및 결과 저장(결과 산출 + 이력 생성 포함)	"- Step1) 견적서 정보 및 차량 정보를 검증 엔진에 전달
+ - Step2) 동일 차량/연식/주행거리 조건의 실제 정비 데이터 조회 (bluehands_maintenance 데이터)
+ - Step3) 각 항목별 통계 계산 (평균 가격, 최소/최대 가격, 중앙값)
+ - Step4) 사용자 견적 가격과 비교하여 판정 (적정/확인필요/과다)
+ - Step5) verification_results 테이블에 INSERT (estimate_id, item_id, user_price, average_price, min_price, max_price, median_price, status)
+ - Step6) 현재 사용자 UUID 확인 (익명 사용자 포함)
+ - Step7) verification_history 테이블에 INSERT (user_id, estimate_id, date, items, total_amount, status, shop_name, vehicle_label)
+ - Step7-1) 이력 생성 실패 시 verification_results는 롤백하거나 재시도 처리
+ - Step8) 검증 결과 반환"	verification_results 테이블 INSERT (항목별 검증 결과), verification_history 테이블 INSERT (검증 이력)	모든 사용자 (익명 사용자 포함, user_id 필수)	정비 데이터 조회 실패 시 에러 메시지 표시, 통계 계산 실패 시 기본값 사용 또는 에러 처리, verification_results INSERT 실패 시 롤백, verification_history INSERT 실패 시 verification_results 롤백 또는 재시도(최대 3회)	- 동일 견적서 재검증 시 새 이력 생성 (기존 이력 유지, 중복 허용)
+- verification_results와 verification_history는 트랜잭션으로 원자성 보장 (부분 저장 불허, 실패 시 모두 롤백)	상
+FR_HISTORY_001	검증 이력/열람	검증 이력 열람		저장된 검증 이력 열람(목록+상세+차량별 필터 포함)	"- Step1) 메인 페이지 하단에 최근 검증 2건 표시
+ - Step2) 내 차 탭에서 차량 선택
+ - Step3) 선택한 차량의 검증 이력 목록 표시
+ - Step4) 정렬 옵션 선택 (최신순/비용순)
+ - Step5) 각 항목에 날짜, 정비소명, 항목 요약, 총액 표시
+ - Step6) 항목 클릭 시 상세 화면(/history/[id])으로 이동
+ - Step7) 검증 내역 상세 정보 표시 (날짜, 정비소, 차량 정보)
+ - Step8) 검증된 항목 목록 표시 (항목명, 부품비, 공임비, 총액, 상태)
+ - Step9) 항목별 상세 정보 확인 가능 (항목 상세 화면으로 이동)
+ - Step10) 검증 결과 화면에서 항목 목록 표시 및 필터 기능 (전체/부품/공임/확인필요)
+ - Step11) 항목 상세 화면에서 가격 비교 차트, 가격 범위, 비슷한 차량 정비결과 표시
+ - Step12) 총 정비비용 통계 표시"	DB 변경 없음 (조회만 수행)	검증 이력 소유자 (user_id로 필터링하여 본인 데이터만 조회 가능)	이력 조회 실패 시 에러 메시지 표시, 권한 없음(다른 사용자 데이터) 시 403 에러, 데이터 없음 시 빈 상태 UI 표시		중
+FR_SHARE_001	공유	검증 결과 공유		검증 결과 공유(링크/네이티브 공유)	"- Step1) 검증 결과 화면 또는 검증 내역 상세에서 공유 버튼 클릭
+ - Step2) 공유 옵션 표시 (링크 복사, 네이티브 공유)
+ - Step3) 링크 복사 선택 시 공유 링크 생성 (검증 결과/내역 URL)
+ - Step4) 클립보드에 저장 및 토스트 메시지 표시
+ - Step5) 네이티브 공유 선택 시 디바이스 공유 API 호출"	DB 변경 없음 (공유 링크 생성만 수행)	검증 결과 소유자 (본인 데이터만 공유 가능)	클립보드 복사 실패 시 에러 메시지 표시, 네이티브 공유 API 미지원 시 링크 복사로 대체, 공유 링크 생성 실패 시 에러 메시지 표시	공유 링크 만료 정책 - 정비내역(verification_history) 또는 연관 차량(vehicles)이 삭제되면 링크 만료, 그 외의 경우 만료 시점 없음(영구 링크)	하
+FR_PROFILE_001	프로필 관리	프로필 관리		프로필 조회(표시)	"- Step1) 설정 페이지 상단에 프로필 카드 표시
+ - Step2) Supabase Auth에서 사용자 정보 조회 (user.id, user.is_anonymous)
+ - Step3) 익명 사용자의 경우 '익명 사용자'로 표시"	DB 변경 없음 (조회만 수행)	모든 사용자 (익명 사용자 포함)	사용자 정보 조회 실패 시 '익명 사용자'로 표시, 에러 발생 시 빈 프로필 카드 표시		중
+FR_SUPPORT_001	고객센터	고객센터 문의		고객센터 문의 제출	"- Step1) 설정 페이지에서 '고객센터 문의' 메뉴 클릭
+ - Step2) 고객센터 문의 화면 표시
+ - Step3) 문의 양식 작성 (제목, 내용, 사용자 정보 선택)
+ - Step4) '제출' 버튼 클릭 시 문의 데이터 저장 (DB 또는 이메일 발송)
+ - Step5) 제출 완료 확인 메시지 표시"	support_inquiries 테이블 INSERT 또는 이메일 발송 (구현 방식에 따라)	모든 사용자 (익명 사용자 포함)	필수 입력값 누락 시 검증 에러 표시, 저장/이메일 발송 실패 시 재시도(최대 2회) 또는 에러 메시지 표시		하
+FR_SETTING_001	설정	알림 설정		알림 수신 설정 변경	"- Step1) 설정 페이지에서 알림 섹션 표시
+ - Step2) 정비 시기 알림 토글 (기본값: ON)
+ - Step3) 검증 완료 알림 토글 (기본값: ON)
+ - Step4) 마케팅 알림 토글 (기본값: OFF)
+ - Step5) 토글 변경 시 사용자 설정 테이블에 UPDATE 또는 INSERT (user_id, maintenance_notification, verification_notification, marketing_notification)
+ - Step6) 저장 완료 확인"	user_settings 테이블 INSERT 또는 UPDATE (user_id, maintenance_notification, verification_notification, marketing_notification)	인증된 사용자 (익명 사용자 포함, user_id 필수)	저장 실패 시 롤백 및 에러 메시지 표시, 저장 성공 후 즉시 반영되어야 함		중
+SEC_001	보안	데이터 접근제어		데이터 접근제어(RLS 정책 적용)	"- Step1) 모든 테이블에 Row Level Security (RLS) 정책 적용
+ - Step2) vehicles 테이블: auth.uid() = user_id 조건으로 사용자별 데이터 접근 제어
+ - Step3) estimates 테이블: 인증된 사용자 또는 익명 사용자(user_id IS NULL) 조회 가능
+ - Step4) verification_results 테이블: 인증된 사용자 또는 익명 사용자 조회 가능
+ - Step5) verification_history 테이블: auth.uid() = user_id 조건으로 본인 데이터만 조회 가능"	Supabase RLS 정책 설정 (데이터베이스 레벨 접근 제어)	시스템 관리자 (배포 시 한 번 설정)	RLS 정책 미적용 시 데이터 유출 위험, 정책 오류 시 접근 불가 에러 발생, 정책 테스트 필수 (본인 데이터만 접근 가능 확인)		상
+NFR_001	비기능 요구사항	이미지 최적화		이미지 최적화(업로드 리사이즈/압축 등)	"- Step1) 업로드된 이미지 파일 수신
+ - Step2) 이미지 리사이징 (최대 1920px)
+ - Step3) 이미지 압축 (품질 80%)
+ - Step4) Next.js Image 컴포넌트 사용으로 자동 최적화"	최적화된 이미지 파일 생성 (원본 파일은 유지 또는 삭제)	시스템 (모든 이미지 업로드 시 자동 적용)	이미지 처리 실패 시 원본 이미지 사용 또는 에러 메시지 표시, 처리 시간 초과 시 타임아웃 에러		중

@@ -1,0 +1,182 @@
+요구사항ID	LV1	LV2	LV3	요구사항명	상세 요구사항 정의	우선순위(상,중,하)
+FR_AUTH_001	인증/세션	익명 세션 생성		익명 세션 생성 및 사용자 컨텍스트 확립	"입력: 앱 진입 요청
+처리: 
+- 세션 토큰 없거나 만료 시 Supabase Auth signInAnonymously() 호출
+- UUID v4 자동 생성 및 JWT 토큰(Access/Refresh) 발급
+- 쿠키에 토큰 저장 (httpOnly, secure, sameSite)
+- AuthProvider에 user 객체 설정 (user.id = UUID, user.is_anonymous = true)
+- 토큰 만료 시 Refresh Token으로 자동 갱신
+출력: 인증된 사용자 컨텍스트 (user 객체)
+외부 의존: Supabase Auth API, @supabase/ssr (쿠키 관리)
+Acceptance Criteria:
+1. 앱 진입 시 자동으로 UUID가 발급되고 세션이 생성되어야 함
+2. 토큰 만료 시 자동으로 갱신되어 사용자 경험이 끊기지 않아야 함
+3. 모든 API 요청에 토큰이 자동으로 첨부되어야 함"	상
+FR_VEH_001	차량 관리	차량 등록		차량 등록(Create)	"입력: 차량번호, 소유주 이름, 별칭(선택), 주행거리
+처리:
+- 차량 정보 조회 API 호출 (제조사, 모델, 연식, 연료타입)
+- 소유주 확인 API 호출
+- vehicles 테이블에 INSERT (user_id, registration_number, manufacturer, model, variant, year, mileage, fuel_type, nickname)
+출력: 저장된 차량 정보 및 내 차 탭 리다이렉트
+외부 의존: 차량 정보 조회 API, 소유주 확인 API, Supabase (vehicles 테이블)
+Acceptance Criteria:
+1. 차량번호 조회가 정확히 동작해야 함
+2. 소유주 확인이 정확히 동작해야 함
+3. 차량 정보가 정상적으로 vehicles 테이블에 저장되어야 함"	상
+FR_VEH_002	차량 관리	차량 정보 수정		차량 정보 수정(Update)	"입력: 차량 ID, 주행거리, 별칭
+처리:
+- vehicles 테이블에서 해당 차량 조회 (user_id로 필터링)
+- UPDATE 쿼리 실행 (mileage, nickname 수정)
+출력: 업데이트된 차량 정보
+외부 의존: Supabase (vehicles 테이블)
+Acceptance Criteria:
+1. 차량 정보 수정이 정상적으로 저장되어야 함
+2. 수정 후 변경사항이 즉시 반영되어야 함
+3. 본인 소유 차량만 수정할 수 있어야 함"	중
+FR_VEH_003	차량 관리	차량 삭제		차량 삭제(Delete)	"입력: 차량 ID
+처리:
+- vehicles 테이블에서 해당 차량 조회 (user_id로 필터링)
+- DELETE 쿼리 실행
+출력: 차량 삭제 완료 및 목록에서 제거
+외부 의존: Supabase (vehicles 테이블)
+Acceptance Criteria:
+1. 삭제 확인 모달이 표시되어야 함
+2. 차량 정보가 정상적으로 삭제되어야 함
+3. 본인 소유 차량만 삭제할 수 있어야 함"	하
+FR_VERIFY_001	견적서 입력 및 검증	견적서 입력	카메라 촬영 기반	견적서 데이터 입력(카메라 촬영 기반)	"입력: 카메라로 촬영한 견적서 이미지
+처리:
+- 카메라 권한 요청 및 촬영
+- 이미지를 sessionStorage에 임시 저장
+- OCR API 호출 (Upstage OCR 또는 OpenAI Vision)
+- 추출된 텍스트에서 차량 정보 및 정비 항목 파싱
+- 사용자가 파싱 결과 수정 가능
+- 차량 정보 및 견적서 저장 (vehicles, estimates 테이블)
+- 검증 엔진 실행 (FR_VERIFY_004)
+출력: 검증 결과 화면으로 이동
+외부 의존: 카메라 API, OCR API (Upstage/OpenAI Vision), Supabase (vehicles, estimates 테이블)
+Acceptance Criteria:
+1. 카메라 촬영이 정상적으로 동작해야 함
+2. OCR이 정확히 텍스트를 추출해야 함 (정확도 80% 이상)
+3. 파싱된 정보를 사용자가 수정할 수 있어야 함
+4. 검증 엔진이 정상적으로 실행되어야 함"	상
+FR_VERIFY_002	견적서 입력 및 검증	견적서 입력	앨범 선택 기반	견적서 데이터 입력(앨범 선택 기반)	"입력: 앨범에서 선택한 견적서 이미지 (최대 10MB)
+처리:
+- 파일 선택 다이얼로그 표시
+- 이미지를 sessionStorage에 임시 저장
+- OCR API 호출 (Upstage OCR 또는 OpenAI Vision)
+- 추출된 텍스트에서 차량 정보 및 정비 항목 파싱
+- 사용자가 파싱 결과 수정 가능
+- 차량 정보 및 견적서 저장 (vehicles, estimates 테이블)
+- 검증 엔진 실행 (FR_VERIFY_004)
+출력: 검증 결과 화면으로 이동
+외부 의존: 파일 선택 API, OCR API (Upstage/OpenAI Vision), Supabase (vehicles, estimates 테이블)
+Acceptance Criteria:
+1. 앨범에서 이미지 선택이 정상적으로 동작해야 함
+2. OCR이 정확히 텍스트를 추출해야 함 (정확도 80% 이상)
+3. 파싱된 정보를 사용자가 수정할 수 있어야 함
+4. 검증 엔진이 정상적으로 실행되어야 함"	중
+FR_VERIFY_003	견적서 입력 및 검증	견적서 입력	수기 입력 기반	견적서 데이터 입력(수기 입력 기반)	"입력: 차량 정보 (제조사, 모델, 연식, 주행거리, 연료타입), 정비 항목 리스트 (항목명, 부품비, 공임비)
+처리:
+- 차량 정보 저장 (saveVehicle → vehicles 테이블)
+- 견적서 정보 저장 (createEstimate → estimates 테이블)
+- sessionStorage에 currentEstimateId 저장
+- 검증 엔진 실행 (FR_VERIFY_004)
+출력: 검증 결과 화면으로 이동
+외부 의존: Supabase (vehicles, estimates 테이블)
+Acceptance Criteria:
+1. 차량 정보 및 정비 항목 입력이 정상적으로 저장되어야 함
+2. 검증 엔진이 정상적으로 실행되어야 함
+3. 입력한 데이터가 정확히 검증 엔진에 전달되어야 함"	중
+FR_VERIFY_004	견적서 입력 및 검증	검증 실행		검증 실행 및 결과 저장(결과 산출 + 이력 생성 포함)	"입력: 견적서 정보 (estimate_id), 차량 정보 (vehicle_id 또는 차량 조건)
+처리:
+- 동일 차량/연식/주행거리 조건의 실제 정비 데이터 조회 (bluehands_maintenance 데이터)
+- 각 항목별 통계 계산 (평균 가격, 최소/최대 가격, 중앙값)
+- 사용자 견적 가격과 비교하여 판정 (적정/확인필요/과다)
+- verification_results 테이블에 INSERT (estimate_id, item_id, user_price, average_price, min_price, max_price, median_price, status)
+- 현재 사용자 UUID 확인 (익명 사용자 포함)
+- verification_history 테이블에 INSERT (user_id, estimate_id, date, items, total_amount, status, shop_name, vehicle_label)
+출력: 검증 결과 데이터 (verification_results 레코드) 및 검증 이력 (verification_history 레코드)
+외부 의존: Supabase (bluehands_maintenance 데이터, verification_results 테이블, verification_history 테이블)
+상태 변화: verification_results 테이블 INSERT (항목별 검증 결과) + verification_history 테이블 INSERT (검증 이력)
+Acceptance Criteria:
+1. 동일 조건의 실제 정비 데이터가 정확히 조회되어야 함
+2. 가격 비교 및 판정이 정확해야 함 (통계 계산 오차 5% 이내)
+3. verification_results와 verification_history 모두 정상적으로 저장되어야 하며, 이력 생성 실패 시 verification_results는 롤백하거나 재시도해야 함"	상
+FR_HISTORY_001	검증 이력/열람	검증 이력 열람		저장된 검증 이력 열람(목록+상세+차량별 필터 포함)	"입력: 사용자 ID (현재 사용자 UUID), 차량 ID (선택), 정렬 옵션 (최신순/비용순), 필터 옵션 (전체/부품/공임/확인필요)
+처리:
+- verification_history 테이블에서 조회 (user_id로 필터링, 차량별 필터링, 정렬)
+- 검증 내역 상세 조회 (verification_results, estimates, vehicles 테이블 JOIN)
+- 항목별 상세 정보 조회 (가격 비교 차트 데이터, 비슷한 차량 정비결과)
+출력: 검증 이력 목록, 상세 정보, 항목별 상세 정보
+외부 의존: Supabase (verification_history, verification_results, estimates, vehicles 테이블)
+Acceptance Criteria:
+1. 검증 이력 목록이 정확히 표시되어야 함 (본인 데이터만)
+2. 차량별 필터링이 정상적으로 동작해야 함
+3. 검증 내역 상세 정보가 정확히 표시되어야 함
+4. 필터 및 정렬 기능이 정상적으로 동작해야 함"	중
+FR_SHARE_001	공유	검증 결과 공유		검증 결과 공유(링크/네이티브 공유)	"입력: 검증 결과 ID 또는 검증 내역 ID
+처리:
+- 공유 링크 생성 (검증 결과/내역 URL)
+- 링크 복사: 클립보드에 저장
+- 네이티브 공유: 디바이스 공유 API 호출
+출력: 공유 링크 또는 네이티브 공유 다이얼로그
+외부 의존: 클립보드 API, 네이티브 공유 API
+Acceptance Criteria:
+1. 링크 복사가 정상적으로 동작해야 함
+2. 네이티브 공유가 정상적으로 동작해야 함
+3. 공유된 링크로 접근 시 해당 검증 결과가 정확히 표시되어야 함"	하
+FR_PROFILE_001	프로필 관리	프로필 관리		프로필 관리(조회/수정)	"입력: 사용자 ID (현재 사용자 UUID)
+처리:
+- Supabase Auth에서 사용자 정보 조회 (user.id, user.is_anonymous)
+- 익명 사용자의 경우 '익명 사용자'로 표시
+- 프로필 수정 기능 (향후 구현)
+출력: 프로필 정보 (사용자 ID, 익명 여부)
+외부 의존: Supabase Auth API (getUser)
+Acceptance Criteria:
+1. 사용자 정보가 정확히 표시되어야 함 (익명 사용자 포함)
+2. 프로필 수정이 정상적으로 저장되어야 함 (향후 구현)
+3. 수정 후 변경사항이 즉시 반영되어야 함"	중
+FR_SUPPORT_001	고객센터	고객센터 문의		고객센터 문의 제출	"입력: 문의 제목, 문의 내용, 사용자 정보 (선택)
+처리:
+- 문의 양식 데이터 수집
+- 문의 데이터 저장 (DB 또는 이메일 발송)
+출력: 제출 완료 확인 메시지
+외부 의존: 문의 저장 API 또는 이메일 API
+Acceptance Criteria:
+1. 문의 양식이 정상적으로 제출되어야 함
+2. 제출 완료 확인이 표시되어야 함
+3. 문의 내용이 정확히 전달되어야 함"	하
+FR_SETTING_001	설정	알림 설정		알림 수신 설정 변경	"입력: 알림 설정 값 (정비 시기 알림 ON/OFF, 검증 완료 알림 ON/OFF, 마케팅 알림 ON/OFF)
+처리:
+- 사용자 설정 테이블에 UPDATE 또는 INSERT (user_id, maintenance_notification, verification_notification, marketing_notification)
+출력: 저장 완료 확인
+외부 의존: Supabase (user_settings 테이블 또는 user_metadata)
+Acceptance Criteria:
+1. 알림 설정이 정상적으로 저장되어야 함
+2. 토글 변경 시 즉시 반영되어야 함
+3. 저장된 설정이 앱 재시작 후에도 유지되어야 함"	중
+SEC_001	보안	데이터 접근제어		데이터 접근제어(RLS 정책 적용)	"입력: 데이터베이스 테이블 (vehicles, estimates, verification_results, verification_history)
+처리:
+- 모든 테이블에 Row Level Security (RLS) 정책 적용
+- vehicles: auth.uid() = user_id 조건으로 사용자별 접근 제어
+- estimates: 인증된 사용자 또는 익명 사용자(user_id IS NULL) 조회 가능
+- verification_results: 인증된 사용자 또는 익명 사용자 조회 가능
+- verification_history: auth.uid() = user_id 조건으로 본인 데이터만 조회 가능
+출력: RLS 정책 적용 완료
+외부 의존: Supabase (RLS 정책 설정)
+Acceptance Criteria:
+1. RLS 정책이 모든 테이블에 정확히 적용되어야 함
+2. 사용자는 본인의 데이터만 접근할 수 있어야 함
+3. 익명 사용자는 익명 데이터만 접근할 수 있어야 함
+4. 다른 사용자의 데이터에 접근 시도 시 에러가 발생해야 함"	상
+NFR_001	비기능 요구사항	이미지 최적화		이미지 최적화(업로드 리사이즈/압축 등)	"입력: 업로드된 이미지 파일
+처리:
+- 이미지 리사이징 (최대 1920px)
+- 이미지 압축 (품질 80%)
+- Next.js Image 컴포넌트 사용으로 자동 최적화
+출력: 최적화된 이미지
+외부 의존: 이미지 처리 라이브러리, Next.js Image 컴포넌트
+Acceptance Criteria:
+1. 이미지 업로드 시 자동으로 리사이징 및 압축이 적용되어야 함
+2. 이미지 로딩 성능이 개선되어야 함 (로딩 시간 30% 이상 감소)
+3. 이미지 품질이 사용자 경험에 지장을 주지 않아야 함"	중

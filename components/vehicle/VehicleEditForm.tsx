@@ -198,7 +198,7 @@ export default function VehicleEditForm({ initialVehicle, vehicleId, title }: Ve
             {/* Step 2: 소유주 확인 */}
             {vehicleStep === 'owner' && vehicleInfo && (
               <div className="space-y-4">
-                <div className="p-4 bg-semantic-success-light rounded-2xl">
+                <div className="p-4 bg-hyundai-gray-50 rounded-xl">
                   <div className="flex items-start gap-2">
                     <div className="w-5 h-5 rounded-full bg-semantic-success-main flex items-center justify-center shrink-0 mt-0.5">
                       <Check className="w-3 h-3 text-white" />
@@ -260,7 +260,7 @@ export default function VehicleEditForm({ initialVehicle, vehicleId, title }: Ve
             {/* Step 3: 확정 — 주행거리 입력 + 저장 */}
             {vehicleStep === 'confirmed' && vehicleInfo && (
               <div className="space-y-4">
-                <div className="p-4 bg-semantic-success-light rounded-2xl">
+                <div className="p-4 bg-hyundai-gray-50 rounded-xl">
                   <div className="flex items-start gap-2">
                     <div className="w-5 h-5 rounded-full bg-semantic-success-main flex items-center justify-center shrink-0 mt-0.5">
                       <Check className="w-3 h-3 text-white" />
@@ -336,7 +336,7 @@ export default function VehicleEditForm({ initialVehicle, vehicleId, title }: Ve
             type="button"
             onClick={handleSave}
             disabled={vehicleStep !== 'confirmed' || isSubmitting}
-            className="w-full max-w-lg mx-auto flex items-center justify-center gap-2 py-4 rounded-2xl bg-hyundai-gray-900 text-white text-base font-semibold active:bg-hyundai-gray-800 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+            className="w-full max-w-lg mx-auto flex items-center justify-center gap-2 py-4 rounded-2xl bg-hyundai-blue-500 text-white text-base font-semibold active:bg-hyundai-blue-600 transition-colors disabled:opacity-40 disabled:pointer-events-none"
           >
             {isSubmitting ? (
               <>

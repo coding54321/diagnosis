@@ -1,0 +1,162 @@
+요구사항ID	LV1	LV2	LV3	요구사항명	상세 요구사항 정의	우선순위(상,중,하)
+REQ_AUTH_001	인증/회원관리	자동 UUID 발급		자동 UUID 발급	"- Step1) 앱 진입 시 쿠키에 세션 토큰 존재 여부 확인
+ - Step1-1) 세션 토큰이 있으면 JWT 토큰 유효성 검증
+ - Step1-2) 토큰이 유효하면 기존 사용자 정보 조회 (getUser)
+ - Step2) 세션이 없거나 토큰이 만료된 경우, Supabase Auth의 signInAnonymously() 자동 호출
+ - Step3) Supabase가 자동으로 UUID v4 형식 생성 (예: 123e4567-e89b-12d3-a456-426614174000)
+ - Step4) JWT Access Token 및 Refresh Token 발급
+ - Step5) 쿠키에 토큰 저장 (httpOnly, secure, sameSite 속성)
+ - Step6) AuthProvider에서 user 객체 설정 (user.id = UUID, user.is_anonymous = true)
+ - Step7) 모든 API 요청 시 Authorization 헤더에 Bearer 토큰 자동 첨부
+ - Step8) 토큰 만료 시 Refresh Token으로 자동 갱신 후 쿠키 업데이트"	상
+REQ_AUTH_002	인증/회원관리	로그인		로그인	"- Step1) 이메일 주소와 비밀번호 입력
+ - Step2) Supabase Auth의 signInWithPassword() 호출
+ - Step3) 로그인 성공 시 세션 생성 및 쿠키에 토큰 저장
+ - Step4) 메인 페이지(/)로 리다이렉트
+ - Step5) 이미 로그인된 상태에서 /auth/login 접속 시 메인으로 자동 리다이렉트
+ - Step6) 로그인 실패 시 에러 메시지 표시"	상
+REQ_AUTH_003	인증/회원관리	회원가입		회원가입	"- Step1) 이름, 이메일, 비밀번호 입력
+ - Step2) 이메일 중복 체크 (Supabase Auth)
+ - Step2-1) 중복된 이메일이 있을 경우, 이미 등록된 이메일이라고 안내
+ - Step3) 중복 이메일이 없는 경우, Supabase Auth의 signUp() 호출
+ - Step4) user_metadata.name에 이름 저장
+ - Step5) 확인 이메일 발송 (Supabase 자동 처리)
+ - Step6) 회원가입 성공 시 메인 페이지(/)로 리다이렉트
+ - Step7) 이미 로그인된 상태에서 /auth/signup 접속 시 메인으로 자동 리다이렉트"	상
+REQ_AUTH_004	인증/회원관리	로그아웃		로그아웃	"- Step1) UserMenu 또는 설정 페이지에서 로그아웃 버튼 클릭
+ - Step2) Supabase Auth의 signOut() 호출
+ - Step3) 쿠키에서 세션 토큰 삭제
+ - Step4) 메인 페이지(/)로 리다이렉트
+ - Step5) 로그아웃 후 자동 UUID 발급 플로우로 전환"	중
+REQ_VERIFY_001	견적서 검증	견적서 입력	카메라 촬영	카메라 촬영	"- Step1) 메인 페이지에서 '견적서 촬영하기' 카드 클릭
+ - Step2) 카메라 권한 요청 (브라우저/앱 권한)
+ - Step3) 카메라 뷰파인더 화면 표시
+ - Step4) 촬영 버튼 클릭 시 사진 캡처
+ - Step5) 미리보기 화면 표시 (재촬영 가능)
+ - Step6) '이 사진 사용' 버튼 클릭 시 sessionStorage에 이미지 저장
+ - Step7) 견적서 확인 화면(/verify/review)으로 이동"	상
+REQ_VERIFY_002	견적서 검증	견적서 입력	앨범 선택	앨범 선택	"- Step1) 메인 페이지에서 '앨범에서 선택' 카드 클릭
+ - Step2) 파일 선택 다이얼로그 표시 (이미지 파일만, 최대 10MB)
+ - Step3) 선택한 이미지 미리보기 표시
+ - Step4) '이 사진 사용' 버튼 클릭 시 sessionStorage에 이미지 저장
+ - Step5) 견적서 확인 화면(/verify/review)으로 이동"	상
+REQ_VERIFY_003	견적서 검증	견적서 입력	직접 입력	직접 입력	"- Step1) 메인 페이지에서 '직접 입력' 버튼 클릭
+ - Step2) 차량 정보 입력 (제조사, 모델, 연식, 주행거리, 연료타입)
+ - Step3) 정비 항목 추가 (항목명, 부품비, 공임비)
+ - Step4) '검증하기' 버튼 클릭 시 차량 정보 저장 (saveVehicle)
+ - Step5) 견적서 정보 저장 (createEstimate)
+ - Step6) sessionStorage에 currentEstimateId 저장
+ - Step7) 검증 결과 화면(/verify/result)으로 이동"	상
+REQ_VERIFY_004	견적서 검증	견적서 확인		견적서 확인	"- Step1) 카메라/앨범 경로에서 이미지 로드 (sessionStorage)
+ - Step2) OCR API 호출 (Upstage OCR 또는 OpenAI Vision)
+ - Step3) 추출된 텍스트에서 차량 정보 및 정비 항목 파싱
+ - Step4) 파싱된 정보를 화면에 표시 (차량 정보, 정비 항목 리스트)
+ - Step5) 사용자가 정보 수정 가능 (차량 정보, 항목 추가/삭제/수정)
+ - Step6) '검증하기' 버튼 클릭 시 차량 정보 및 견적서 저장
+ - Step7) 검증 엔진 실행 (비동기)
+ - Step8) 검증 결과 화면(/verify/result)으로 이동"	상
+REQ_VERIFY_005	견적서 검증	검증 실행		검증 실행	"- Step1) 견적서 정보 및 차량 정보를 검증 엔진에 전달
+ - Step2) 동일 차량/연식/주행거리 조건의 실제 정비 데이터 조회
+ - Step3) 각 항목별 평균 가격, 최소/최대 가격, 중앙값 계산
+ - Step4) 사용자 견적 가격과 비교하여 적정/확인필요/과다 판정
+ - Step5) 검증 결과 저장 (verification_results 테이블)
+ - Step6) 검증 결과 반환"	상
+REQ_VERIFY_006	견적서 검증	검증 결과 확인		검증 결과 확인	"- Step1) 검증 결과 화면에 전체 항목 목록 표시
+ - Step2) 각 항목별 상태 표시 (적정/확인필요/과다)
+ - Step3) 항목별 평균 가격, 사용자 가격, 가격 범위 표시
+ - Step4) 항목 클릭 시 상세 화면(/verify/result/[itemId])으로 이동
+ - Step5) 필터 기능 (전체/부품/공임/확인필요)
+ - Step6) 비로그인 사용자에게 '저장하기' 버튼 클릭 시 로그인 모달 표시"	상
+REQ_VERIFY_007	견적서 검증	검증 결과 상세		검증 결과 상세	"- Step1) 항목 상세 정보 표시 (항목명, 부품비, 공임비, 총액)
+ - Step2) 가격 비교 차트 표시 (사용자 가격 vs 평균 가격)
+ - Step3) 가격 범위 표시 (최소/최대/중앙값)
+ - Step4) 비슷한 차량 정비결과 바텀시트 (주행거리 짧은 순)
+ - Step5) 정비사님께 질문 가이드 표시 (상태별 질문 예시)
+ - Step6) 다른 정비소 추천받기 버튼 (향후 구현)"	상
+REQ_VERIFY_008	견적서 검증	검증 결과 저장		검증 결과 저장	"- Step1) 로그인 상태 확인
+ - Step2) 로그인된 경우, 검증 결과를 verification_history 테이블에 저장
+ - Step3) user_id에 현재 사용자 UUID 저장
+ - Step4) 저장 성공 시 토스트 메시지 표시
+ - Step5) 비로그인 사용자의 경우 로그인 모달 표시 후 로그인 유도"	상
+REQ_VEHICLE_001	차량 관리	차량 등록		차량 등록	"- Step1) 내 차 탭(/vehicle)에서 '차량 등록' 버튼 클릭
+ - Step2) 차량번호 입력 (예: 12가3456)
+ - Step3) '차량 조회' 버튼 클릭 시 차량 정보 조회 API 호출
+ - Step4) 조회된 차량 정보 표시 (제조사, 모델, 연식, 연료타입)
+ - Step5) 소유주 이름 입력 (차량등록증 기준)
+ - Step6) 소유주 확인 API 호출
+ - Step7) 별칭 입력 (선택사항)
+ - Step8) 주행거리 입력 (km)
+ - Step9) '차량 등록' 버튼 클릭 시 저장
+ - Step10) 저장 성공 시 내 차 탭으로 리다이렉트"	상
+REQ_VEHICLE_002	차량 관리	차량 정보 수정		차량 정보 수정	"- Step1) 내 차 탭에서 차량 카드의 수정 버튼 클릭
+ - Step2) 차량 정보 수정 폼 표시 (주행거리, 별칭)
+ - Step3) 수정 내용 저장
+ - Step4) 저장 성공 시 차량 정보 업데이트"	중
+REQ_VEHICLE_003	차량 관리	차량 삭제		차량 삭제	"- Step1) 내 차 탭에서 차량 카드의 삭제 버튼 클릭
+ - Step2) 삭제 확인 모달 표시
+ - Step3) 확인 시 차량 정보 삭제
+ - Step4) 삭제 성공 시 차량 목록에서 제거"	중
+REQ_VEHICLE_004	차량 관리	차량별 검증 이력 조회		차량별 검증 이력 조회	"- Step1) 내 차 탭에서 차량 선택
+ - Step2) 선택한 차량의 검증 이력 목록 표시
+ - Step3) 정렬 옵션 (최신순/비용순)
+ - Step4) 각 이력 항목 클릭 시 상세 화면(/history/[id])으로 이동
+ - Step5) 총 정비비용 통계 표시"	상
+REQ_HISTORY_001	검증 이력	검증 내역 목록		검증 내역 목록	"- Step1) 메인 페이지 하단에 최근 검증 2건 표시 (로그인 사용자만)
+ - Step2) 내 차 탭에서 차량별 검증 이력 목록 표시
+ - Step3) 각 항목에 날짜, 정비소명, 항목 요약, 총액 표시
+ - Step4) 항목 클릭 시 상세 화면(/history/[id])으로 이동
+ - Step5) '내 차에서 보기' 링크로 내 차 탭으로 이동"	상
+REQ_HISTORY_002	검증 이력	검증 내역 상세		검증 내역 상세	"- Step1) 검증 내역 상세 정보 표시 (날짜, 정비소, 차량 정보)
+ - Step2) 검증된 항목 목록 표시 (항목명, 부품비, 공임비, 총액, 상태)
+ - Step3) 항목별 상세 정보 확인 가능
+ - Step4) 공유 기능 (링크 복사, 네이티브 공유)
+ - Step5) 삭제 기능 (본인 소유 검증만)"	상
+REQ_NOTIFICATION_001	알림	알림 목록		알림 목록	"- Step1) 메인 페이지 우측 상단 알림 아이콘 클릭
+ - Step2) 알림 화면(/notifications) 표시
+ - Step3) 알림이 없는 경우 빈 상태 UI 표시 (종 아이콘, '새로운 알림이 없습니다' 메시지)
+ - Step4) 알림이 있는 경우 알림 목록 표시 (향후 구현)"	중
+REQ_SETTING_001	설정	알림 설정		알림 설정	"- Step1) 설정 페이지에서 알림 섹션 표시
+ - Step2) 정비 시기 알림 토글 (기본값: ON)
+ - Step3) 검증 완료 알림 토글 (기본값: ON)
+ - Step4) 마케팅 알림 토글 (기본값: OFF)
+ - Step5) 토글 변경 시 설정 저장"	중
+REQ_SETTING_002	설정	고객센터 문의		고객센터 문의	"- Step1) 설정 페이지에서 '고객센터 문의' 메뉴 클릭
+ - Step2) 고객센터 문의 화면 표시 (향후 구현)
+ - Step3) 문의 양식 작성 및 제출 기능"	하
+REQ_SETTING_003	설정	이용약관		이용약관	"- Step1) 설정 페이지에서 '이용약관' 메뉴 클릭
+ - Step2) 이용약관 내용 표시 (향후 구현)"	하
+REQ_SETTING_004	설정	개인정보처리방침		개인정보처리방침	"- Step1) 설정 페이지에서 '개인정보처리방침' 메뉴 클릭
+ - Step2) 개인정보처리방침 내용 표시 (향후 구현)"	하
+REQ_SETTING_005	설정	프로필 관리		프로필 관리	"- Step1) 설정 페이지 상단에 프로필 카드 표시 (로그인 사용자만)
+ - Step2) 이름 및 이메일 표시
+ - Step3) 프로필 수정 기능 (향후 구현)"	중
+REQ_SHARE_001	공유	검증 결과 공유		검증 결과 공유	"- Step1) 검증 결과 화면 또는 검증 내역 상세에서 공유 버튼 클릭
+ - Step2) 공유 옵션 표시 (링크 복사, 네이티브 공유)
+ - Step3) 링크 복사 시 클립보드에 저장 및 토스트 메시지 표시
+ - Step4) 네이티브 공유 시 디바이스 공유 기능 호출"	중
+REQ_DATA_001	데이터 관리	RLS 정책 적용		RLS 정책 적용	"- Step1) 모든 테이블에 Row Level Security (RLS) 정책 적용
+ - Step2) vehicles 테이블: auth.uid() = user_id 조건으로 사용자별 데이터 접근 제어
+ - Step3) estimates 테이블: 인증된 사용자 또는 익명 사용자(user_id IS NULL) 조회 가능
+ - Step4) verification_results 테이블: 인증된 사용자 또는 익명 사용자 조회 가능
+ - Step5) verification_history 테이블: auth.uid() = user_id 조건으로 본인 데이터만 조회 가능"	상
+REQ_DATA_002	데이터 관리	토큰 자동 갱신		토큰 자동 갱신	"- Step1) API 요청 시 JWT Access Token 만료 여부 확인
+ - Step2) 토큰 만료 시 Refresh Token으로 새 Access Token 발급
+ - Step3) 쿠키에 새 토큰 저장
+ - Step4) 요청 계속 처리
+ - Step5) Refresh Token도 만료된 경우 자동 익명 로그인으로 재인증"	상
+REQ_UI_001	UI/UX	하단 네비게이션		하단 네비게이션	"- Step1) 메인 영역 모든 페이지에 하단 네비게이션 표시
+ - Step2) 네비게이션 탭: 홈(/), 검증(/verify/camera), 내 차(/vehicle), 더보기(/settings)
+ - Step3) 현재 페이지에 해당하는 탭 하이라이트
+ - Step4) 인증 페이지(/auth/*)에서는 네비게이션 숨김"	상
+REQ_UI_002	UI/UX	로딩 상태 표시		로딩 상태 표시	"- Step1) API 요청 중 로딩 스피너 표시
+ - Step2) 검증 실행 중 로딩 화면 표시
+ - Step3) 데이터 로딩 중 스켈레톤 UI 또는 로딩 인디케이터 표시"	중
+REQ_UI_003	UI/UX	에러 처리		에러 처리	"- Step1) API 요청 실패 시 에러 메시지 표시
+ - Step2) 네트워크 오류 시 재시도 안내
+ - Step3) 사용자 친화적인 에러 메시지 표시"	중
+REQ_PERF_001	성능	이미지 최적화		이미지 최적화	"- Step1) 업로드된 이미지 리사이징 (최대 1920px)
+ - Step2) 이미지 압축 (품질 80%)
+ - Step3) Next.js Image 컴포넌트 사용으로 자동 최적화"	중
+REQ_PERF_002	성능	세션 관리 최적화		세션 관리 최적화	"- Step1) 서버 사이드에서 쿠키 기반 세션 관리 (@supabase/ssr)
+ - Step2) 클라이언트 사이드에서 브라우저 쿠키 자동 관리
+ - Step3) 세션 갱신은 middleware에서 자동 처리"	상

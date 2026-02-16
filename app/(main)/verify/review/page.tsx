@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronRight, Loader2, X, ArrowLeft, Check, AlertCircle, CheckCircle2 } from 'lucide-react';
+import Skeleton from '@/components/ui/Skeleton';
 import { Container } from '@/components/layout';
 import { Card, BottomSheet, Input } from '@/components/ui';
 import { formatPrice } from '@/lib/utils';
@@ -12,6 +13,7 @@ import { classifyShopType } from '@/lib/verification/shop-classifier';
 import { analyzeEstimateImage } from '@/lib/openai/vision';
 import type { EstimateItem } from '@/types';
 import type { OCRResult } from '@/lib/openai/vision';
+import { sendVerificationCompleteNotification } from '@/lib/notification';
 
 /** 차량번호 조회로 채워지는 차량 정보 (주행거리 포함) */
 type VehicleInfoFromLookup = {
@@ -58,7 +60,7 @@ const ReviewPage: React.FC = () => {
   // Step 1에서 이미지 OCR 실행 중 (카메라에서 이미지만 저장 후 온 경우)
   const [isOcrLoading, setIsOcrLoading] = useState(false);
   const [ocrError, setOcrError] = useState<{
-    type: 'NOT_ESTIMATE' | 'POOR_QUALITY' | 'ERROR';
+    type: 'POOR_QUALITY' | 'ERROR';
     message: string;
   } | null>(null);
 
@@ -337,12 +339,7 @@ const ReviewPage: React.FC = () => {
       analyzeEstimateImage(image)
         .then((ocrResult) => {
           if (!ocrResult.success) {
-            if (ocrResult.status === 'NOT_ESTIMATE') {
-              setOcrError({
-                type: 'NOT_ESTIMATE',
-                message: '견적서가 아닌 것으로 보입니다. 정비소에서 받은 견적서를 촬영해 주세요.',
-              });
-            } else if (ocrResult.status === 'POOR_QUALITY') {
+            if (ocrResult.status === 'POOR_QUALITY') {
               setOcrError({
                 type: 'POOR_QUALITY',
                 message: '이미지 품질이 낮아 인식이 어려울 수 있습니다.',
@@ -692,6 +689,8 @@ const ReviewPage: React.FC = () => {
         console.error('검증 결과 저장 실패:', saveVerificationResult.error);
       }
 
+      sendVerificationCompleteNotification(verificationResult.status);
+
       sessionStorage.setItem('currentEstimateId', savedEstimateId);
       if (vehicleNumber.trim()) {
         sessionStorage.setItem('currentVehicleRegistration', vehicleNumber.replace(/\s|-/g, '').trim());
@@ -699,7 +698,7 @@ const ReviewPage: React.FC = () => {
       if (estimate.shopName?.trim()) {
         sessionStorage.setItem('currentShopName', estimate.shopName.trim());
       }
-      router.push('/verify/result');
+      router.replace('/verify/result');
     } catch (error) {
       console.error('Error in handleVerify:', error);
       alert('견적서 저장 중 오류가 발생했습니다. 다시 시도해주세요.');
@@ -753,14 +752,7 @@ const ReviewPage: React.FC = () => {
             인식에 실패했어요
           </h1>
           <div className="text-sm text-hyundai-gray-500 text-center mb-6 space-y-1">
-            {ocrError.type === 'NOT_ESTIMATE' && ocrError.message.includes('.') ? (
-              <>
-                <p>{ocrError.message.split('.')[0]}.</p>
-                <p>{ocrError.message.split('.').slice(1).join('.').trim()}</p>
-              </>
-            ) : (
-              <p>{ocrError.message}</p>
-            )}
+            <p>{ocrError.message}</p>
           </div>
           <div className="flex flex-col gap-2.5 w-full max-w-xs">
             <button
@@ -1038,9 +1030,14 @@ const ReviewPage: React.FC = () => {
 
           {/* Step 3-1.5: 조회 중 */}
           {vehicleStep === 'checking' && (
-            <div className="flex flex-col items-center py-8">
-              <Loader2 className="w-8 h-8 animate-spin text-hyundai-gray-400 mb-3" />
-              <p className="text-sm text-hyundai-gray-500">차량 정보를 조회하고 있어요...</p>
+            <div className="py-6 space-y-4">
+              {/* 차량 카드 형태 스켈레톤 */}
+              <div className="p-4 bg-hyundai-gray-50 rounded-2xl space-y-3">
+                <Skeleton className="w-36 h-5" />
+                <Skeleton className="w-48 h-4" />
+                <Skeleton className="w-24 h-4" />
+              </div>
+              <p className="text-sm text-hyundai-gray-500 text-center">차량 정보를 조회하고 있어요...</p>
             </div>
           )}
 
@@ -1048,17 +1045,17 @@ const ReviewPage: React.FC = () => {
           {vehicleStep === 'owner' && vehicleInfo && (
             <div className="space-y-4">
               {/* 조회된 차량 정보 */}
-              <div className="p-4 bg-green-50 rounded-2xl">
+              <div className="p-4 bg-hyundai-gray-50 rounded-xl">
                 <div className="flex items-start gap-2">
-                  <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shrink-0 mt-0.5">
+                  <div className="w-5 h-5 rounded-full bg-semantic-success-main flex items-center justify-center shrink-0 mt-0.5">
                     <Check className="w-3 h-3 text-white" />
                   </div>
                   <div>
-                    <p className="text-base font-medium text-hyundai-gray-900">
+                    <p className="text-sm font-medium text-hyundai-gray-900">
                       {vehicleInfo.manufacturer} {vehicleInfo.model}
                       {vehicleInfo.variant ? ` ${vehicleInfo.variant}` : ''}
                     </p>
-                    <p className="text-sm text-hyundai-gray-500 mt-0.5">
+                    <p className="text-xs text-hyundai-gray-500 mt-0.5">
                       {vehicleNumber} · {vehicleInfo.year}년식 · {vehicleInfo.fuelType}
                     </p>
                   </div>
@@ -1111,22 +1108,22 @@ const ReviewPage: React.FC = () => {
       {/* 확정된 상태 */}
       {vehicleStep === 'confirmed' && vehicleInfo && (
         <div className="space-y-3">
-          <div className="p-4 bg-green-50 rounded-2xl">
+          <div className="p-4 bg-hyundai-gray-50 rounded-xl">
             <div className="flex items-start gap-2">
-              <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shrink-0 mt-0.5">
+              <div className="w-5 h-5 rounded-full bg-semantic-success-main flex items-center justify-center shrink-0 mt-0.5">
                 <Check className="w-3 h-3 text-white" />
               </div>
               <div className="flex-1">
-                <p className="text-base font-medium text-hyundai-gray-900">
+                <p className="text-sm font-medium text-hyundai-gray-900">
                   {vehicleInfo.manufacturer} {vehicleInfo.model}
                   {vehicleInfo.variant ? ` ${vehicleInfo.variant}` : ''}
                 </p>
-                <p className="text-sm text-hyundai-gray-500 mt-0.5">
+                <p className="text-xs text-hyundai-gray-500 mt-0.5">
                   {vehicleNumber} · {vehicleInfo.year}년식 · {vehicleInfo.fuelType}
                   {estimateMileage > 0 ? ` · ${estimateMileage.toLocaleString()}km` : ''}
                 </p>
                 {ownerName && (
-                  <p className="text-sm text-green-600 mt-1">소유주: {ownerName}</p>
+                  <p className="text-xs text-semantic-success-dark mt-1">소유주: {ownerName}</p>
                 )}
               </div>
             </div>
@@ -1290,7 +1287,7 @@ const ReviewPage: React.FC = () => {
           <button
             onClick={handleVerify}
             disabled={isSubmitting || items.length === 0}
-            className="w-full py-4 rounded-2xl bg-hyundai-gray-900 text-white text-base font-semibold active:bg-hyundai-gray-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-4 rounded-2xl bg-hyundai-blue-500 text-white text-base font-semibold active:bg-hyundai-blue-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {isSubmitting ? (
               <>
@@ -1434,7 +1431,7 @@ const ReviewPage: React.FC = () => {
               type="button"
               onClick={() => {
                 if (wizardStep === 2) {
-                  router.push('/verify/camera');
+                  router.replace('/verify/camera');
                 } else {
                   setWizardStep((prev) => (prev > 1 ? (prev - 1) as WizardStep : prev));
                 }
